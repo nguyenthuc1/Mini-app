@@ -1,192 +1,77 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>SUPER-MONEYMINE</title>
+<title>Nhiệm vụ truy cập link</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 <style>
-body{
-  font-family: Arial, sans-serif;
-  background:#0f172a;
-  color:#fff;
-  padding:15px;
-}
-.card{
-  background:#1e293b;
-  padding:12px;
-  margin-bottom:12px;
-  border-radius:10px;
-}
-button{
-  padding:8px 14px;
-  border:none;
-  border-radius:6px;
-  font-weight:bold;
-  background:#22c55e;
-}
-button:disabled{
-  background:#64748b;
-}
-.warn{
-  color:#f87171;
-  font-size:13px;
-}
+body{font-family:Arial;background:#0f172a;color:#fff;padding:15px}
+.card{background:#1e293b;padding:12px;border-radius:10px;margin-bottom:12px}
+button{padding:8px 12px;border:none;border-radius:6px;font-weight:bold}
+.do{background:#22c55e}
+.ok{background:#38bdf8;margin-left:6px}
+.small{font-size:13px;color:#cbd5e1}
 </style>
 </head>
-
 <body>
-<h2>💰 NHIỆM VỤ KIẾM TIỀN</h2>
 
+<h2>💰 NHIỆM VỤ KIẾM TIỀM</h2>
 <p id="user"></p>
-<p>💎 Điểm: <b><span id="point">0</span></b></p>
-<p class="warn" id="warn"></p>
+<p>$: <b><span id="point">0</span></b></p>
 
 <div class="card">
-📢 Tham gia Telegram  
-<br><br>
-<button onclick="doTask(1,'https://t.me/telegram')">Làm nhiệm vụ</button>
-</div>
-
-<div class="card">
-🌐 Truy cập website  
-<br><br>
-<button onclick="doTask(2,'https://google.com')">Làm nhiệm vụ</button>
-</div>
-
-<div class="card">
-📅 Điểm danh hôm nay  
-<br><br>
-<button onclick="daily()">Điểm danh</button>
+🌐 Truy cập website<br>
+<span class="small">Ở lại tối thiểu 15 giây</span><br><br>
+<button class="do" onclick="doTask(1,'https://example.com')">Làm nhiệm vụ</button>
+<button class="ok" onclick="confirmTask(1)">Xác nhận</button>
 </div>
 
 <script>
-/* ===== TELEGRAM INIT ===== */
-const tg = window.Telegram.WebApp;
+const tg = Telegram.WebApp;
 tg.expand();
 
-if(!tg.initDataUnsafe || !tg.initDataUnsafe.user){
-  document.body.innerHTML = "❌ Vui lòng mở app trong Telegram";
+// BẮT BUỘC MỞ TRONG TELEGRAM
+if(!tg.initDataUnsafe?.user){
+  document.body.innerHTML="❌ Vui lòng mở trong Telegram";
   throw new Error("Not Telegram");
 }
 
 const userId = tg.initDataUnsafe.user.id;
-document.getElementById("user").innerText = "👤 User ID: " + userId;
+document.getElementById("user").innerText = "👤 User ID: "+userId;
 
-/* ===== STORAGE KEY ===== */
+// ĐIỂM
 const POINT_KEY = "point_"+userId;
-const MAX_POINT = 1000;
-const COOLDOWN = 5000;
-
-/* ===== LOAD POINT ===== */
 let point = Number(localStorage.getItem(POINT_KEY)) || 0;
-updatePoint();
+document.getElementById("point").innerText = point;
 
-/* ===== ANTI SPAM ===== */
-function checkCooldown(){
-  let now = Date.now();
-  let last = Number(localStorage.getItem("last_"+userId)) || 0;
-  if(now - last < COOLDOWN){
-    showWarn("⚠️ Thao tác quá nhanh!");
-    return false;
-  }
-  localStorage.setItem("last_"+userId, now);
-  return true;
-}
-
-/* ===== TASK ===== */
-<script>
-const tg = window.Telegram.WebApp;
-const userId = tg.initDataUnsafe.user.id;
-
-function doTask(taskId, link){
-  const taskKey = "task_done_"+taskId+"_"+userId;
-  const pendingKey = "task_pending_"+taskId+"_"+userId;
-
-  if(localStorage.getItem(taskKey)){
+// LÀM NHIỆM VỤ
+function doTask(id, link){
+  if(localStorage.getItem("done_"+id+"_"+userId)){
     alert("❌ Nhiệm vụ đã hoàn thành");
     return;
   }
-
-  // Đánh dấu đang làm nhiệm vụ
-  localStorage.setItem(pendingKey, Date.now());
-
-  // Mở link nhiệm vụ
-  tg.openLink(link);
-
-  alert("🔔 Sau khi hoàn thành, quay lại app và bấm XÁC NHẬN");
+  localStorage.setItem("pending_"+id+"_"+userId, Date.now());
+  tg.openLink(link); // mở link hợp lệ
+  alert("🔔 Quay lại app và bấm XÁC NHẬN");
 }
 
-// Gọi khi user bấm xác nhận
-function confirmTask(taskId){
-  const taskKey = "task_done_"+taskId+"_"+userId;
-  const pendingKey = "task_pending_"+taskId+"_"+userId;
+// XÁC NHẬN
+function confirmTask(id){
+  const start = localStorage.getItem("pending_"+id+"_"+userId);
+  if(!start){ alert("⚠️ Chưa làm nhiệm vụ"); return; }
+  if(Date.now() - start < 15000){ alert("⚠️ Làm quá nhanh"); return; }
 
-  if(localStorage.getItem(taskKey)){
-    alert("❌ Nhiệm vụ đã hoàn thành");
-    return;
-  }
-
-  const startTime = localStorage.getItem(pendingKey);
-  if(!startTime){
-    alert("⚠️ Bạn chưa làm nhiệm vụ");
-    return;
-  }
-
-  const spent = Date.now() - startTime;
-  if(spent < 5000){ // 5 giây
-    alert("⚠️ Làm nhiệm vụ quá nhanh");
-    return;
-  }
-
-  // Hoàn thành
-  localStorage.removeItem(pendingKey);
-  localStorage.setItem(taskKey, "done");
-
+  localStorage.removeItem("pending_"+id+"_"+userId);
+  localStorage.setItem("done_"+id+"_"+userId,"yes");
   addPoint(10);
-  alert("✅ Hoàn thành nhiệm vụ +10 điểm");
+  alert("✅ Hoàn thành +100đ");
 }
 
-
-
-/* ===== DAILY CHECK-IN ===== */
-function daily(){
-  if(!checkCooldown()) return;
-
-  let today = new Date().toDateString();
-  let key = "daily_"+userId;
-
-  if(localStorage.getItem(key) === today){
-    alert("❌ Hôm nay đã điểm danh");
-    return;
-  }
-
-  localStorage.setItem(key, today);
-  addPoint(5);
-}
-
-/* ===== ADD POINT ===== */
+// CỘNG ĐIỂM
 function addPoint(x){
   point += x;
-
-  if(point > MAX_POINT){
-    point = MAX_POINT;
-  }
-
   localStorage.setItem(POINT_KEY, point);
-  updatePoint();
-}
-
-/* ===== UI ===== */
-function updatePoint(){
   document.getElementById("point").innerText = point;
-}
-
-function showWarn(msg){
-  let w = document.getElementById("warn");
-  w.innerText = msg;
-  setTimeout(()=>w.innerText="",2000);
 }
 </script>
 </body>
