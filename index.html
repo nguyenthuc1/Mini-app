@@ -96,25 +96,59 @@ function checkCooldown(){
 }
 
 /* ===== TASK ===== */
-function doTask(id, link){
-  if(!checkCooldown()) return;
+<script>
+const tg = window.Telegram.WebApp;
+const userId = tg.initDataUnsafe.user.id;
 
-  let key = "task_"+id+"_"+userId;
-  if(localStorage.getItem(key)){
+function doTask(taskId, link){
+  const taskKey = "task_done_"+taskId+"_"+userId;
+  const pendingKey = "task_pending_"+taskId+"_"+userId;
+
+  if(localStorage.getItem(taskKey)){
     alert("❌ Nhiệm vụ đã hoàn thành");
     return;
   }
 
-  if(point >= MAX_POINT){
-    alert("🚫 Tài khoản bị giới hạn điểm");
+  // Đánh dấu đang làm nhiệm vụ
+  localStorage.setItem(pendingKey, Date.now());
+
+  // Mở link nhiệm vụ
+  tg.openLink(link);
+
+  alert("🔔 Sau khi hoàn thành, quay lại app và bấm XÁC NHẬN");
+}
+
+// Gọi khi user bấm xác nhận
+function confirmTask(taskId){
+  const taskKey = "task_done_"+taskId+"_"+userId;
+  const pendingKey = "task_pending_"+taskId+"_"+userId;
+
+  if(localStorage.getItem(taskKey)){
+    alert("❌ Nhiệm vụ đã hoàn thành");
     return;
   }
 
-  window.open(link, "_blank");
+  const startTime = localStorage.getItem(pendingKey);
+  if(!startTime){
+    alert("⚠️ Bạn chưa làm nhiệm vụ");
+    return;
+  }
 
-  localStorage.setItem(key, "done");
+  const spent = Date.now() - startTime;
+  if(spent < 5000){ // 5 giây
+    alert("⚠️ Làm nhiệm vụ quá nhanh");
+    return;
+  }
+
+  // Hoàn thành
+  localStorage.removeItem(pendingKey);
+  localStorage.setItem(taskKey, "done");
+
   addPoint(10);
+  alert("✅ Hoàn thành nhiệm vụ +10 điểm");
 }
+</script>
+
 
 /* ===== DAILY CHECK-IN ===== */
 function daily(){
