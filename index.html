@@ -2,38 +2,31 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Reward Ads Bot</title>
+<title>Mini App Kiếm Tiền</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
 body {
-    font-family: Arial;
-    background: #0f172a;
-    color: #fff;
-    text-align: center;
-    padding: 20px;
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+  padding: 20px;
 }
 .card {
-    background: #1e293b;
-    padding: 20px;
-    border-radius: 10px;
-    max-width: 400px;
-    margin: auto;
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
 }
 button {
-    background: #22c55e;
-    border: none;
-    padding: 10px 20px;
-    color: #000;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-button:disabled {
-    background: #555;
-}
-.log {
-    text-align: left;
-    font-size: 14px;
-    margin-top: 10px;
+  margin-top: 15px;
+  padding: 12px 20px;
+  font-size: 18px;
+  border-radius: 8px;
+  border: none;
+  background: #22c55e;
+  color: black;
 }
 </style>
 </head>
@@ -41,75 +34,36 @@ button:disabled {
 <body>
 
 <div class="card">
-<h2>🎁 Xem quảng cáo nhận tiền</h2>
+  <h2>💰 XEM QUẢNG CÁO KIẾM TIỀN</h2>
+  <p>ID Telegram: <b id="uid"></b></p>
+  <p>Số dư: <b id="coin">0</b> điểm</p>
 
-<p>💰 Số dư: <span id="coin">0</span> coin</p>
-
-<button id="watchBtn" onclick="watchAd()">👁 Xem quảng cáo</button>
-<p id="timer"></p>
-
-<button onclick="withdraw()">🏧 Rút tiền</button>
-
-<div class="log">
-<h4>📜 Lịch sử</h4>
-<ul id="history"></ul>
-</div>
+  <button onclick="watchAd()">▶️ Xem quảng cáo</button>
 </div>
 
 <script>
-let coin = localStorage.getItem("coin") || 0;
-let lastWatch = localStorage.getItem("lastWatch") || 0;
+const tg = Telegram.WebApp;
+tg.expand();
 
+let userId = tg.initDataUnsafe.user.id;
+let coin = localStorage.getItem("coin_" + userId) || 0;
+
+document.getElementById("uid").innerText = userId;
 document.getElementById("coin").innerText = coin;
 
 function watchAd() {
-    let now = Date.now();
-    if (now - lastWatch < 30000) {
-        alert("⛔ Vui lòng đợi 30 giây!");
-        return;
-    }
+  // LINK QUẢNG CÁO (thay bằng Adsterra / PropellerAds)
+  window.open("https://example-ads-link.com", "_blank");
 
-    lastWatch = now;
-    localStorage.setItem("lastWatch", lastWatch);
+  tg.showAlert("⏳ Xem quảng cáo trong 10 giây");
 
-    document.getElementById("watchBtn").disabled = true;
-
-    let time = 10;
-    let interval = setInterval(() => {
-        document.getElementById("timer").innerText =
-            "⏳ Đang xem quảng cáo: " + time + "s";
-
-        time--;
-        if (time < 0) {
-            clearInterval(interval);
-            reward();
-        }
-    }, 1000);
-
-    // 👉 LINK QUẢNG CÁO THẬT (đổi link này)
-    window.open("https://link4m.com/xHprfP", "_blank");
-}
-
-function reward() {
-    let rewardCoin = 100;
-    coin = parseInt(coin) + rewardCoin;
-    localStorage.setItem("coin", coin);
-
+  setTimeout(() => {
+    coin = parseInt(coin) + 10;
+    localStorage.setItem("coin_" + userId, coin);
     document.getElementById("coin").innerText = coin;
-    document.getElementById("timer").innerText = "✅ Nhận +" + rewardCoin + " coin";
-    document.getElementById("watchBtn").disabled = false;
 
-    let li = document.createElement("li");
-    li.innerText = "✔ Nhận " + rewardCoin + " coin";
-    document.getElementById("history").appendChild(li);
-}
-
-function withdraw() {
-    if (coin < 1000) {
-        alert("❌ Tối thiểu 1000 coin để rút!");
-        return;
-    }
-    alert("✅ Gửi yêu cầu rút tiền thành công!");
+    tg.showAlert("🎉 Bạn nhận được +10 điểm");
+  }, 10000);
 }
 </script>
 
