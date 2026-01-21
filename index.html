@@ -1,97 +1,24 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Vượt Link Kiếm Tiền</title>
+<title>Kiếm tiền</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<style>
-body {
-  background: #020617;
-  color: #e5e7eb;
-  font-family: Arial;
-  text-align: center;
-  padding: 20px;
-}
-.box {
-  background: #0f172a;
-  padding: 20px;
-  border-radius: 12px;
-}
-button {
-  padding: 12px 20px;
-  font-size: 18px;
-  border-radius: 8px;
-  background: #22c55e;
-  border: none;
-  color: black;
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<div class="box">
-  <h2>🔗 VƯỢT LINK KIẾM TIỀN</h2>
-  <p>ID: <b id="uid"></b></p>
-  <p>Số dư: <b id="coin">0</b> điểm</p>
+<h2>💰 Nhiệm vụ vượt link</h2>
 
-  <button onclick="startBypass()">🚀 Bắt đầu vượt link</button>
+<div class="task">
+  <p>🔗 Truy cập link & chờ 10 giây</p>
+
+  <button onclick="startTask(1)">Làm nhiệm vụ</button>
+  <button onclick="confirmTask(1)">Xác nhận</button>
+
+  <p id="status"></p>
 </div>
 
-<script>
-const tg = Telegram.WebApp;
-tg.expand();
-
-const userId = tg.initDataUnsafe.user.id;
-let coin = parseInt(localStorage.getItem("coin_" + userId)) || 0;
-
-document.getElementById("uid").innerText = userId;
-document.getElementById("coin").innerText = coin;
-
-let startTime = 0;
-let doing = false;
-
-function startBypass() {
-  if (doing) {
-    tg.showAlert("❌ Đang vượt link rồi");
-    return;
-  }
-
-  doing = true;
-  startTime = Date.now();
-
-  // 🔗 LINK RÚT GỌN / LINKVERTISE
-  window.open("https://link4m.com/xHprfP", "_blank");
-
-  tg.showAlert(" Vui lòng vượt link và quay lại sau khi vượt ");
-}
-
-document.addEventListener("visibilitychange", () => {
-  if (!doing) return;
-
-  if (!document.hidden) {
-    let time = Math.floor((Date.now() - startTime) / 1000);
-
-    if (time >= 60) {
-      finishBypass();
-    } else {
-      tg.showAlert("❌ chưa hoàn thành!");
-      doing = false;
-    }
-  }
-});
-
-function finishBypass() {
-  doing = false;
-
-  coin += 150;
-  localStorage.setItem("coin_" + userId, coin);
-  document.getElementById("coin").innerText = coin;
-
-  tg.showAlert("🎉 Thành công! +150 điểm");
-}
-</script>
-
+<script src="app.js"></script>
 </body>
 </html>
