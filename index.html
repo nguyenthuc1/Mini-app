@@ -2,83 +2,116 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Nhiệm vụ truy cập link</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Reward Ads Bot</title>
 <style>
-body{font-family:Arial;background:#0f172a;color:#fff;padding:15px}
-.card{background:#1e293b;padding:12px;border-radius:10px;margin-bottom:12px}
-button{padding:8px 12px;border:none;border-radius:6px;font-weight:bold}
-.do{background:#22c55e}
-.ok{background:#38bdf8;margin-left:6px}
-.small{font-size:13px;color:#cbd5e1}
+body {
+    font-family: Arial;
+    background: #0f172a;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+}
+.card {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 400px;
+    margin: auto;
+}
+button {
+    background: #22c55e;
+    border: none;
+    padding: 10px 20px;
+    color: #000;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+button:disabled {
+    background: #555;
+}
+.log {
+    text-align: left;
+    font-size: 14px;
+    margin-top: 10px;
+}
 </style>
 </head>
+
 <body>
 
-<h2>💰 NHIỆM VỤ KIẾM TIỀM</h2>
-<p id="user"></p>
-<p>$: <b><span id="point">0</span></b></p>
+<div class="card">
+<h2>🎁 Xem quảng cáo nhận tiền</h2>
 
-<div class="card">
-🌐 Truy cập website #1 được 200đ<br>
-<span class="small">Ở lại tối thiểu 15 giây</span><br><br>
-<button class="do" onclick="doTask(1,'https://example.com')">Làm nhiệm vụ</button>
-<button class="ok" onclick="confirmTask(1)">Xác nhận</button>
+<p>💰 Số dư: <span id="coin">0</span> coin</p>
+
+<button id="watchBtn" onclick="watchAd()">👁 Xem quảng cáo</button>
+<p id="timer"></p>
+
+<button onclick="withdraw()">🏧 Rút tiền</button>
+
+<div class="log">
+<h4>📜 Lịch sử</h4>
+<ul id="history"></ul>
 </div>
-<div class="card">
-🌐 Truy cập website #2 được 200đ<br>
-<span class="small">Ở lại tối thiểu 15 giây</span><br><br>
-<button class="do" onclick="doTask(2,'https://another.com')">Làm nhiệm vụ</button>
-<button class="ok" onclick="confirmTask(2)">Xác nhận</button>
 </div>
 
 <script>
-const tg = Telegram.WebApp;
-tg.expand();
+let coin = localStorage.getItem("coin") || 0;
+let lastWatch = localStorage.getItem("lastWatch") || 0;
 
-// BẮT BUỘC MỞ TRONG TELEGRAM
-if(!tg.initDataUnsafe?.user){
-  document.body.innerHTML="❌ Vui lòng mở trong Telegram";
-  throw new Error("Not Telegram");
+document.getElementById("coin").innerText = coin;
+
+function watchAd() {
+    let now = Date.now();
+    if (now - lastWatch < 30000) {
+        alert("⛔ Vui lòng đợi 30 giây!");
+        return;
+    }
+
+    lastWatch = now;
+    localStorage.setItem("lastWatch", lastWatch);
+
+    document.getElementById("watchBtn").disabled = true;
+
+    let time = 10;
+    let interval = setInterval(() => {
+        document.getElementById("timer").innerText =
+            "⏳ Đang xem quảng cáo: " + time + "s";
+
+        time--;
+        if (time < 0) {
+            clearInterval(interval);
+            reward();
+        }
+    }, 1000);
+
+    // 👉 LINK QUẢNG CÁO THẬT (đổi link này)
+    window.open("https://shrinkme.io/example", "_blank");
 }
 
-const userId = tg.initDataUnsafe.user.id;
-document.getElementById("user").innerText = "👤 User ID: "+userId;
+function reward() {
+    let rewardCoin = 100;
+    coin = parseInt(coin) + rewardCoin;
+    localStorage.setItem("coin", coin);
 
-// ĐIỂM
-const POINT_KEY = "point_"+userId;
-let point = Number(localStorage.getItem(POINT_KEY)) || 0;
-document.getElementById("point").innerText = point;
+    document.getElementById("coin").innerText = coin;
+    document.getElementById("timer").innerText = "✅ Nhận +" + rewardCoin + " coin";
+    document.getElementById("watchBtn").disabled = false;
 
-// LÀM NHIỆM VỤ
-function doTask(id, link){
-  if(localStorage.getItem("done_"+id+"_"+userId)){
-    alert("❌ Nhiệm vụ đã hoàn thành");
-    return;
-  }
-  localStorage.setItem("pending_"+id+"_"+userId, Date.now());
-  tg.openLink(link); // mở link hợp lệ
-  alert("🔔 Quay lại app và bấm XÁC NHẬN");
+    let li = document.createElement("li");
+    li.innerText = "✔ Nhận " + rewardCoin + " coin";
+    document.getElementById("history").appendChild(li);
 }
 
-// XÁC NHẬN
-function confirmTask(id){
-  const start = localStorage.getItem("pending_"+id+"_"+userId);
-  if(!start){ alert("⚠️ Chưa làm nhiệm vụ"); return; }
-  if(Date.now() - start < 15000){ alert("⚠️ Làm quá nhanh"); return; }
-
-  localStorage.removeItem("pending_"+id+"_"+userId);
-  localStorage.setItem("done_"+id+"_"+userId,"yes");
-  addPoint(10);
-  alert("✅ Hoàn thành +100đ");
-}
-
-// CỘNG ĐIỂM
-function addPoint(x){
-  point += x;
-  localStorage.setItem(POINT_KEY, point);
-  document.getElementById("point").innerText = point;
+function withdraw() {
+    if (coin < 1000) {
+        alert("❌ Tối thiểu 1000 coin để rút!");
+        return;
+    }
+    alert("✅ Gửi yêu cầu rút tiền thành công!");
 }
 </script>
+
 </body>
 </html>
