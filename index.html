@@ -2,30 +2,28 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Mini App Kiếm Tiền</title>
-
+<title>Vượt Link Kiếm Tiền</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 body {
+  background: #020617;
+  color: #e5e7eb;
   font-family: Arial;
-  background: #0f172a;
-  color: white;
   text-align: center;
   padding: 20px;
 }
-.card {
-  background: #1e293b;
+.box {
+  background: #0f172a;
   padding: 20px;
   border-radius: 12px;
 }
 button {
-  margin-top: 15px;
   padding: 12px 20px;
   font-size: 18px;
   border-radius: 8px;
-  border: none;
   background: #22c55e;
+  border: none;
   color: black;
 }
 </style>
@@ -33,12 +31,12 @@ button {
 
 <body>
 
-<div class="card">
-  <h2>💰 XEM QUẢNG CÁO KIẾM TIỀN</h2>
-  <p>ID Telegram: <b id="uid"></b></p>
+<div class="box">
+  <h2>🔗 VƯỢT LINK KIẾM TIỀN</h2>
+  <p>ID: <b id="uid"></b></p>
   <p>Số dư: <b id="coin">0</b> điểm</p>
 
-  <button onclick="watchAd()">▶️ Xem quảng cáo</button>
+  <button onclick="startBypass()">🚀 Bắt đầu vượt link</button>
 </div>
 
 <script>
@@ -46,68 +44,53 @@ const tg = Telegram.WebApp;
 tg.expand();
 
 const userId = tg.initDataUnsafe.user.id;
-const COOLDOWN = 60;      // 60 giây giữa mỗi lần xem
-const WATCH_TIME = 10;   // phải xem ít nhất 10 giây
-
 let coin = parseInt(localStorage.getItem("coin_" + userId)) || 0;
-let lastWatch = parseInt(localStorage.getItem("lastWatch_" + userId)) || 0;
-let watching = false;
-let timer = null;
-let startTime = 0;
 
 document.getElementById("uid").innerText = userId;
 document.getElementById("coin").innerText = coin;
 
-function watchAd() {
-  const now = Date.now();
+let startTime = 0;
+let doing = false;
 
-  if (watching) {
-    tg.showAlert("❌ Bạn đang xem quảng cáo rồi");
+function startBypass() {
+  if (doing) {
+    tg.showAlert("❌ Đang vượt link rồi");
     return;
   }
 
-  if (now - lastWatch < COOLDOWN * 1000) {
-    let wait = Math.ceil((COOLDOWN * 1000 - (now - lastWatch)) / 1000);
-    tg.showAlert("⏳ Vui lòng chờ " + wait + " giây");
-    return;
-  }
-
-  watching = true;
+  doing = true;
   startTime = Date.now();
 
-  window.open("https://example-ads-link.com", "_blank");
-  tg.showAlert("👀 Vui lòng xem quảng cáo đủ " + WATCH_TIME + " giây");
+  // 🔗 LINK RÚT GỌN / LINKVERTISE
+  window.open("https://link4m.com/xHprfP", "_blank");
 
-  timer = setInterval(checkWatch, 1000);
-}
-
-function checkWatch() {
-  if (document.hidden) return; // vẫn đang xem quảng cáo
-
-  let watched = Math.floor((Date.now() - startTime) / 1000);
-
-  if (watched >= WATCH_TIME) {
-    finishWatch();
-  }
-}
-
-function finishWatch() {
-  clearInterval(timer);
-  watching = false;
-
-  lastWatch = Date.now();
-  localStorage.setItem("lastWatch_" + userId, lastWatch);
-
-  coin += 10;
-  localStorage.setItem("coin_" + userId, coin);
-  document.getElementById("coin").innerText = coin;
-
-  tg.showAlert("🎉 Thành công! +10 điểm");
+  tg.showAlert(" Vui lòng vượt link và quay lại sau khi vượt ");
 }
 
 document.addEventListener("visibilitychange", () => {
-  // dùng để kiểm tra tab
+  if (!doing) return;
+
+  if (!document.hidden) {
+    let time = Math.floor((Date.now() - startTime) / 1000);
+
+    if (time >= 60) {
+      finishBypass();
+    } else {
+      tg.showAlert("❌ chưa hoàn thành!");
+      doing = false;
+    }
+  }
 });
+
+function finishBypass() {
+  doing = false;
+
+  coin += 150;
+  localStorage.setItem("coin_" + userId, coin);
+  document.getElementById("coin").innerText = coin;
+
+  tg.showAlert("🎉 Thành công! +150 điểm");
+}
 </script>
 
 </body>
