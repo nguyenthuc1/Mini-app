@@ -2,19 +2,92 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Telegram Mini App</title>
+<title>Nhiệm vụ kiếm tiền</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+body{
+  font-family: Arial;
+  background:#0f172a;
+  color:white;
+  padding:15px;
+}
+.task{
+  background:#1e293b;
+  padding:12px;
+  margin-bottom:10px;
+  border-radius:8px;
+}
+button{
+  padding:8px 12px;
+  border:none;
+  border-radius:5px;
+  background:#22c55e;
+  color:black;
+  font-weight:bold;
+}
+.done{background:#64748b;}
+</style>
 </head>
+
 <body>
-<h2>Mini App chạy trên điện thoại 📱</h2>
-<button onclick="getUser()">Lấy ID</button>
+<h2>💰 Nhiệm vụ kiếm tiền</h2>
+<p id="user"></p>
+<p>💎 Điểm: <span id="point">0</span></p>
+
+<div class="task">
+  📢 Tham gia Telegram  
+  <br><br>
+  <button onclick="task(1,'https://t.me/telegram')">Làm nhiệm vụ</button>
+</div>
+
+<div class="task">
+  🌐 Truy cập website  
+  <br><br>
+  <button onclick="task(2,'https://google.com')">Làm nhiệm vụ</button>
+</div>
+
+<div class="task">
+  📅 Điểm danh hôm nay  
+  <br><br>
+  <button onclick="daily()">Điểm danh</button>
+</div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-function getUser(){
-  alert(tg.initDataUnsafe.user.id);
+const userId = tg.initDataUnsafe.user.id;
+document.getElementById("user").innerText = "👤 User ID: " + userId;
+
+let point = Number(localStorage.getItem("point_"+userId)) || 0;
+document.getElementById("point").innerText = point;
+
+function task(id,link){
+  let key = "task_"+id+"_"+userId;
+  if(localStorage.getItem(key)){
+    alert("❌ Bạn đã làm nhiệm vụ này");
+    return;
+  }
+  window.open(link);
+  localStorage.setItem(key,true);
+  addPoint(10);
+}
+
+function daily(){
+  let today = new Date().toDateString();
+  let key = "daily_"+userId;
+  if(localStorage.getItem(key) === today){
+    alert("❌ Hôm nay đã điểm danh");
+    return;
+  }
+  localStorage.setItem(key,today);
+  addPoint(5);
+}
+
+function addPoint(x){
+  point += x;
+  localStorage.setItem("point_"+userId,point);
+  document.getElementById("point").innerText = point;
 }
 </script>
 </body>
