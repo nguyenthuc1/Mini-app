@@ -45,26 +45,69 @@ button {
 const tg = Telegram.WebApp;
 tg.expand();
 
-let userId = tg.initDataUnsafe.user.id;
-let coin = localStorage.getItem("coin_" + userId) || 0;
+const userId = tg.initDataUnsafe.user.id;
+const COOLDOWN = 60;      // 60 giây giữa mỗi lần xem
+const WATCH_TIME = 10;   // phải xem ít nhất 10 giây
+
+let coin = parseInt(localStorage.getItem("coin_" + userId)) || 0;
+let lastWatch = parseInt(localStorage.getItem("lastWatch_" + userId)) || 0;
+let watching = false;
+let timer = null;
+let startTime = 0;
 
 document.getElementById("uid").innerText = userId;
 document.getElementById("coin").innerText = coin;
 
 function watchAd() {
-  // LINK QUẢNG CÁO (thay bằng Adsterra / PropellerAds)
+  const now = Date.now();
+
+  if (watching) {
+    tg.showAlert("❌ Bạn đang xem quảng cáo rồi");
+    return;
+  }
+
+  if (now - lastWatch < COOLDOWN * 1000) {
+    let wait = Math.ceil((COOLDOWN * 1000 - (now - lastWatch)) / 1000);
+    tg.showAlert("⏳ Vui lòng chờ " + wait + " giây");
+    return;
+  }
+
+  watching = true;
+  startTime = Date.now();
+
   window.open("https://example-ads-link.com", "_blank");
+  tg.showAlert("👀 Vui lòng xem quảng cáo đủ " + WATCH_TIME + " giây");
 
-  tg.showAlert("⏳ Xem quảng cáo trong 10 giây");
-
-  setTimeout(() => {
-    coin = parseInt(coin) + 10;
-    localStorage.setItem("coin_" + userId, coin);
-    document.getElementById("coin").innerText = coin;
-
-    tg.showAlert("🎉 Bạn nhận được +10 điểm");
-  }, 10000);
+  timer = setInterval(checkWatch, 1000);
 }
+
+function checkWatch() {
+  if (document.hidden) return; // vẫn đang xem quảng cáo
+
+  let watched = Math.floor((Date.now() - startTime) / 1000);
+
+  if (watched >= WATCH_TIME) {
+    finishWatch();
+  }
+}
+
+function finishWatch() {
+  clearInterval(timer);
+  watching = false;
+
+  lastWatch = Date.now();
+  localStorage.setItem("lastWatch_" + userId, lastWatch);
+
+  coin += 10;
+  localStorage.setItem("coin_" + userId, coin);
+  document.getElementById("coin").innerText = coin;
+
+  tg.showAlert("🎉 Thành công! +10 điểm");
+}
+
+document.addEventListener("visibilitychange", () => {
+  // dùng để kiểm tra tab
+});
 </script>
 
 </body>
