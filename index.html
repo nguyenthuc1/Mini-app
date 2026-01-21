@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Telegram Mini App</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<h2>Mini App chạy trên điện thoại 📱</h2>
+<button onclick="getUser()">Lấy ID</button>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+function getUser(){
+  alert(tg.initDataUnsafe.user.id);
+}
+</script>
+</body>
+</html>
