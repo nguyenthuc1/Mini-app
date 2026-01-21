@@ -1,93 +1,158 @@
 <!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="vi">
 <head>
-<meta charset="utf-8">
-<title>Nhiệm vụ kiếm tiền</title>
+<meta charset="UTF-8">
+<title>SUPER-MONEYMINE</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
 body{
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   background:#0f172a;
-  color:white;
+  color:#fff;
   padding:15px;
 }
-.task{
+.card{
   background:#1e293b;
   padding:12px;
-  margin-bottom:10px;
-  border-radius:8px;
+  margin-bottom:12px;
+  border-radius:10px;
 }
 button{
-  padding:8px 12px;
+  padding:8px 14px;
   border:none;
-  border-radius:5px;
-  background:#22c55e;
-  color:black;
+  border-radius:6px;
   font-weight:bold;
+  background:#22c55e;
 }
-.done{background:#64748b;}
+button:disabled{
+  background:#64748b;
+}
+.warn{
+  color:#f87171;
+  font-size:13px;
+}
 </style>
 </head>
 
 <body>
-<h2>💰 Nhiệm vụ kiếm tiền</h2>
+<h2>💰 NHIỆM VỤ KIẾM TIỀN</h2>
+
 <p id="user"></p>
-<p>💎 Điểm: <span id="point">0</span></p>
+<p>💎 Điểm: <b><span id="point">0</span></b></p>
+<p class="warn" id="warn"></p>
 
-<div class="task">
-  📢 Tham gia Telegram  
-  <br><br>
-  <button onclick="task(1,'https://t.me/telegram')">Làm nhiệm vụ</button>
+<div class="card">
+📢 Tham gia Telegram  
+<br><br>
+<button onclick="doTask(1,'https://t.me/telegram')">Làm nhiệm vụ</button>
 </div>
 
-<div class="task">
-  🌐 Truy cập website  
-  <br><br>
-  <button onclick="task(2,'https://google.com')">Làm nhiệm vụ</button>
+<div class="card">
+🌐 Truy cập website  
+<br><br>
+<button onclick="doTask(2,'https://google.com')">Làm nhiệm vụ</button>
 </div>
 
-<div class="task">
-  📅 Điểm danh hôm nay  
-  <br><br>
-  <button onclick="daily()">Điểm danh</button>
+<div class="card">
+📅 Điểm danh hôm nay  
+<br><br>
+<button onclick="daily()">Điểm danh</button>
 </div>
 
 <script>
+/* ===== TELEGRAM INIT ===== */
 const tg = window.Telegram.WebApp;
 tg.expand();
+
+if(!tg.initDataUnsafe || !tg.initDataUnsafe.user){
+  document.body.innerHTML = "❌ Vui lòng mở app trong Telegram";
+  throw new Error("Not Telegram");
+}
 
 const userId = tg.initDataUnsafe.user.id;
 document.getElementById("user").innerText = "👤 User ID: " + userId;
 
-let point = Number(localStorage.getItem("point_"+userId)) || 0;
-document.getElementById("point").innerText = point;
+/* ===== STORAGE KEY ===== */
+const POINT_KEY = "point_"+userId;
+const MAX_POINT = 1000;
+const COOLDOWN = 5000;
 
-function task(id,link){
+/* ===== LOAD POINT ===== */
+let point = Number(localStorage.getItem(POINT_KEY)) || 0;
+updatePoint();
+
+/* ===== ANTI SPAM ===== */
+function checkCooldown(){
+  let now = Date.now();
+  let last = Number(localStorage.getItem("last_"+userId)) || 0;
+  if(now - last < COOLDOWN){
+    showWarn("⚠️ Thao tác quá nhanh!");
+    return false;
+  }
+  localStorage.setItem("last_"+userId, now);
+  return true;
+}
+
+/* ===== TASK ===== */
+function doTask(id, link){
+  if(!checkCooldown()) return;
+
   let key = "task_"+id+"_"+userId;
   if(localStorage.getItem(key)){
-    alert("❌ Bạn đã làm nhiệm vụ này");
+    alert("❌ Nhiệm vụ đã hoàn thành");
     return;
   }
-  window.open(link);
-  localStorage.setItem(key,true);
+
+  if(point >= MAX_POINT){
+    alert("🚫 Tài khoản bị giới hạn điểm");
+    return;
+  }
+
+  window.open(link, "_blank");
+
+  localStorage.setItem(key, "done");
   addPoint(10);
 }
 
+/* ===== DAILY CHECK-IN ===== */
 function daily(){
+  if(!checkCooldown()) return;
+
   let today = new Date().toDateString();
   let key = "daily_"+userId;
+
   if(localStorage.getItem(key) === today){
     alert("❌ Hôm nay đã điểm danh");
     return;
   }
-  localStorage.setItem(key,today);
+
+  localStorage.setItem(key, today);
   addPoint(5);
 }
 
+/* ===== ADD POINT ===== */
 function addPoint(x){
   point += x;
-  localStorage.setItem("point_"+userId,point);
+
+  if(point > MAX_POINT){
+    point = MAX_POINT;
+  }
+
+  localStorage.setItem(POINT_KEY, point);
+  updatePoint();
+}
+
+/* ===== UI ===== */
+function updatePoint(){
   document.getElementById("point").innerText = point;
+}
+
+function showWarn(msg){
+  let w = document.getElementById("warn");
+  w.innerText = msg;
+  setTimeout(()=>w.innerText="",2000);
 }
 </script>
 </body>
