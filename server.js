@@ -1,45 +1,38 @@
-const express = require("express")
-const cors = require("cors")
-const crypto = require("crypto")
+import express from "express"
+import cors from "cors"
+import crypto from "crypto"
 
 const app = express()
 app.use(cors())
 app.use(express.json())
 
-/**
- * sessionId => {
- *   telegramId,
- *   fingerprint,
- *   createdAt,
- *   completed,
- * }
- */
+const PORT = process.env.PORT || 3000
+
+// DB tạm (free)
 const sessions = new Map()
 
-/* ========== HEALTH CHECK ========== */
-app.get("/", (req, res) => {
-  res.send("Mini App Backend Running")
-})
-
-/* ========== START TASK ========== */
+// =======================
+// START TASK
+// =======================
 app.post("/api/task/start", (req, res) => {
-  const { telegramId, fingerprint } = req.body
-  if (!telegramId || !fingerprint) {
-    return res.status(400).json({ error: "Missing data" })
-  }
+  const { telegramId } = req.body
+  if (!telegramId) return res.status(400).json({ error: "No telegramId" })
 
   const sessionId = crypto.randomUUID()
+  const token = crypto.randomUUID()
 
   sessions.set(sessionId, {
     telegramId,
-    fingerprint,
-    createdAt: Date.now(),
-    completed: false
+    token,
+    verified: false,
+    createdAt: Date.now()
   })
 
-  // ⚠️ LINK RÚT GỌN + SUBID
+  // ⚠️ ĐỔI link4m của bạn
   const shortLink =
-   "https://google.com" + sessionId
+    "https://google.com"" +
+    "?redirect=" +
+    encodeURIComponent(`https://miniappp-backend-d87k.onrender.com/callback/${token}`)
 
   res.json({
     sessionId,
@@ -47,52 +40,46 @@ app.post("/api/task/start", (req, res) => {
   })
 })
 
-/* ========== CALLBACK TỪ LINK RÚT GỌN ========== */
-/**
- * Link rút gọn sẽ gọi về URL này
- * Ví dụ payload:
- * { subid: "sessionId", status: "completed" }
- */
-app.post("/api/callback", (req, res) => {
-  const { subid, status } = req.body
+// =======================
+// CALLBACK VERIFY (QUAN TRỌNG)
+// =======================
+app.get("/callback/:token", (req, res) => {
+  const { token } = req.params
 
-  const session = sessions.get(subid)
-  if (!session) return res.send("INVALID")
-
-  if (status === "completed") {
-    session.completed = true
+  for (const session of sessions.values()) {
+    if (session.token === token) {
+      session.verified = true
+      break
+    }
   }
 
-  res.send("OK")
+  // quay lại Telegram
+  res.redirect("https://t.me/YOUR_BOT_USERNAME")
 })
 
-/* ========== VERIFY + NHẬN THƯỞNG ========== */
+// =======================
+// VERIFY TASK
+// =======================
 app.post("/api/task/verify", (req, res) => {
   const { sessionId, telegramId } = req.body
+
   const session = sessions.get(sessionId)
+  if (!session) return res.json({ success: false })
 
-  if (!session) {
-    return res.json({ success: false, reason: "no_session" })
-  }
+  if (session.telegramId !== telegramId)
+    return res.json({ success: false })
 
-  if (session.telegramId !== telegramId) {
-    return res.json({ success: false, reason: "user_mismatch" })
-  }
+  if (!session.verified)
+    return res.json({ success: false })
 
-  if (!session.completed) {
-    return res.json({ success: false, reason: "not_completed" })
-  }
-
-  // Anti spam nhận nhiều lần
+  // OK
   sessions.delete(sessionId)
-
   res.json({
     success: true,
     reward: 100
   })
 })
 
-const PORT = process.env.PORT || 3000
-app.listen(PORT, () =>
+app.listen(PORT, () => {
   console.log("Server running on port", PORT)
-)
+})
