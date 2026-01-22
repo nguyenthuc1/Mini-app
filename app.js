@@ -20,7 +20,7 @@ async function startTask() {
     const fingerprint = genFingerprint()
 
     const res = await fetch(
-      "https://YOUR-RENDER.onrender.com/api/task/start",
+      "https://miniapp-backend-d87k.onrender.com/api/task/start",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -50,7 +50,7 @@ async function startTask() {
 async function verifyTask() {
   try {
     const res = await fetch(
-      "https://YOUR-RENDER.onrender.com/api/task/verify",
+      "https://miniapp-backend-d87k.onrender.com/api/task/start",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
