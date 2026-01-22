@@ -35,7 +35,10 @@ async function startTask() {
     currentSessionId = data.sessionId
 
     // 👉 CHUYỂN HƯỚNG LINK (CHUẨN TELEGRAM)
-    Telegram.WebApp.openLink("https://link4m.com/xHprfP")
+    Telegram.WebApp.openLink(
+  "https://link4m.com/xHprfP",
+  { try_browser: true }
+)
 
   } catch (err) {
     alert("Lỗi khi mở nhiệm vụ")
