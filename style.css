@@ -37,7 +37,8 @@ body {
   left: 0;
   right: 0;
   height: 70px;
-  background: #f59e0b;
+  background: #0f172a;
+  border-top: 1px solid rgba(255,255,255,.1);
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -46,9 +47,10 @@ body {
 .bottom-menu button {
   background: none;
   border: none;
-  color: #000;
-  font-size: 12px;
-  }
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+}
 /* ===== RA KHƠI UI ===== */
 .sea-card {
   background: linear-gradient(180deg, #0ea5e9, #0369a1);
