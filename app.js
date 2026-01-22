@@ -6,7 +6,62 @@ let speed = 7
 let fishing = false
 let endTime = null
 let interval = null
+let fish = Number(localStorage.getItem("fish")) || 0
+let baseSpeed = 8
+let bonusSpeed = 0
+let rentExpire = Number(localStorage.getItem("rentExpire")) || 0
 
+function updateUI() {
+  document.getElementById("fish").innerText = fish
+}
+
+updateUI()
+
+/* ===== ĐÀO / ĐÁNH CÁ ===== */
+setInterval(() => {
+  if (Date.now() < rentExpire) {
+    bonusSpeed = 4
+    document.getElementById("rentStatus").innerText =
+      "⏳ Còn " + Math.ceil((rentExpire - Date.now()) / 60000) + " phút"
+  } else {
+    bonusSpeed = 0
+    document.getElementById("rentStatus").innerText = "Chưa thuê"
+    localStorage.removeItem("rentExpire")
+  }
+
+  fish += baseSpeed + bonusSpeed
+  localStorage.setItem("fish", fish)
+  updateUI()
+}, 1000)
+
+/* ===== ĐỔI CÁ ===== */
+function exchangeFish() {
+  if (fish < 100) {
+    alert("Cần ít nhất 100 cá")
+    return
+  }
+
+  fish -= 100
+  localStorage.setItem("fish", fish)
+  alert("Đã đổi 100 cá ➜ +1.000 VNĐ")
+  updateUI()
+}
+
+/* ===== THUÊ THUYỀN ===== */
+function rentBoat() {
+  if (Date.now() < rentExpire) {
+    alert("Bạn đang thuê thuyền rồi")
+    return
+  }
+
+  // 🔥 CHỖ GẮN QUẢNG CÁO
+  alert("Giả lập xem quảng cáo xong")
+
+  rentExpire = Date.now() + 60 * 60 * 1000 // 1 giờ
+  localStorage.setItem("rentExpire", rentExpire)
+
+  alert("Thuê thuyền thành công! +4 cá / giây trong 1 giờ")
+                            }
 const goldEl = document.getElementById("gold")
 const btn = document.getElementById("fishBtn")
 const timerEl = document.getElementById("timer")
