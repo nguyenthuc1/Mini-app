@@ -13,7 +13,7 @@
 <script>
 function watchAdAndSail() {
   document.getElementById("sea-area")
-    .classList.remove("hidden");
+    .classList.remove("");
 }
 </script>
   <script>
@@ -30,7 +30,7 @@ function watchAdAndSail() {
   // Nếu đang ra khơi thì không cho bấm lại
   if (fishingInterval) return;
 
-  sea.classList.remove("hidden");
+  sea.classList.remove("");
 document.getElementById("speed").innerText = (1000 / CATCH_INTERVAL).toFixed(2);
   // Bắt cá liên tục
   fishingInterval = setInterval(catchFish, CATCH_INTERVAL);
