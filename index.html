@@ -24,9 +24,18 @@ let fishingTimeout = null;
 const FISH_DURATION = 3 * 60 * 60 * 1000; // 3 tiếng
 const CATCH_INTERVAL = 2000; // 2 giây bắt 1 con cá
 
+
 function watchAdAndSail() {
   const sea = document.getElementById("sea-area");
 
+  if (fishingInterval) return;
+
+  sea.classList.remove("hidden");
+  sea.classList.add("fishing"); // 🚤 THUYỀN CHẠY
+
+  fishingInterval = setInterval(catchFish, CATCH_INTERVAL);
+  fishingTimeout = setTimeout(stopFishing, FISH_DURATION);
+    }
   // Nếu đang ra khơi thì không cho bấm lại
   if (fishingInterval) return;
 
@@ -57,8 +66,11 @@ function stopFishing() {
   fishingInterval = null;
   fishingTimeout = null;
 
-  alert("⛵ Hết chuyến ra khơi! Vui lòng bấm Ra khơi để tiếp tục.");
-}
+  document.getElementById("sea-area")
+    .classList.remove("fishing"); // ⛔ THUYỀN DỪNG
+
+  alert("🚤 Hết chuyến ra khơi!");
+    }
   </script>
 <body>
   <div id="app">
