@@ -3,6 +3,7 @@ Telegram.WebApp.expand()
 
 const tgUser = Telegram.WebApp.initDataUnsafe?.user
 const btn = document.getElementById("btn")
+
 let currentSessionId = null
 
 btn.onclick = startTask
@@ -17,16 +18,13 @@ async function startTask() {
   btn.innerText = "⏳ Đang mở..."
 
   try {
-    const fingerprint = genFingerprint()
-
     const res = await fetch(
-      "https://miniapp-backend-d87k.onrender.com/api/task/start",
+      "https://supermoney.onrender.com/api/task/start",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          telegramId: tgUser.id,
-          fingerprint
+          telegramId: tgUser.id
         })
       }
     )
@@ -34,12 +32,11 @@ async function startTask() {
     const data = await res.json()
     currentSessionId = data.sessionId
 
-    Telegram.WebApp.openLink(data.url, {
-      try_browser: true
-    })
+    Telegram.WebApp.openLink(data.url, { try_browser: true })
 
-    // user quay lại → cho bấm xác minh
-    setTimeout(verifyTask, 20000)
+    btn.innerText = "✅ Xác minh"
+    btn.disabled = false
+    btn.onclick = verifyTask
 
   } catch (e) {
     alert("Lỗi mở nhiệm vụ")
@@ -48,9 +45,12 @@ async function startTask() {
 }
 
 async function verifyTask() {
+  btn.disabled = true
+  btn.innerText = "🔍 Đang kiểm tra..."
+
   try {
     const res = await fetch(
-      "https://miniapp-backend-d87k.onrender.com/api/task/start",
+      "https://supermoney.onrender.com/api/task/verify",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,8 +66,9 @@ async function verifyTask() {
     if (data.success) {
       alert("✅ Hoàn thành + " + data.reward + " xu")
     } else {
-      alert("❌ Chưa vượt link")
+      alert("❌ Bạn chưa vượt link")
     }
+
   } catch {
     alert("Lỗi xác minh")
   }
@@ -78,13 +79,5 @@ async function verifyTask() {
 function resetBtn() {
   btn.disabled = false
   btn.innerText = "🚀 Nhận nhiệm vụ"
-}
-
-function genFingerprint() {
-  return btoa(
-    navigator.userAgent +
-    screen.width +
-    screen.height +
-    navigator.language
-  )
+  btn.onclick = startTask
       }
