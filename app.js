@@ -8,6 +8,16 @@ let currentSessionId = null
 
 btn.onclick = startTask
 
+function genFingerprint() {
+  return btoa(
+    navigator.userAgent +
+    screen.width +
+    screen.height +
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  )
+}
+
+// ================= START =================
 async function startTask() {
   if (!tgUser) {
     alert("Không xác thực Telegram")
@@ -19,12 +29,13 @@ async function startTask() {
 
   try {
     const res = await fetch(
-      "https://supermoney.onrender.com/api/task/start",
+      "https://miniapp-backend-d87k.onrender.com/",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          telegramId: tgUser.id
+          telegramId: tgUser.id,
+          fingerprint: genFingerprint()
         })
       }
     )
@@ -38,25 +49,27 @@ async function startTask() {
     btn.disabled = false
     btn.onclick = verifyTask
 
-  } catch (e) {
+  } catch {
     alert("Lỗi mở nhiệm vụ")
     resetBtn()
   }
 }
 
+// ================= VERIFY =================
 async function verifyTask() {
   btn.disabled = true
-  btn.innerText = "🔍 Đang kiểm tra..."
+  btn.innerText = "🔎 Đang kiểm tra..."
 
   try {
     const res = await fetch(
-      "https://supermoney.onrender.com/api/task/verify",
+      "https://miniapp-backend-d87k.onrender.com/",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          telegramId: tgUser.id,
           sessionId: currentSessionId,
-          telegramId: tgUser.id
+          fingerprint: genFingerprint()
         })
       }
     )
@@ -64,7 +77,7 @@ async function verifyTask() {
     const data = await res.json()
 
     if (data.success) {
-      alert("✅ Hoàn thành + " + data.reward + " xu")
+      alert("✅ Hoàn thành +" + data.reward + " xu")
     } else {
       alert("❌ Bạn chưa vượt link")
     }
@@ -80,4 +93,4 @@ function resetBtn() {
   btn.disabled = false
   btn.innerText = "🚀 Nhận nhiệm vụ"
   btn.onclick = startTask
-      }
+}
