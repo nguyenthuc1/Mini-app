@@ -6,80 +6,91 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-const PORT = process.env.PORT || 3000
-
-// DB tạm (free)
 const sessions = new Map()
 
-// =======================
-// START TASK
-// =======================
+// ================= START TASK =================
 app.post("/api/task/start", (req, res) => {
-  const { telegramId } = req.body
-  if (!telegramId) return res.status(400).json({ error: "No telegramId" })
+  const { telegramId, fingerprint } = req.body
+  if (!telegramId || !fingerprint) {
+    return res.json({ error: "invalid" })
+  }
 
-  const sessionId = crypto.randomUUID()
   const token = crypto.randomUUID()
 
-  sessions.set(sessionId, {
+  sessions.set(token, {
     telegramId,
-    token,
-    verified: false,
+    fingerprint,
+    completed: false,
     createdAt: Date.now()
   })
 
-  // ⚠️ ĐỔI link4m của bạn
-  const shortLink =
-    "https://google.com"" +
-    "?redirect=" +
-    encodeURIComponent(`https://miniappp-backend-d87k.onrender.com/callback/${token}`)
-
   res.json({
-    sessionId,
-    url: shortLink
+    sessionId: token,
+    url: `https://miniapp-backend-d87k.onrender.com/go/${token}`
   })
 })
 
-// =======================
-// CALLBACK VERIFY (QUAN TRỌNG)
-// =======================
-app.get("/callback/:token", (req, res) => {
-  const { token } = req.params
+// ================= SHORT LINK =================
+app.get("/go/:token", (req, res) => {
+  const session = sessions.get(req.params.token)
+  if (!session) return res.send("Link không hợp lệ")
 
-  for (const session of sessions.values()) {
-    if (session.token === token) {
-      session.verified = true
-      break
-    }
-  }
+  res.send(`
+    <html>
+      <body style="text-align:center;font-family:sans-serif">
+        <h2>⏳ Đang tải quảng cáo...</h2>
+        <p>Vui lòng chờ 10 giây</p>
 
-  // quay lại Telegram
-  res.redirect("https://t.me/YOUR_BOT_USERNAME")
+        <script>
+          setTimeout(() => {
+            window.location.href = "/callback/${req.params.token}"
+          }, 10000)
+        </script>
+      </body>
+    </html>
+  `)
 })
 
-// =======================
-// VERIFY TASK
-// =======================
-app.post("/api/task/verify", (req, res) => {
-  const { sessionId, telegramId } = req.body
+// ================= CALLBACK =================
+app.get("/callback/:token", (req, res) => {
+  const session = sessions.get(req.params.token)
+  if (!session) return res.send("Invalid")
 
+  session.completed = true
+
+  res.send(`
+    <html>
+      <body style="text-align:center">
+        <h2>✅ Hoàn thành</h2>
+        <p>Quay lại Telegram để nhận thưởng</p>
+      </body>
+    </html>
+  `)
+})
+
+// ================= VERIFY =================
+app.post("/api/task/verify", (req, res) => {
+  const { telegramId, sessionId, fingerprint } = req.body
   const session = sessions.get(sessionId)
+
   if (!session) return res.json({ success: false })
 
-  if (session.telegramId !== telegramId)
+  if (
+    session.telegramId !== telegramId ||
+    session.fingerprint !== fingerprint ||
+    !session.completed
+  ) {
     return res.json({ success: false })
+  }
 
-  if (!session.verified)
-    return res.json({ success: false })
-
-  // OK
   sessions.delete(sessionId)
+
   res.json({
     success: true,
     reward: 100
   })
 })
 
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT)
+app.listen(3000, () => {
+  console.log("Backend running")
 })
