@@ -16,6 +16,50 @@ function watchAdAndSail() {
     .classList.remove("hidden");
 }
 </script>
+  <script>
+let gold = 0;
+let fishingInterval = null;
+let fishingTimeout = null;
+
+const FISH_DURATION = 3 * 60 * 60 * 1000; // 3 tiếng
+const CATCH_INTERVAL = 2000; // 2 giây bắt 1 con cá
+
+function watchAdAndSail() {
+  const sea = document.getElementById("sea-area");
+
+  // Nếu đang ra khơi thì không cho bấm lại
+  if (fishingInterval) return;
+
+  sea.classList.remove("hidden");
+
+  // Bắt cá liên tục
+  fishingInterval = setInterval(catchFish, CATCH_INTERVAL);
+
+  // Hết 3 tiếng thì dừng chứng
+  fishingTimeout = setTimeout(stopFishing, FISH_DURATION);
+}
+
+function catchFish() {
+  gold += 1;
+  document.getElementById("gold").innerText = gold;
+
+  // Hiệu ứng cá nhấp nháy (giả lập bị bắt)
+  const fishes = document.querySelectorAll(".fish");
+  const fish = fishes[Math.floor(Math.random() * fishes.length)];
+  fish.style.opacity = "0.2";
+  setTimeout(() => fish.style.opacity = "1", 300);
+}
+
+function stopFishing() {
+  clearInterval(fishingInterval);
+  clearTimeout(fishingTimeout);
+
+  fishingInterval = null;
+  fishingTimeout = null;
+
+  alert("⛵ Hết chuyến ra khơi! Vui lòng bấm Ra khơi để tiếp tục.");
+}
+  </script>
 <body>
   <div id="app">
 
