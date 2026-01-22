@@ -36,7 +36,7 @@ async function startTask() {
 
     // 👉 CHUYỂN HƯỚNG LINK (CHUẨN TELEGRAM)
     Telegram.WebApp.openLink(
-  "https://link4m.com/xHprfP",
+  data.url,
   { try_browser: true }
 )
 
