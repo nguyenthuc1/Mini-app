@@ -104,3 +104,15 @@ function sellFish() {
 
 // ================== INIT ==================
 updateUI();
+// ================= SCREEN CONTROL =================
+function showScreen(name) {
+  document.querySelectorAll(".screen").forEach(s => {
+    s.classList.add("hidden");
+  });
+
+  document
+    .getElementById(`screen-${name}`)
+    .classList.remove("hidden");
+
+  updateUI(); // gọi lại UI khi chuyển màn
+      }
