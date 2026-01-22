@@ -102,8 +102,7 @@ function sellFish() {
   alert("Đã bán cá sang xu");
 }
 
-// ================== INIT ==================
-updateUI();
+
 // ================= SCREEN CONTROL =================
 function showScreen(name) {
   document.querySelectorAll(".screen").forEach(s => {
