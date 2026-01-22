@@ -51,60 +51,6 @@ body {
   font-size: 11px;
   text-align: center;
 }
-/* ===== RA KHƠI UI ===== */
-.sea-card {
-  background: linear-gradient(180deg, #0ea5e9, #0369a1);
-  border-radius: 20px;
-  padding: 20px;
-  max-width: 420px;
-  margin: 0 auto;
-  box-shadow: 0 10px 30px rgba(0,0,0,.4);
-}
-
-.sea-header {
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 16px;
-}
-
-.sea-info {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.info-box {
-  background: rgba(255,255,255,.15);
-  padding: 12px;
-  border-radius: 12px;
-  width: 48%;
-  text-align: center;
-}
-
-.info-box span {
-  font-size: 12px;
-  opacity: .9;
-}
-
-.info-box strong {
-  display: block;
-  font-size: 18px;
-  margin-top: 4px;
-}
-
-/* NÚT RA KHƠI */
-.sail-btn {
-  width: 100%;
-  padding: 14px;
-  font-size: 18px;
-  font-weight: bold;
-  border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #facc15, #f97316);
-  color: #000;
-  cursor: pointer;
-  box-shadow: 0 6px 0 #c2410c;
 }
 
 .sail-btn:active {
@@ -118,3 +64,73 @@ body {
   margin-top: 10px;
   opacity: .9;
     }
+/* ===== RA KHƠI UI ===== */
+.sea-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin-top: 30px;
+}
+
+.sea-card {
+  width: 100%;
+  max-width: 420px;
+  background: linear-gradient(180deg, #0ea5e9, #0369a1);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.4);
+}
+
+.sea-title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 18px;
+}
+
+.sea-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.stat {
+  width: 48%;
+  background: rgba(255,255,255,.15);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.stat strong {
+  display: block;
+  font-size: 18px;
+  margin-top: 4px;
+}
+
+/* NÚT RA KHƠI */
+.sail-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fde047, #f97316);
+  color: #000;
+  cursor: pointer;
+  box-shadow: 0 6px 0 #c2410c;
+}
+
+.sail-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 4px 0 #c2410c;
+}
+
+.sea-note {
+  text-align: center;
+  font-size: 12px;
+  opacity: .9;
+  margin-top: 10px;
+  }
