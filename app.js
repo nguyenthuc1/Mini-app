@@ -1,5 +1,5 @@
 // ================== CONFIG ==================
-const ADS_BLOCK_ID = "BLOCK_ID_CUA_BAN"; // <-- thay ID AdsGram
+const ADS_BLOCK_ID = "https://www.google.com/?hl=vi"; // <-- thay ID AdsGram
 const SAIL_TIME = 3 * 60 * 60; // 3 giờ
 const BASE_SPEED = 3;
 const RENT_BOAT_SPEED = 2;
