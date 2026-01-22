@@ -21,15 +21,14 @@ async function startTask() {
     const fingerprint = await genFingerprint()
 
     // GỌI SERVER TẠO SESSION
-    const res = await fetch("/api/task/start", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        telegramId: tgUser.id,
-        fingerprint
-      })
-    })
-
+    fetch("https://nguyenthuc1.github.io/Mini-app/api/task/start", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    telegramId: tgUser.id,
+    fingerprint
+  })
+})
     const data = await res.json()
 
     currentSessionId = data.sessionId
