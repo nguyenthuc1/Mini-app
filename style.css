@@ -85,3 +85,26 @@ button:disabled {
 .hidden {
   display: none;
 }
+.menu {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+}
+
+.menu-box {
+  flex: 1;
+  background: white;
+  border-radius: 16px;
+  padding: 12px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.menu-box h3 {
+  margin: 0 0 8px;
+}
+
+.menu-box button {
+  margin-top: 8px;
+  background: #00b894;
+}
