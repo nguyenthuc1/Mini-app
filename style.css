@@ -1,65 +1,67 @@
 body {
   margin: 0;
-  font-family: Arial;
-  background: linear-gradient(#2dbfff, #1e90ff);
-  color: #000;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #3bb6ff, #2ecc71);
+  color: #333;
 }
 
-.app { padding-bottom: 90px; }
+.app {
+  padding: 15px;
+  padding-bottom: 90px;
+}
 
-.header {
+.top {
   display: flex;
   justify-content: space-between;
+  background: #ffffffcc;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.game-area {
+  background: white;
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 15px;
+  text-align: center;
+}
+
+.main-btn {
+  margin-top: 15px;
   padding: 12px;
-  background: rgba(255,255,255,0.3);
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  background: #f1c40f;
+  font-size: 16px;
   font-weight: bold;
 }
 
-.sea {
-  height: 180px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.boat {
-  width: 120px;
-}
-
-.panel {
-  background: #fff;
-  margin: 12px;
-  padding: 15px;
-  border-radius: 16px;
-  text-align: center;
-}
-
-.panel button {
+#timer {
   margin-top: 10px;
-  padding: 10px;
-  width: 100%;
-  background: orange;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
+  font-weight: bold;
 }
 
-.menu {
+.bottom-menu {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: #f39c12;
   display: flex;
-  gap: 10px;
-  margin: 12px;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 15px 15px 0 0;
 }
 
-.box {
-  flex: 1;
-  background: #fff;
-  padding: 12px;
-  border-radius: 12px;
+.tab {
   text-align: center;
+  font-size: 12px;
+  color: white;
 }
 
-.box button {
-  margin-top: 8px;
-  padding: 8px;
-  width: 100%;
+.tab span {
+  display: block;
+  font-size: 11px;
 }
