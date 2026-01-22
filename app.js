@@ -1,94 +1,106 @@
-let fish = parseInt(localStorage.getItem("fish")) || 0;
-let coin = parseInt(localStorage.getItem("coin")) || 0;
+// ================== CONFIG ==================
+const ADS_BLOCK_ID = "BLOCK_ID_CUA_BAN"; // <-- thay ID AdsGram
+const SAIL_TIME = 3 * 60 * 60; // 3 giờ
+const BASE_SPEED = 3;
+const RENT_BOAT_SPEED = 2;
+const MAX_BOATS = 2;
 
-let fishingEnd = parseInt(localStorage.getItem("fishingEnd")) || 0;
-let rentEnd = parseInt(localStorage.getItem("rentEnd")) || 0;
+// ================== STATE ==================
+let gold = 0;
+let fish = 0;
+let boats = 0;
+let speed = 0;
+let sailEnd = 0;
+let fishInterval = null;
+let timerInterval = null;
 
-let baseSpeed = 0;
-let interval = null;
-
-updateUI();
-startLoop();
-
-function fakeAd(callback) {
-  alert("📺 Đang xem quảng cáo...");
-  setTimeout(callback, 3000);
+// ================== UI ==================
+function updateUI() {
+  document.getElementById("gold").innerText = Math.floor(gold);
+  document.getElementById("speed").innerText = speed;
 }
 
-/* 🚢 RA KHƠI */
-function startFishing() {
-  fakeAd(() => {
-    fishingEnd = Date.now() + 3 * 60 * 60 * 1000;
-    localStorage.setItem("fishingEnd", fishingEnd);
-    startLoop();
+// ================== ADS ==================
+function showAd(onSuccess) {
+  if (!window.Adsgram) {
+    alert("Quảng cáo chưa sẵn sàng");
+    return;
+  }
+
+  const ad = new Adsgram({ blockId: ADS_BLOCK_ID });
+
+  ad.show().then(onSuccess).catch(() => {
+    alert("Bạn phải xem hết quảng cáo");
   });
 }
 
-/* ⛴ THUÊ THUYỀN */
-function rentBoat() {
-  fakeAd(() => {
-    rentEnd = Date.now() + 60 * 60 * 1000;
-    localStorage.setItem("rentEnd", rentEnd);
-    updateUI();
-  });
+// ================== GAME LOGIC ==================
+function watchAdAndSail() {
+  showAd(startSailing);
 }
 
-/* 🔁 GAME LOOP */
-function startLoop() {
-  if (interval) clearInterval(interval);
+function startSailing() {
+  clearInterval(fishInterval);
+  clearInterval(timerInterval);
 
-  interval = setInterval(() => {
-    const now = Date.now();
+  speed = BASE_SPEED + boats * RENT_BOAT_SPEED;
+  sailEnd = Date.now() + SAIL_TIME * 1000;
 
-    baseSpeed = 0;
-
-    if (now < fishingEnd) baseSpeed += 3;
-    if (now < rentEnd) baseSpeed += 2;
-
-    fish += baseSpeed;
-    localStorage.setItem("fish", fish);
-
-    updateUI();
+  fishInterval = setInterval(() => {
+    fish += speed;
   }, 1000);
-}
 
-/* 💰 BÁN CÁ */
-function sellFish() {
-  if (fish <= 0) return alert("Không có cá");
-  coin += fish * 10;
-  fish = 0;
+  timerInterval = setInterval(updateTimer, 1000);
 
-  localStorage.setItem("fish", fish);
-  localStorage.setItem("coin", coin);
   updateUI();
 }
 
-/* 🖥 UPDATE UI */
-function updateUI() {
-  document.getElementById("fish").innerText = fish;
-  document.getElementById("coin").innerText = coin;
-  document.getElementById("speed").innerText = baseSpeed;
-
-  const now = Date.now();
-  const timer = document.getElementById("timer");
-
-  if (now < fishingEnd) {
-    timer.innerText = "⏳ Còn " + formatTime(fishingEnd - now);
-    document.getElementById("startBtn").disabled = true;
-  } else {
-    timer.innerText = "⛔ Chưa ra khơi";
-    document.getElementById("startBtn").disabled = false;
+function updateTimer() {
+  const left = sailEnd - Date.now();
+  if (left <= 0) {
+    clearInterval(fishInterval);
+    clearInterval(timerInterval);
+    speed = 0;
+    document.getElementById("timer").innerText = "⛔ Hết thời gian – Ra khơi lại";
+    updateUI();
+    return;
   }
 
-  document.getElementById("rentStatus").innerText =
-    now < rentEnd ? "⏳ Còn " + formatTime(rentEnd - now) : "Chưa thuê";
+  const h = Math.floor(left / 3600000);
+  const m = Math.floor((left % 3600000) / 60000);
+  const s = Math.floor((left % 60000) / 1000);
+
+  document.getElementById("timer").innerText =
+    `⏳ ${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-function formatTime(ms) {
-  let s = Math.floor(ms / 1000);
-  let h = Math.floor(s / 3600);
-  s %= 3600;
-  let m = Math.floor(s / 60);
-  s %= 60;
-  return `${h}h ${m}m ${s}s`;
+function watchAdAndRent() {
+  if (boats >= MAX_BOATS) {
+    alert("Đã thuê tối đa 2 thuyền");
+    return;
+  }
+
+  showAd(() => {
+    boats++;
+    alert("Thuê thuyền thành công +2 cá/giây");
+    if (speed > 0) {
+      speed += RENT_BOAT_SPEED;
+      updateUI();
+    }
+  });
 }
+
+function sellFish() {
+  if (fish <= 0) {
+    alert("Không có cá");
+    return;
+  }
+
+  gold += fish;
+  fish = 0;
+  updateUI();
+  alert("Đã bán cá sang xu");
+}
+
+// ================== INIT ==================
+updateUI();
