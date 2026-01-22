@@ -18,33 +18,37 @@ async function startTask() {
   startBtn.disabled = true
 
   try {
-    const fingerprint = await genFingerprint()
+  const fingerprint = await genFingerprint()
 
-    // GỌI SERVER TẠO SESSION
-    fetch("https://nguyenthuc1.github.io/Mini-app/api/task/start", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    telegramId: tgUser.id,
-    fingerprint
-  })
-})
-    const data = await res.json()
+  const res = await fetch(
+    "https://YOUR_BACKEND_DOMAIN/api/task/start",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        telegramId: tgUser.id,
+        fingerprint
+      })
+    }
+  )
 
-    currentSessionId = data.sessionId
+  if (!res.ok) throw new Error("API error")
 
-    // 👉 CHUYỂN HƯỚNG LINK (CHUẨN TELEGRAM)
-    Telegram.WebApp.openLink(
-  data.url,
-  { try_browser: true }
-)
+  const data = await res.json()
 
-  } catch (err) {
-    alert("Lỗi khi mở nhiệm vụ")
-    startBtn.disabled = false
-    startBtn.innerText = "🚀 Làm nhiệm vụ"
-  }
-}
+  currentSessionId = data.sessionId
+
+  Telegram.WebApp.openLink(
+    data.url,
+    { try_browser: true }
+  )
+
+} catch (err) {
+  console.error(err)
+  alert("Lỗi khi mở nhiệm vụ")
+  startBtn.disabled = false
+  startBtn.innerText = "🚀 Làm nhiệm vụ"
+    }
 async function genFingerprint() {
   const raw =
     navigator.userAgent +
