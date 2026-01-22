@@ -1,25 +1,43 @@
-<!-- SCREEN: Khai thác -->
-<div id="screen-khai-thac" class="screen">
-  <h2>🎣 Đánh Cá Kiếm Xu</h2>
-  <p>Tốc độ: <span id="speed">0</span> cá / giây</p>
-  <button onclick="watchAdAndSail()">🚤 Ra khơi</button>
-</div>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini App</title>
 
-<!-- SCREEN: Quy đổi -->
-<div id="screen-quy-doi" class="screen hidden">
-  <h2>💰 Quy đổi</h2>
-  <p>Xu: <span id="gold">0</span></p>
-</div>
+  <!-- BẮT BUỘC cho Telegram -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- SCREEN: Thuê thuyền -->
-<div id="screen-thue-thuyen" class="screen hidden">
-  <h2>🚤 Thuê thuyền</h2>
-  <button onclick="rentBoat()">Thuê</button>
-</div>
+  <link rel="stylesheet" href="style.css">
+</head>
 
-<!-- Bottom menu -->
-<div class="bottom-menu">
-  <button onclick="showScreen('khai-thac')">⛏️<br>Khai thác</button>
-  <button onclick="showScreen('quy-doi')">💰<br>Quy đổi</button>
-  <button onclick="showScreen('thue-thuyen')">🚤<br>Thuê</button>
-</div>
+<body>
+  <div id="app">
+
+    <div id="content">
+      <div id="screen-khai-thac" class="screen">
+        <h2>🎣 Đánh cá</h2>
+        <button onclick="watchAdAndSail()">🚤 Ra khơi</button>
+      </div>
+
+      <div id="screen-quy-doi" class="screen hidden">
+        <h2>💰 Quy đổi</h2>
+        <span id="gold">0</span>
+      </div>
+
+      <div id="screen-thue-thuyen" class="screen hidden">
+        <h2>🚤 Thuê thuyền</h2>
+      </div>
+    </div>
+
+    <div class="bottom-menu">
+      <button onclick="showScreen('khai-thac')">⛏️<br>Khai thác</button>
+      <button onclick="showScreen('quy-doi')">💰<br>Quy đổi</button>
+      <button onclick="showScreen('thue-thuyen')">🚤<br>Thuê</button>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+  </html>
