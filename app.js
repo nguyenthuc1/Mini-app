@@ -42,7 +42,8 @@ function watchAdAndSail() {
 function startSailing() {
   clearInterval(fishInterval);
   clearInterval(timerInterval);
-
+sea.classList.remove("hidden");
+sea.classList.add("fishing");
   speed = BASE_SPEED + boats * RENT_BOAT_SPEED;
   sailEnd = Date.now() + SAIL_TIME * 1000;
 
