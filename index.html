@@ -2,12 +2,78 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Mini App</title>
+  <title>Tap Miner</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; background:#111; color:#fff }
+    button { padding:15px; font-size:20px; margin:10px }
+  </style>
 </head>
 <body>
-  <button id="btn">🚀 Nhận nhiệm vụ</button>
 
-  <script src="app.js"></script>
+<h1>⛏ Tap Miner</h1>
+<p id="coins">Coins: 0</p>
+<p id="energy">Energy: 10</p>
+
+<button id="tap">👆 TAP</button>
+<button id="ads">📺 Xem quảng cáo</button>
+<button id="ref">👥 Mời bạn</button>
+
+<script>
+Telegram.WebApp.ready()
+Telegram.WebApp.expand()
+
+const user = Telegram.WebApp.initDataUnsafe?.user
+let coins = 0
+let energy = 10
+
+const coinsEl = document.getElementById("coins")
+const energyEl = document.getElementById("energy")
+
+document.getElementById("tap").onclick = () => {
+  if (energy <= 0) {
+    alert("Hết năng lượng!")
+    return
+  }
+  coins++
+  energy--
+  update()
+  save()
+}
+
+document.getElementById("ads").onclick = () => {
+  window.open("https://YOUR_ADS_LINK", "_blank")
+  setTimeout(() => {
+    energy += 5
+    coins += 5
+    update()
+    save()
+  }, 5000)
+}
+
+document.getElementById("ref").onclick = () => {
+  Telegram.WebApp.openTelegramLink(
+    `https://t.me/YOUR_BOT?start=${user.id}`
+  )
+}
+
+function update() {
+  coinsEl.innerText = "Coins: " + coins
+  energyEl.innerText = "Energy: " + energy
+}
+
+function save() {
+  fetch("https://YOUR_BACKEND/save", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      telegramId: user.id,
+      coins,
+      energy
+    })
+  })
+}
+</script>
+
 </body>
 </html>
