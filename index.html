@@ -3,78 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gom Xu Đào Vàng</title>
+  <title>Đánh Cá Kiếm Xu</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-  <div class="app">
 
-    <!-- HEADER -->
-    <div class="header">
-      <div class="user">
-        👤 <span id="username">ThứcNguyễn</span>
-      </div>
-      <div class="stats">
-        💎 <span id="diamond">1000</span>
-        🪙 <span id="gold">3301684</span>
-      </div>
-    </div>
+<div class="app">
 
-    <!-- TITLE -->
-    <h2 class="title">⛏️ Khai Thác Vàng</h2>
-
-    <!-- MINER -->
-    <div class="miner-box">
-      <div class="miner">👷‍♂️⛏️</div>
-      <div class="rock">🪨</div>
-    </div>
-
-    <!-- CARD -->
-    <div class="card">
-      <h3>👷‍♂️ Cấp độ thợ đào</h3>
-      <div class="level">Lv. <span id="level">1</span></div>
-
-      <div class="upgrade-cost">
-        💰 Chi phí nâng cấp tiếp theo  
-        <strong>5000 💎</strong>
-      </div>
-
-      <div class="note">
-        (Nâng cấp để tăng tốc độ đào vàng)
-      </div>
-    </div>
-
-    <!-- SPEED -->
-    <div class="speed">
-      ⚡ Tốc độ đào: <strong id="speed">7.00</strong> vàng/giây
-    </div>
-
-    <!-- TIMER + BUTTON -->
-    <div class="actions">
-  <button id="mineBtn">⛏️ ĐÀO NGAY</button>
-      <button id="upgradeBtn">⚙️ Nâng cấp</button>
-    </div>
-
-    <!-- FAQ -->
-    <div class="faq">
-      ❓ <strong>Câu hỏi thường gặp</strong>
-      <p>💡 Nâng cấp thợ mỏ để tăng tốc độ khai thác</p>
-      <p>🪙 Vàng có thể rút về ví, 1 Vàng = 0,0005 VND</p>
-      <p>💎 Kim cương dùng để nâng cấp thợ đào</p>
-    </div>
-
-    <!-- NAV -->
-    <div class="nav">
-      <div class="nav-item active">⛏️<br>Khai Thác</div>
-      <div class="nav-item">💱<br>Quy Đổi</div>
-      <div class="nav-item">🎯<br>Nhiệm Vụ</div>
-      <div class="nav-item">👥<br>Mời Bạn</div>
-      <div class="nav-item">💸<br>Rút Tiền</div>
-    </div>
-
+  <!-- HEADER -->
+  <div class="top">
+    <div>👤 Người chơi</div>
+    <div>💰 <span id="gold">3301684</span> vàng</div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- BIỂN -->
+  <div class="sea">
+    <img src="https://i.imgur.com/W5cRZkF.png" class="boat">
+    <img src="https://i.imgur.com/7G3YB1O.png" class="fish">
+  </div>
+
+  <!-- THÔNG TIN -->
+  <div class="panel">
+    <h2>🎣 Đánh Cá Kiếm Xu</h2>
+    <p>Tốc độ: <b>8 cá / giây</b></p>
+
+    <div id="timer" class="timer hidden"></div>
+
+    <button id="fishBtn">🚤 RA KHƠI</button>
+  </div>
+
+</div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
