@@ -165,6 +165,6 @@ body {
 }
 
 @keyframes fishMove {
-  from { left: -40px; }
+  from { left: -100px; }
   to   { left: 100%; }
   }
