@@ -127,3 +127,23 @@ setInterval(() => {
     rentStatusEl.innerText = "Chưa thuê";
   }
 }, 1000);
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  if (tab === 'fish') {
+    alert('Khai thác cá');
+  }
+  if (tab === 'exchange') {
+    alert('Quy đổi cá → tiền');
+  }
+  if (tab === 'task') {
+    alert('Nhiệm vụ hằng ngày');
+  }
+  if (tab === 'invite') {
+    alert('Mời bạn bè nhận thưởng');
+  }
+  if (tab === 'withdraw') {
+    alert('Rút tiền');
+  }
+  }
