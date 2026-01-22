@@ -1,48 +1,25 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đánh Cá Kiếm Xu</title>
-
-  <!-- Telegram -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- AdsGram -->
-  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<div class="app">
-
-  <!-- TOP BAR -->
-  <div class="top">
-    <div>👤 Người chơi</div>
-    <div>💰 <span id="gold">0</span> xu</div>
-  </div>
-
-  <!-- GAME AREA -->
-  <div class="game-area">
-    <h2>🎣 Đánh Cá Kiếm Xu</h2>
-    <p>Tốc độ: <b><span id="speed">0</span></b> cá / giây</p>
-    <div id="timer">Chưa ra khơi</div>
-
-    <button class="main-btn" onclick="watchAdAndSail()">🚢 Ra khơi (xem quảng cáo)</button>
-  </div>
-
+<!-- SCREEN: Khai thác -->
+<div id="screen-khai-thac" class="screen">
+  <h2>🎣 Đánh Cá Kiếm Xu</h2>
+  <p>Tốc độ: <span id="speed">0</span> cá / giây</p>
+  <button onclick="watchAdAndSail()">🚤 Ra khơi</button>
 </div>
 
-<!-- BOTTOM MENU -->
+<!-- SCREEN: Quy đổi -->
+<div id="screen-quy-doi" class="screen hidden">
+  <h2>💰 Quy đổi</h2>
+  <p>Xu: <span id="gold">0</span></p>
+</div>
+
+<!-- SCREEN: Thuê thuyền -->
+<div id="screen-thue-thuyen" class="screen hidden">
+  <h2>🚤 Thuê thuyền</h2>
+  <button onclick="rentBoat()">Thuê</button>
+</div>
+
+<!-- Bottom menu -->
 <div class="bottom-menu">
-  <div class="tab active">🎣<span>Khai Thác</span></div>
-  <div class="tab" onclick="sellFish()">💰<span>Quy Đổi</span></div>
-  <div class="tab" onclick="watchAdAndRent()">⛵<span>Thuê Thuyền</span></div>
-  <div class="tab">👥<span>Mời Bạn</span></div>
-  <div class="tab">🏧<span>Rút Tiền</span></div>
+  <button onclick="showScreen('khai-thac')">⛏️<br>Khai thác</button>
+  <button onclick="showScreen('quy-doi')">💰<br>Quy đổi</button>
+  <button onclick="showScreen('thue-thuyen')">🚤<br>Thuê</button>
 </div>
-
-<script src="app.js"></script>
-</body>
-</html>
