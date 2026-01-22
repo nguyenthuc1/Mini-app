@@ -114,3 +114,69 @@ body {
   50%  { transform: translateY(-6px); }
   100% { left: 110%; transform: translateY(0); }
 }
+/* ===== KHUNG BIỂN ĐÁNH CÁ ===== */
+.sea-area {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: 90%;
+  max-width: 360px;
+  height: 220px;
+
+  background: linear-gradient(
+    to bottom,
+    #0fa3ff,
+    #035aa6
+  );
+
+  border-radius: 18px;
+  overflow: hidden;
+
+  box-shadow:
+    inset 0 0 30px rgba(255,255,255,0.2),
+    0 12px 30px rgba(0,0,0,0.45);
+
+  z-index: 2;
+}
+
+.sea-area.hidden {
+  display: none;
+  }
+.boat {
+  position: absolute;
+  top: 20px;
+  left: -60px;
+  font-size: 36px;
+
+  animation: boatMove 8s linear infinite;
+}
+
+@keyframes boatMove {
+  from { left: -60px; }
+  to   { left: 100%; }
+                    }
+.fish {
+  position: absolute;
+  bottom: 20px;
+  font-size: 26px;
+  opacity: 0.9;
+}
+
+.fish1 {
+  animation: fishMove 5s linear infinite;
+}
+.fish2 {
+  bottom: 60px;
+  animation: fishMove 7s linear infinite;
+}
+.fish3 {
+  bottom: 100px;
+  animation: fishMove 6s linear infinite;
+}
+
+@keyframes fishMove {
+  from { left: -40px; }
+  to   { left: 100%; }
+  }
