@@ -101,19 +101,7 @@ body {
   background:
     radial-gradient(circle at top, rgba(255,255,255,.15), transparent 60%),
     linear-gradient(180deg, #0ea5e9, #022c43);
-  }
-.boat {
-  position: absolute;
-  left: -60px;
-  top: 40%;
-  font-size: 42px;
-  animation: boat-sail 6s linear infinite;
-      }
-@keyframes boat-sail {
-  0%   { left: -60px; transform: translateY(0); }
-  50%  { transform: translateY(-6px); }
-  100% { left: 110%; transform: translateY(0); }
-}
+
 /* ===== KHUNG BIỂN ĐÁNH CÁ ===== */
 .sea-area {
   position: absolute;
