@@ -65,3 +65,10 @@ body {
   display: block;
   font-size: 11px;
 }
+.screen {
+  padding: 20px;
+}
+
+.hidden {
+  display: none;
+}
