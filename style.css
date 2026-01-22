@@ -113,3 +113,11 @@ button {
 .nav-item.active {
   background: #ff9900;
 }
+#mineBtn {
+  background: #ffb400;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 14px;
+  font-weight: bold;
+  font-size: 16px;
+  }
