@@ -1,54 +1,46 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Đánh Cá Kiếm Xu</title>
+
+  <!-- Telegram -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- AdsGram -->
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="app">
 
-  <!-- HEADER -->
-  <div class="header">
-    👤 Người chơi  
-    <div>💰 <span id="coin">0</span> xu</div>
+  <!-- TOP BAR -->
+  <div class="top">
+    <div>👤 Người chơi</div>
+    <div>💰 <span id="gold">0</span> xu</div>
   </div>
 
-  <!-- BIỂN -->
-  <div class="sea">
-    <img src="https://i.imgur.com/Qbl3z7K.png" class="boat">
+  <!-- GAME AREA -->
+  <div class="game-area">
+    <h2>🎣 Đánh Cá Kiếm Xu</h2>
+    <p>Tốc độ: <b><span id="speed">0</span></b> cá / giây</p>
+    <div id="timer">Chưa ra khơi</div>
+
+    <button class="main-btn" onclick="watchAdAndSail()">🚢 Ra khơi (xem quảng cáo)</button>
   </div>
 
-  <!-- PANEL -->
-  <div class="panel">
-    <h2>🎣 Đánh Cá Kiếm Tiền</h2>
-    <p>🐟 Cá: <b><span id="fish">0</span></b></p>
-    <p>⚡ Tốc độ: <b><span id="speed">0</span></b> cá / giây</p>
-    <div id="timer"></div>
+</div>
 
-    <button id="startBtn" onclick="startFishing()">🚢 Ra khơi</button>
-  </div>
-
-  <!-- MENU -->
-  <div class="menu">
-
-    <div class="box">
-      <h3>💰 Bán cá</h3>
-      <p>1 cá = 10 xu</p>
-      <button onclick="sellFish()">Bán cá</button>
-    </div>
-
-    <div class="box">
-      <h3>⛴ Thuê thuyền</h3>
-      <p>+2 cá / giây<br>⏳ 1 giờ</p>
-      <div id="rentStatus">Chưa thuê</div>
-      <button onclick="rentBoat()">Xem quảng cáo & thuê</button>
-    </div>
-
-  </div>
-
+<!-- BOTTOM MENU -->
+<div class="bottom-menu">
+  <div class="tab active">🎣<span>Khai Thác</span></div>
+  <div class="tab" onclick="sellFish()">💰<span>Quy Đổi</span></div>
+  <div class="tab" onclick="watchAdAndRent()">⛵<span>Thuê Thuyền</span></div>
+  <div class="tab">👥<span>Mời Bạn</span></div>
+  <div class="tab">🏧<span>Rút Tiền</span></div>
 </div>
 
 <script src="app.js"></script>
