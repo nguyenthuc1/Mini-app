@@ -1,149 +1,94 @@
-// ===== TELEGRAM INIT =====
-const tg = window.Telegram.WebApp;
-tg.ready();
+let fish = parseInt(localStorage.getItem("fish")) || 0;
+let coin = parseInt(localStorage.getItem("coin")) || 0;
 
-// ===== CONFIG =====
-const BASE_FISH_PER_SEC = 8;
-const RENT_BONUS = 4;
-const FISH_TO_MONEY = 1; // 1 cá = 1 tiền (bạn đổi sau)
-const FISH_TIME = 12 * 60 * 60; // 12 giờ
-const RENT_TIME = 60 * 60; // 1 giờ
+let fishingEnd = parseInt(localStorage.getItem("fishingEnd")) || 0;
+let rentEnd = parseInt(localStorage.getItem("rentEnd")) || 0;
 
-// ===== ELEMENTS =====
-const fishBtn = document.getElementById("fishBtn");
-const fishEl = document.getElementById("fish");
-const goldEl = document.getElementById("gold");
-const timerEl = document.getElementById("timer");
-const rentStatusEl = document.getElementById("rentStatus");
+let baseSpeed = 0;
+let interval = null;
 
-// ===== STATE =====
-let fish = Number(localStorage.getItem("fish")) || 0;
-let gold = Number(localStorage.getItem("gold")) || 0;
-
-let fishingEnd = Number(localStorage.getItem("fishingEnd")) || 0;
-let rentEnd = Number(localStorage.getItem("rentEnd")) || 0;
-
-let fishingInterval = null;
-
-// ===== UI UPDATE =====
-function updateUI() {
-  fishEl.innerText = Math.floor(fish);
-  if (goldEl) goldEl.innerText = Math.floor(gold);
-}
 updateUI();
+startLoop();
 
-// ===== TIME FORMAT =====
-function formatTime(sec) {
-  const h = String(Math.floor(sec / 3600)).padStart(2, "0");
-  const m = String(Math.floor((sec % 3600) / 60)).padStart(2, "0");
-  const s = String(sec % 60).padStart(2, "0");
-  return `${h}:${m}:${s}`;
+function fakeAd(callback) {
+  alert("📺 Đang xem quảng cáo...");
+  setTimeout(callback, 3000);
 }
 
-// ===== START FISHING =====
-fishBtn.onclick = () => {
-  if (Date.now() < fishingEnd) return;
-
-  // Giả lập xem quảng cáo
-  fishBtn.disabled = true;
-  fishBtn.innerText = "📺 Đang xem quảng cáo...";
-
-  setTimeout(() => {
-    fishingEnd = Date.now() + FISH_TIME * 1000;
-    localStorage.setItem("fishingEnd", fishingEnd);
-
-    fishBtn.innerText = "🎣 Đang đánh cá...";
-    startFishing();
-  }, 2000); // 2s giả lập quảng cáo
-};
-
-// ===== FISH LOOP =====
+/* 🚢 RA KHƠI */
 function startFishing() {
-  if (fishingInterval) clearInterval(fishingInterval);
+  fakeAd(() => {
+    fishingEnd = Date.now() + 3 * 60 * 60 * 1000;
+    localStorage.setItem("fishingEnd", fishingEnd);
+    startLoop();
+  });
+}
 
-  fishingInterval = setInterval(() => {
+/* ⛴ THUÊ THUYỀN */
+function rentBoat() {
+  fakeAd(() => {
+    rentEnd = Date.now() + 60 * 60 * 1000;
+    localStorage.setItem("rentEnd", rentEnd);
+    updateUI();
+  });
+}
+
+/* 🔁 GAME LOOP */
+function startLoop() {
+  if (interval) clearInterval(interval);
+
+  interval = setInterval(() => {
     const now = Date.now();
 
-    if (now >= fishingEnd) {
-      clearInterval(fishingInterval);
-      fishingInterval = null;
-      timerEl.classList.add("hidden");
-      fishBtn.disabled = false;
-      fishBtn.innerText = "🚤 RA KHƠI";
-      return;
-    }
+    baseSpeed = 0;
 
-    let speed = BASE_FISH_PER_SEC;
-    if (now < rentEnd) speed += RENT_BONUS;
+    if (now < fishingEnd) baseSpeed += 3;
+    if (now < rentEnd) baseSpeed += 2;
 
-    fish += speed;
+    fish += baseSpeed;
     localStorage.setItem("fish", fish);
-
-    timerEl.classList.remove("hidden");
-    timerEl.innerText = "⏳ " + formatTime(Math.floor((fishingEnd - now) / 1000));
 
     updateUI();
   }, 1000);
 }
 
-// ===== RESUME WHEN RELOAD =====
-if (Date.now() < fishingEnd) {
-  fishBtn.disabled = true;
-  fishBtn.innerText = "🎣 Đang đánh cá...";
-  startFishing();
-}
-
-// ===== EXCHANGE FISH =====
-window.exchangeFish = () => {
-  if (fish < 1) return alert("Không có cá để đổi");
-
-  gold += fish * FISH_TO_MONEY;
+/* 💰 BÁN CÁ */
+function sellFish() {
+  if (fish <= 0) return alert("Không có cá");
+  coin += fish * 10;
   fish = 0;
 
   localStorage.setItem("fish", fish);
-  localStorage.setItem("gold", gold);
-
+  localStorage.setItem("coin", coin);
   updateUI();
-  alert("✅ Đổi cá thành tiền thành công");
-};
+}
 
-// ===== RENT BOAT =====
-window.rentBoat = () => {
-  if (Date.now() < rentEnd) return alert("Bạn đã thuê thuyền rồi");
+/* 🖥 UPDATE UI */
+function updateUI() {
+  document.getElementById("fish").innerText = fish;
+  document.getElementById("coin").innerText = coin;
+  document.getElementById("speed").innerText = baseSpeed;
 
-  // Giả lập xem quảng cáo
-  rentStatusEl.innerText = "📺 Đang xem quảng cáo...";
+  const now = Date.now();
+  const timer = document.getElementById("timer");
 
-  setTimeout(() => {
-    rentEnd = Date.now() + RENT_TIME * 1000;
-    localStorage.setItem("rentEnd", rentEnd);
-    rentStatusEl.innerText = "🚤 Đã thuê thuyền (+4 cá/giây)";
-  }, 2000);
-};
+  if (now < fishingEnd) {
+    timer.innerText = "⏳ Còn " + formatTime(fishingEnd - now);
+    document.getElementById("startBtn").disabled = true;
+  } else {
+    timer.innerText = "⛔ Chưa ra khơi";
+    document.getElementById("startBtn").disabled = false;
+  }
 
-// ===== RENT STATUS CHECK =====
-setInterval(() => {
-  if (Date.now() >= rentEnd) {
-    rentStatusEl.innerText = "Chưa thuê";
-  }
-}, 1000);
-function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  document.getElementById("rentStatus").innerText =
+    now < rentEnd ? "⏳ Còn " + formatTime(rentEnd - now) : "Chưa thuê";
+}
 
-  if (tab === 'fish') {
-    alert('Khai thác cá');
-  }
-  if (tab === 'exchange') {
-    alert('Quy đổi cá → tiền');
-  }
-  if (tab === 'task') {
-    alert('Nhiệm vụ hằng ngày');
-  }
-  if (tab === 'invite') {
-    alert('Mời bạn bè nhận thưởng');
-  }
-  if (tab === 'withdraw') {
-    alert('Rút tiền');
-  }
-  }
+function formatTime(ms) {
+  let s = Math.floor(ms / 1000);
+  let h = Math.floor(s / 3600);
+  s %= 3600;
+  let m = Math.floor(s / 60);
+  s %= 60;
+  return `${h}h ${m}m ${s}s`;
+}
