@@ -1,77 +1,67 @@
 Telegram.WebApp.ready()
 Telegram.WebApp.expand()
 
-let gold = 3301684
+let gold = Number(localStorage.getItem("gold")) || 3301684
 let speed = 7
-let mining = false
+let fishing = false
 let endTime = null
-let mineInterval = null
+let interval = null
 
-const mineBtn = document.getElementById("mineBtn")
+const goldEl = document.getElementById("gold")
+const btn = document.getElementById("fishBtn")
+const timerEl = document.getElementById("timer")
 
-// Load trạng thái cũ
-const savedEnd = localStorage.getItem("mine_end")
+goldEl.innerText = gold
+
+// Load lại nếu đang đánh cá
+const savedEnd = localStorage.getItem("fish_end")
 if (savedEnd && Date.now() < savedEnd) {
-  startMining(Number(savedEnd))
+  startFishing(Number(savedEnd))
 }
 
-// ======================
-// BẤM ĐÀO
-// ======================
-mineBtn.onclick = () => {
-  // 1️⃣ Mở quảng cáo
+btn.onclick = () => {
+  // 🔥 MỞ QUẢNG CÁO
   Telegram.WebApp.openLink(
     "https://example.com/quang-cao",
     { try_browser: true }
   )
 
-  // 2️⃣ Khi user quay lại app
+  // Giả lập user xem quảng cáo
   setTimeout(() => {
-    const end = Date.now() + 12 * 60 * 60 * 1000 // 12h
-    localStorage.setItem("mine_end", end)
-    startMining(end)
-  }, 3000) // giả lập user xem quảng cáo
+    const end = Date.now() + 12 * 60 * 60 * 1000
+    localStorage.setItem("fish_end", end)
+    startFishing(end)
+  }, 3000)
 }
 
-// ======================
-// BẮT ĐẦU ĐÀO
-// ======================
-function startMining(end) {
-  mining = true
+function startFishing(end) {
+  fishing = true
   endTime = end
-  mineBtn.disabled = true
-  mineBtn.innerText = "⏳ Đang đào..."
+  btn.disabled = true
+  btn.innerText = "🎣 Đang đánh cá..."
+  timerEl.classList.remove("hidden")
 
-  // đào vàng
-  mineInterval = setInterval(() => {
+  interval = setInterval(() => {
     gold += speed
-    document.getElementById("gold").innerText = Math.floor(gold)
+    goldEl.innerText = Math.floor(gold)
+    localStorage.setItem("gold", gold)
   }, 1000)
 
-  // cập nhật timer
   updateTimer()
 }
 
-// ======================
-// TIMER 12H
-// ======================
 function updateTimer() {
-  const timer = document.createElement("div")
-  timer.className = "timer"
-  mineBtn.parentNode.insertBefore(timer, mineBtn)
-
   const t = setInterval(() => {
     const left = endTime - Date.now()
-
     if (left <= 0) {
       clearInterval(t)
-      clearInterval(mineInterval)
-      localStorage.removeItem("mine_end")
+      clearInterval(interval)
+      fishing = false
 
-      mining = false
-      mineBtn.disabled = false
-      mineBtn.innerText = "⛏️ ĐÀO NGAY"
-      timer.remove()
+      localStorage.removeItem("fish_end")
+      btn.disabled = false
+      btn.innerText = "🚤 RA KHƠI"
+      timerEl.classList.add("hidden")
       return
     }
 
@@ -79,6 +69,6 @@ function updateTimer() {
     const m = Math.floor((left % 3600000) / 60000)
     const s = Math.floor((left % 60000) / 1000)
 
-    timer.innerText = `⏳ ${h}h ${m}m ${s}s`
+    timerEl.innerText = `⏳ ${h}h ${m}m ${s}s`
   }, 1000)
-    }
+      }
