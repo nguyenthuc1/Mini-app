@@ -6,69 +6,76 @@
   <title>Đánh Cá Kiếm Xu</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Đánh Cá Kiếm Xu</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
+  <!-- APP -->
+  <div class="app">
 
-<div class="app">
+    <!-- HEADER -->
+    <div class="top">
+      <div>👤 Người chơi</div>
+      <div>💰 <span id="gold">3301768</span> vàng</div>
+    </div>
 
-  <!-- HEADER -->
-  <div class="top">
-    <div>👤 Người chơi</div>
-    <div>💰 <span id="gold">3301684</span> cá</div>
+    <!-- BIỂN -->
+    <div class="sea">
+      <img src="https://i.imgur.com/w5cRZkF.png" class="boat" />
+      <img src="https://i.imgur.com/7G3YB10.png" class="fish" />
+    </div>
+
+    <!-- PANEL -->
+    <div class="panel" id="tab-fish">
+      <h2>🎣 Đánh Cá Kiếm Xu</h2>
+      <p>Tốc độ: <b><span id="speed">8</span> cá / giây</b></p>
+
+      <div id="timer" class="timer hidden"></div>
+
+      <button id="fishBtn">🚤 RA KHƠI</button>
+    </div>
+
+    <!-- QUY ĐỔI -->
+    <div class="panel hidden" id="tab-exchange">
+      <h2>💰 Đổi Cá Ra Tiền</h2>
+      <p>Bạn có: <b><span id="fish">0</span> cá</b></p>
+      <button onclick="exchangeFish()">Đổi cá</button>
+    </div>
+
+    <!-- NHIỆM VỤ -->
+    <div class="panel hidden" id="tab-task">
+      <h2>🎁 Nhiệm Vụ</h2>
+      <p>Xem quảng cáo để nhận thưởng</p>
+      <button onclick="watchAd()">Xem quảng cáo</button>
+    </div>
+
+    <!-- MỜI BẠN -->
+    <div class="panel hidden" id="tab-invite">
+      <h2>👥 Mời Bạn Bè</h2>
+      <p>Nhận % hoa hồng khi bạn bè chơi</p>
+      <button onclick="inviteFriend()">Lấy link mời</button>
+    </div>
+
+    <!-- RÚT TIỀN -->
+    <div class="panel hidden" id="tab-withdraw">
+      <h2>💳 Rút Tiền</h2>
+      <p>1 cá = 0.0005 VNĐ</p>
+      <button onclick="withdraw()">Rút tiền</button>
+    </div>
+
   </div>
 
-  <!-- BIỂN -->
-  <div class="sea">
-    <img src="https://i.imgur.com/W5cRZkF.png" class="boat">
-    <img src="https://i.imgur.com/7G3YB1O.png" class="fish">
+  <!-- BOTTOM MENU -->
+  <div class="bottom-menu">
+    <div class="tab active" onclick="switchTab('fish')">🐟<span>Khai Thác</span></div>
+    <div class="tab" onclick="switchTab('exchange')">💰<span>Quy Đổi</span></div>
+    <div class="tab" onclick="switchTab('task')">🎁<span>Nhiệm Vụ</span></div>
+    <div class="tab" onclick="switchTab('invite')">👥<span>Mời Bạn</span></div>
+    <div class="tab" onclick="switchTab('withdraw')">💳<span>Rút Tiền</span></div>
   </div>
 
-  <!-- THÔNG TIN -->
-  <div class="panel">
-    <h2>🎣 Đánh Cá Kiếm Xu</h2>
-    <p>Tốc độ: <b>8 cá / giây</b></p>
+  <!-- SCRIPTS -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="app.js"></script>
 
-
-
-    <button id="fishBtn">🚤 RA KHƠI</button>
-  </div>
-  <!-- MENU -->
-<div class="menu">
-
-  <!-- ĐỔI CÁ -->
-  <div class="menu-box">
-    <h3>💱 Đổi Cá Ra Tiền</h3>
-    <p>Bạn có: <b><span id="fish">0</span> cá</b></p>
-    <button onclick="exchangeFish()">Đổi cá</button>
-  </div>
-
-  <!-- THUÊ THUYỀN -->
-  <div class="menu-box">
-    <h3>🚤 Thuê Thuyền</h3>
-    <p>
-      +4 cá / giây<br>
-      ⏳ 1 giờ
-    </p>
-    <div id="rentStatus">Chưa thuê</div>
-    <button onclick="rentBoat()">Xem quảng cáo & thuê</button>
-  </div>
-
-</div>
-
-</div>
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="app.js"></script>
 </body>
-</html>
-
-
+                      </html>
