@@ -16,28 +16,27 @@
 
     <div id="content">
       <div id="screen-khai-thac" class="screen">
-        <h2>🎣 Đánh cá</h2>
-        <button onclick="watchAdAndSail()">🚤 Ra khơi</button>
+  <div class="sea-card">
+    <div class="sea-header">
+      <span>🎣 Đánh cá kiếm xu</span>
+    </div>
+
+    <div class="sea-info">
+      <div class="info-box">
+        <span>⚡ Tốc độ</span>
+        <strong><span id="speed">0</span> cá/giây</strong>
       </div>
 
-      <div id="screen-quy-doi" class="screen hidden">
-        <h2>💰 Quy đổi</h2>
-        <span id="gold">0</span>
-      </div>
-
-      <div id="screen-thue-thuyen" class="screen hidden">
-        <h2>🚤 Thuê thuyền</h2>
+      <div class="info-box">
+        <span>💰 Xu</span>
+        <strong><span id="gold">0</span></strong>
       </div>
     </div>
 
-    <div class="bottom-menu">
-      <button onclick="showScreen('khai-thac')">⛏️<br>Khai thác</button>
-      <button onclick="showScreen('quy-doi')">💰<br>Quy đổi</button>
-      <button onclick="showScreen('thue-thuyen')">🚤<br>Thuê</button>
-    </div>
+    <button class="sail-btn" onclick="watchAdAndSail()">
+      🚤 Ra khơi
+    </button>
 
+    <p class="hint">Xem quảng cáo để ra khơi và bắt cá</p>
   </div>
-
-  <script src="app.js"></script>
-</body>
-  </html>
+      </div>
