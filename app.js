@@ -79,6 +79,6 @@ app.post("/api/task/start", async (req, res) => {
 
   res.json({
     sessionId,
-    url: "https:https://link4m.com/xHprfP/abc123" // LINK RÚT GỌN
+    url: "https://link4m.com/xHprfP" // LINK RÚT GỌN
   })
 })
