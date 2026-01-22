@@ -94,19 +94,10 @@ body {
 
 /* ===== KHUNG BIỂN ĐÁNH CÁ ===== */
 .sea-area {
-  .sea {
-  position: relative; /* 🔥 BẮT BUỘC */
-  width: 100%;
-  height: 100%;
-    }
   position: relative;
-  top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-
-  width: 90%;
-  max-width: 360px;
-  height: 220px;
+  width: 100%;
+  height: 220px;        /* 🔥 BẮT BUỘC */
+  margin-bottom: 16px;
 
   background: linear-gradient(
     to bottom,
@@ -116,24 +107,29 @@ body {
 
   border-radius: 18px;
   overflow: hidden;
-
   box-shadow:
     inset 0 0 30px rgba(255,255,255,0.2),
     0 12px 30px rgba(0,0,0,0.45);
-
-  z-index: 5;
-}
-
+  }
+.sea {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  }
+  
 .sea-area.hidden {
   display: none;
   }
 .boat {
   position: absolute;
   top: 20px;
-  left: -60px; /* QUAN TRỌNG */
+  left: -60px;
   font-size: 36px;
-  animation: boatMove 12s linear infinite;
   z-index: 5;
+  animation: none; /* 🔥 QUAN TRỌNG */
+  }
+  .sea-area.fishing .boat {
+  animation: boatMove 12s linear infinite;
   }
 
 @keyframes boatMove {
