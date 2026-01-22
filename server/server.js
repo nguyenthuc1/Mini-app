@@ -48,3 +48,33 @@ app.post("/ads/verify", (req,res)=>{
 })
 
 app.listen(3000, ()=>console.log("Server running"))
+async function watchAds() {
+  const userId = Telegram.WebApp.initDataUnsafe.user.id
+
+  const r = await fetch("/ads/start", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ userId })
+  })
+
+  const { token, adUrl } = await r.json()
+
+  localStorage.setItem("ad_token", token)
+
+  Telegram.WebApp.openLink(adUrl, { try_browser:true })
+}
+
+// Khi user quay lại app
+async function claimReward() {
+  const token = localStorage.getItem("ad_token")
+  const userId = Telegram.WebApp.initDataUnsafe.user.id
+
+  const r = await fetch("/ads/verify", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ userId, token })
+  })
+
+  const data = await r.json()
+  alert(JSON.stringify(data))
+    }
