@@ -16,12 +16,11 @@ async function startTask() {
   startBtn.classList.add("btn-disabled")
   startBtn.innerText = "⏳ Đang mở nhiệm vụ..."
   startBtn.disabled = true
-
-  try {
+try {
   const fingerprint = await genFingerprint()
 
   const res = await fetch(
-    "https://YOUR_BACKEND_DOMAIN/api/task/start",
+    "https://miniapp-backend-d87k.onrender.com/api/task/start",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -35,20 +34,19 @@ async function startTask() {
   if (!res.ok) throw new Error("API error")
 
   const data = await res.json()
-
   currentSessionId = data.sessionId
 
-  Telegram.WebApp.openLink(
-    data.url,
-    { try_browser: true }
-  )
+  Telegram.WebApp.openLink(data.url, {
+    try_browser: true
+  })
 
 } catch (err) {
   console.error(err)
   alert("Lỗi khi mở nhiệm vụ")
   startBtn.disabled = false
   startBtn.innerText = "🚀 Làm nhiệm vụ"
-    }
+}
+  
 async function genFingerprint() {
   const raw =
     navigator.userAgent +
