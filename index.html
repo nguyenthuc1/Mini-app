@@ -1,23 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Tap Miner</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body { font-family: sans-serif; text-align: center; background:#111; color:#fff }
-    button { padding:15px; font-size:20px; margin:10px }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #0f0f0f, #1a1a1a);
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-top: 10px;
+      font-size: 28px;
+      color: #00ffcc;
+    }
+
+    .card {
+      background: #151515;
+      border-radius: 16px;
+      padding: 20px;
+      margin: 15px 0;
+      box-shadow: 0 0 15px rgba(0,255,204,0.15);
+    }
+
+    .coins {
+      font-size: 32px;
+      font-weight: bold;
+      color: #ffd700;
+    }
+
+    .energy-bar {
+      width: 100%;
+      height: 18px;
+      background: #333;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .energy-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #00ffcc, #00ccff);
+      transition: width 0.3s;
+    }
+
+    .tap-btn {
+      margin: 20px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: none;
+      font-size: 26px;
+      font-weight: bold;
+      color: #000;
+      background: radial-gradient(circle, #00ffcc, #00cc99);
+      box-shadow: 0 0 25px #00ffcc;
+      cursor: pointer;
+    }
+
+    .tap-btn:active {
+      transform: scale(0.95);
+    }
+
+    .actions button {
+      width: 100%;
+      padding: 14px;
+      margin: 8px 0;
+      font-size: 16px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .ads {
+      background: #ff9800;
+      color: #000;
+    }
+
+    .ref {
+      background: #2196f3;
+      color: #fff;
+    }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      opacity: 0.6;
+    }
   </style>
 </head>
 <body>
 
 <h1>⛏ Tap Miner</h1>
-<p id="coins">Coins: 0</p>
-<p id="energy">Energy: 10</p>
 
-<button id="tap">👆 TAP</button>
-<button id="ads">📺 Xem quảng cáo</button>
-<button id="ref">👥 Mời bạn</button>
+<div class="card">
+  <div class="coins" id="coins">0</div>
+  <div>💰 Coins</div>
+
+  <div class="energy-bar">
+    <div class="energy-fill" id="energyFill"></div>
+  </div>
+  <div id="energyText">Energy: 10 / 10</div>
+</div>
+
+<button class="tap-btn" id="tapBtn">TAP</button>
+
+<div class="card actions">
+  <button class="ads" id="adsBtn">📺 Xem quảng cáo (+5 năng lượng)</button>
+  <button class="ref" id="refBtn">👥 Mời bạn (+10%)</button>
+</div>
+
+<div class="footer">Powered by Telegram Mini App</div>
 
 <script>
 Telegram.WebApp.ready()
@@ -26,54 +126,45 @@ Telegram.WebApp.expand()
 const user = Telegram.WebApp.initDataUnsafe?.user
 let coins = 0
 let energy = 10
+const maxEnergy = 10
 
 const coinsEl = document.getElementById("coins")
-const energyEl = document.getElementById("energy")
+const energyFill = document.getElementById("energyFill")
+const energyText = document.getElementById("energyText")
 
-document.getElementById("tap").onclick = () => {
+function updateUI() {
+  coinsEl.innerText = coins
+  energyText.innerText = `Energy: ${energy} / ${maxEnergy}`
+  energyFill.style.width = (energy / maxEnergy * 100) + "%"
+}
+
+document.getElementById("tapBtn").onclick = () => {
   if (energy <= 0) {
-    alert("Hết năng lượng!")
+    Telegram.WebApp.showAlert("⚡ Hết năng lượng!")
     return
   }
   coins++
   energy--
-  update()
-  save()
+  updateUI()
 }
 
-document.getElementById("ads").onclick = () => {
-  window.open("https://YOUR_ADS_LINK", "_blank")
+document.getElementById("adsBtn").onclick = () => {
+  window.open("https://YOUR_ADS_DIRECT_LINK", "_blank")
   setTimeout(() => {
-    energy += 5
+    energy = Math.min(maxEnergy, energy + 5)
     coins += 5
-    update()
-    save()
+    updateUI()
   }, 5000)
 }
 
-document.getElementById("ref").onclick = () => {
+document.getElementById("refBtn").onclick = () => {
   Telegram.WebApp.openTelegramLink(
-    `https://t.me/YOUR_BOT?start=${user.id}`
+    `https://t.me/YOUR_BOT_USERNAME?start=${user?.id}`
   )
 }
 
-function update() {
-  coinsEl.innerText = "Coins: " + coins
-  energyEl.innerText = "Energy: " + energy
-}
-
-function save() {
-  fetch("https://YOUR_BACKEND/save", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      telegramId: user.id,
-      coins,
-      energy
-    })
-  })
-}
+updateUI()
 </script>
 
 </body>
-</html>
+  </html>
