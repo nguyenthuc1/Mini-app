@@ -134,12 +134,12 @@ body {
   }
 .boat {
   position: absolute;
-  top: 20px;
-  left: -60px;
+  top: 40px;
+  left: 0;
   font-size: 36px;
-
-  animation: boatMove 8s linear infinite;
-}
+  animation: boatMove 12s linear infinite;
+  z-index: 5;
+  }
 
 @keyframes boatMove {
   from { left: -60px; }
