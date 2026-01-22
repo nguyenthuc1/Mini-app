@@ -1,85 +1,90 @@
 Telegram.WebApp.ready()
 Telegram.WebApp.expand()
 
-const tgUser = Telegram.WebApp.initDataUnsafe.user
-const startBtn = document.getElementById("startBtn")
-
+const tgUser = Telegram.WebApp.initDataUnsafe?.user
+const btn = document.getElementById("btn")
 let currentSessionId = null
+
+btn.onclick = startTask
 
 async function startTask() {
   if (!tgUser) {
-    alert("Không xác thực được Telegram")
+    alert("Không xác thực Telegram")
     return
   }
 
-  // Disable nút chống spam
-  startBtn.classList.add("btn-disabled")
-  startBtn.innerText = "⏳ Đang mở nhiệm vụ..."
-  startBtn.disabled = true
-try {
-  const fingerprint = await genFingerprint()
+  btn.disabled = true
+  btn.innerText = "⏳ Đang mở..."
 
-  const res = await fetch(
-    "https://miniapp-backend-d87k.onrender.com/api/task/start",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        telegramId: tgUser.id,
-        fingerprint
-      })
-    }
-  )
+  try {
+    const fingerprint = genFingerprint()
 
-  if (!res.ok) throw new Error("API error")
+    const res = await fetch(
+      "https://YOUR-RENDER.onrender.com/api/task/start",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          telegramId: tgUser.id,
+          fingerprint
+        })
+      }
+    )
 
-  const data = await res.json()
-  currentSessionId = data.sessionId
+    const data = await res.json()
+    currentSessionId = data.sessionId
 
-  Telegram.WebApp.openLink(data.url, {
-    try_browser: true
-  })
+    Telegram.WebApp.openLink(data.url, {
+      try_browser: true
+    })
 
-} catch (err) {
-  console.error(err)
-  alert("Lỗi khi mở nhiệm vụ")
-  startBtn.disabled = false
-  startBtn.innerText = "🚀 Làm nhiệm vụ"
+    // user quay lại → cho bấm xác minh
+    setTimeout(verifyTask, 20000)
+
+  } catch (e) {
+    alert("Lỗi mở nhiệm vụ")
+    resetBtn()
+  }
 }
-  
-async function genFingerprint() {
-  const raw =
+
+async function verifyTask() {
+  try {
+    const res = await fetch(
+      "https://YOUR-RENDER.onrender.com/api/task/verify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: currentSessionId,
+          telegramId: tgUser.id
+        })
+      }
+    )
+
+    const data = await res.json()
+
+    if (data.success) {
+      alert("✅ Hoàn thành + " + data.reward + " xu")
+    } else {
+      alert("❌ Chưa vượt link")
+    }
+  } catch {
+    alert("Lỗi xác minh")
+  }
+
+  resetBtn()
+}
+
+function resetBtn() {
+  btn.disabled = false
+  btn.innerText = "🚀 Nhận nhiệm vụ"
+}
+
+function genFingerprint() {
+  return btoa(
     navigator.userAgent +
     screen.width +
     screen.height +
-    tgUser.id
-
-  const hash = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(raw)
+    navigator.language
   )
-
-  return [...new Uint8Array(hash)]
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("")
-}
-app.post("/api/task/start", async (req, res) => {
-  const { telegramId, fingerprint } = req.body
-
-  const sessionId = crypto.randomUUID()
-
-  await redis.setex(
-    `task:${sessionId}`,
-    180,
-    JSON.stringify({
-      telegramId,
-      fingerprint,
-      startTime: Date.now()
-    })
-  )
-
-  res.json({
-    sessionId,
-    url: "https://google.com" // LINK RÚT GỌN
-  })
-})
+      }
