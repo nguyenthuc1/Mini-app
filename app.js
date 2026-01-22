@@ -80,6 +80,6 @@ app.post("/api/task/start", async (req, res) => {
 
   res.json({
     sessionId,
-    url: "https://www.qq8886.com/m/home" // LINK RÚT GỌN
+    url: "https://google.com" // LINK RÚT GỌN
   })
 })
