@@ -1,33 +1,44 @@
-let currentToken = null;
-const userId = Telegram.WebApp.initDataUnsafe.user.id;
+Telegram.WebApp.ready()
+Telegram.WebApp.expand()
 
-function startTask(taskId) {
-  fetch("/start-task", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ user: userId, task: taskId })
-  })
-  .then(res => res.json())
-  .then(data => {
-    currentToken = data.link.split("token=")[1];
-    window.open(data.link, "_blank");
-    document.getElementById("status").innerText =
-      "⏳ Hãy ở lại trang quảng cáo";
-  });
-}
+const user = Telegram.WebApp.initDataUnsafe.user
+document.getElementById("user").innerText =
+  `ID: ${user.id} | ${user.first_name}`
 
-function confirmTask() {
-  fetch("/confirm", {
+async function startTask() {
+  const res = await fetch("/api/task/start", {
     method: "POST",
-    headers: {"Content-Type": "application/json"},
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      user: userId,
-      token: currentToken
+      telegramId: user.id
     })
   })
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById("status").innerText =
-      data.success || data.error;
-  });
-    }
+
+  const data = await res.json()
+  Telegram.WebApp.openLink(data.url)
+      }
+import express from "express"
+const app = express()
+
+app.use(express.json())
+
+app.post("/api/task/start", (req, res) => {
+  const { telegramId } = req.body
+
+  // TODO: tạo session + anti-cheat
+  res.json({
+    url: "https://your-short-link.com/abc"
+  })
+})
+
+app.listen(3000)
+import crypto from "crypto"
+
+function verifyTelegram(initData) {
+  const secret = crypto
+    .createHash("sha256")
+    .update(BOT_TOKEN)
+    .digest()
+
+  // verify theo chuẩn Telegram
+}
