@@ -21,9 +21,8 @@ let gold = 0;
 let fishingInterval = null;
 let fishingTimeout = null;
 
-const FISH_DURATION = 3 * 60 * 60 * 1000; // 3 tiếng
-const CATCH_INTERVAL = 2000; // 2 giây bắt 1 con cá
-
+const FISH_DURATION = 3 * 60 * 60 * 1000;
+const CATCH_INTERVAL = 2000;
 
 function watchAdAndSail() {
   const sea = document.getElementById("sea-area");
@@ -31,28 +30,16 @@ function watchAdAndSail() {
   if (fishingInterval) return;
 
   sea.classList.remove("hidden");
-  sea.classList.add("fishing"); // 🚤 THUYỀN CHẠY
+  sea.classList.add("fishing");
 
   fishingInterval = setInterval(catchFish, CATCH_INTERVAL);
-  fishingTimeout = setTimeout(stopFishing, FISH_DURATION);
-    }
-  // Nếu đang ra khơi thì không cho bấm lại
-  if (fishingInterval) return;
-
-  sea.classList.remove("hidden");
-document.getElementById("speed").innerText = (1000 / CATCH_INTERVAL).toFixed(2);
-  // Bắt cá liên tục
-  fishingInterval = setInterval(catchFish, CATCH_INTERVAL);
-
-  // Hết 3 tiếng thì dừng chứng
   fishingTimeout = setTimeout(stopFishing, FISH_DURATION);
 }
 
 function catchFish() {
-  gold += 1;
+  gold++;
   document.getElementById("gold").innerText = gold;
 
-  // Hiệu ứng cá nhấp nháy (giả lập bị bắt)
   const fishes = document.querySelectorAll(".fish");
   const fish = fishes[Math.floor(Math.random() * fishes.length)];
   fish.style.opacity = "0.2";
@@ -67,9 +54,9 @@ function stopFishing() {
   fishingTimeout = null;
 
   document.getElementById("sea-area")
-    .classList.remove("fishing"); // ⛔ THUYỀN DỪNG
+    .classList.remove("fishing");
 
-  alert("🚤 Hết chuyến ra khơi!");
+  alert("⛵ Hết chuyến ra khơi!");
     }
   </script>
 <body>
