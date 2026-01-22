@@ -27,7 +27,7 @@ app.post("/api/task/start", (req, res) => {
 
   // TODO: tạo session + anti-cheat
   res.json({
-    url: "https://your-short-link.com/abc"
+    url: "https://link4m.com/xHprfP"
   })
 })
 
