@@ -1,3 +1,4 @@
+alert("JS ĐÃ CHẠY");
 // ================== CONFIG ==================
 const ADS_BLOCK_ID = "https://www.google.com/?hl=vi"; // <-- thay ID AdsGram
 const SAIL_TIME = 3 * 60 * 60; // 3 giờ
