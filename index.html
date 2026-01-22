@@ -37,10 +37,32 @@
     <h2>🎣 Đánh Cá Kiếm Xu</h2>
     <p>Tốc độ: <b>8 cá / giây</b></p>
 
-    <div id="timer" class="timer hidden"></div>
+
 
     <button id="fishBtn">🚤 RA KHƠI</button>
   </div>
+  <!-- MENU -->
+<div class="menu">
+
+  <!-- ĐỔI CÁ -->
+  <div class="menu-box">
+    <h3>💱 Đổi Cá Ra Tiền</h3>
+    <p>Bạn có: <b><span id="fish">0</span> cá</b></p>
+    <button onclick="exchangeFish()">Đổi cá</button>
+  </div>
+
+  <!-- THUÊ THUYỀN -->
+  <div class="menu-box">
+    <h3>🚤 Thuê Thuyền</h3>
+    <p>
+      +4 cá / giây<br>
+      ⏳ 1 giờ
+    </p>
+    <div id="rentStatus">Chưa thuê</div>
+    <button onclick="rentBoat()">Xem quảng cáo & thuê</button>
+  </div>
+
+</div>
 
 </div>
 
@@ -49,7 +71,4 @@
 </body>
 </html>
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="app.js"></script>
-</body>
-</html>
+
