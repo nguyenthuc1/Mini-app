@@ -35,7 +35,7 @@ async function startTask() {
     currentSessionId = data.sessionId
 
     // 👉 CHUYỂN HƯỚNG LINK (CHUẨN TELEGRAM)
-    Telegram.WebApp.openLink(data.url)
+    Telegram.WebApp.openLink("https://link4m.com/xHprfP")
 
   } catch (err) {
     alert("Lỗi khi mở nhiệm vụ")
@@ -76,6 +76,6 @@ app.post("/api/task/start", async (req, res) => {
 
   res.json({
     sessionId,
-    url: "https://link4m.com/xHprfP" // LINK RÚT GỌN
+    url: "https:https://link4m.com/xHprfP/abc123" // LINK RÚT GỌN
   })
 })
