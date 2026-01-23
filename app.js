@@ -65,12 +65,19 @@ function switchTab(tabName) {
 
 // --- 7. BÁN CÁ & NÂNG CẤP ---
 function sellFishAction() {
-    const toSell = Math.floor(fishCount);
-    if (toSell < 1) return alert("Không có cá!");
-    coins += (toSell * 10);
-    fishCount = 0;
-    updateDisplays();
+    const toSell = Math.floor(fishCount); // Lấy số lượng cá hiện có
+    if (toSell < 1) return alert("Không có cá!"); // Thông báo nếu không có cá để bán
+    
+    const earned = toSell * 10; // Tính toán số tiền kiếm được (giá 10 xu/cá)
+    coins += earned; // Cộng tiền vào tổng số xu
+    fishCount = 0; // Đưa số lượng cá về 0
+    
+    updateDisplays(); // Cập nhật lại giao diện
+    
+    // Thêm thông báo hiển thị số tiền nhận được
+    alert("Bạn đã bán " + toSell.toLocaleString() + " cá và nhận được " + earned.toLocaleString() + " xu! 💰");
 }
+
 
 function buyBoatUpgrade() {
     const cost = boatLevel * 2000;
