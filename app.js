@@ -91,4 +91,57 @@ window.onload = () => {
         runLogic();
     }
 };
+// Thêm biến quản lý cá
+let coins = parseInt(localStorage.getItem('fishing_coins')) || 0;
+let fishCount = parseInt(localStorage.getItem('fishing_count')) || 0; // Số cá hiện có
+let endTime = localStorage.getItem('fishing_endTime') || 0;
+
+// Cập nhật hiển thị lúc đầu
+document.getElementById('coin-display').innerText = coins;
+document.getElementById('fish-display').innerText = fishCount;
+
+function runLogic() {
+    if (fishInterval) clearInterval(fishInterval);
+
+    fishInterval = setInterval(() => {
+        const now = Date.now();
+        const timeLeft = endTime - now;
+
+        if (timeLeft <= 0) {
+            stopFishing();
+        } else {
+            // ... (giữ nguyên logic quảng cáo và thời gian) ...
+
+            // Thay vì cộng xu, ta cộng cá
+            fishCount += 1; 
+            document.getElementById('fish-display').innerText = fishCount;
+            localStorage.setItem('fishing_count', fishCount);
+
+            spawnFish();
+        }
+    }, 1000);
+}
+
+// Hàm đổi cá lấy xu (Ví dụ: 1 con cá = 10 xu)
+function sellFish() {
+    if (fishCount <= 0) {
+        alert("Bạn không có cá để bán!");
+        return;
+    }
+
+    const pricePerFish = 10; // Bạn có thể chỉnh giá ở đây
+    const earnedCoins = fishCount * pricePerFish;
+    
+    coins += earnedCoins;
+    fishCount = 0; // Reset số cá về 0 sau khi bán
+
+    // Cập nhật giao diện và bộ nhớ
+    document.getElementById('coin-display').innerText = coins;
+    document.getElementById('fish-display').innerText = fishCount;
+    localStorage.setItem('fishing_coins', coins);
+    localStorage.setItem('fishing_count', fishCount);
+
+    alert(`Bạn đã bán cá và nhận được ${earnedCoins} Xu!`);
+}
+
 
