@@ -48,4 +48,14 @@ body {
 .menu-btn.active {
     color: #60a5fa; /* Màu xanh sáng khi nút được chọn */
 }
+/* Lớp này dùng để ẩn các trang không dùng tới */
+.tab-page.hidden {
+    display: none !important;
+}
+
+/* Đảm bảo nội dung không bị tràn màn hình */
+body {
+    overflow: hidden;
+    touch-action: manipulation;
+}
 
