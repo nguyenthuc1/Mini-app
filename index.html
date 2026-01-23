@@ -48,14 +48,25 @@
         </div>
 
         <div id="page-upgrade" class="tab-page hidden space-y-4">
-            <div class="bg-slate-800 p-8 rounded-[2.5rem] border border-white/10 text-center">
-                <span class="text-6xl mb-4 block">🚀</span>
-                <h3 class="text-xl font-bold mb-6">Thuyền Cấp <span id="boat-level">1</span></h3>
-                <button onclick="buyBoatUpgrade()" class="w-full bg-blue-600 py-4 rounded-2xl font-black shadow-lg">
-                    NÂNG CẤP (<span id="upgrade-cost">2000</span> XU)
-                </button>
-            </div>
-        </div>
+            <div id="page-upgrade" class="tab-page hidden space-y-6">
+    <div class="bg-slate-800 p-6 rounded-[2.5rem] border border-white/10 text-center shadow-xl">
+        <span class="text-5xl mb-2 block">🚢</span>
+        <h3 class="text-lg font-bold">Thuyền Cấp <span id="boat-level">1</span></h3>
+        <p class="text-gray-400 text-xs mb-4">Tăng tốc độ đánh bắt (+0.5/s)</p>
+        <button onclick="buyBoatUpgrade()" class="w-full bg-blue-600 py-3 rounded-2xl font-black shadow-lg active:scale-95">
+            NÂNG CẤP (<span id="upgrade-cost">2000</span> XU)
+        </button>
+    </div>
+
+    <div class="bg-slate-800 p-6 rounded-[2.5rem] border border-white/10 text-center shadow-xl">
+        <span class="text-5xl mb-2 block">📦</span>
+        <h3 class="text-lg font-bold">Kho Cấp <span id="storage-level">1</span></h3>
+        <p class="text-gray-400 text-xs mb-4">Sức chứa: <span id="max-storage-display-up">2000</span> cá</p>
+        <button onclick="buyStorageUpgrade()" class="w-full bg-indigo-600 py-3 rounded-2xl font-black shadow-lg active:scale-95">
+            MỞ RỘNG KHO (<span id="storage-upgrade-cost">5000</span> XU)
+        </button>
+    </div>
+</div>
 
         <div id="page-sell" class="tab-page hidden">
             <div class="bg-slate-800/50 border border-white/10 p-8 rounded-[2.5rem] text-center">
