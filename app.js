@@ -176,3 +176,65 @@ if (endTime > Date.now()) {
 } else {
     updateDisplays();
 }
+// --- 1. KHỞI TẠO (Thêm storageLevel) ---
+let storageLevel = parseInt(localStorage.getItem('storage_level_' + userId)) || 1;
+
+// Sức chứa kho: 2000 cá cơ bản + 3000 mỗi cấp độ nâng cấp
+function getMaxStorage() {
+    return 2000 + (storageLevel - 1) * 3000; 
+}
+
+// --- 2. CẬP NHẬT GIAO DIỆN ---
+function updateDisplays() {
+    const roundedFish = Math.floor(fishCount);
+    const maxStorage = getMaxStorage();
+    const storageCost = storageLevel * 5000;
+
+    const elements = {
+        'fish-display': roundedFish.toLocaleString(),
+        'sell-fish-count': roundedFish.toLocaleString(),
+        'coin-display': coins.toLocaleString(),
+        'boat-level': boatLevel,
+        'upgrade-cost': (boatLevel * 2000).toLocaleString(),
+        'storage-level': storageLevel,
+        'storage-upgrade-cost': storageCost.toLocaleString(),
+        'max-storage-display': maxStorage.toLocaleString(),
+        'max-storage-display-up': maxStorage.toLocaleString(),
+        'storage-display': roundedFish.toLocaleString()
+    };
+
+    for (let id in elements) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = elements[id];
+    }
+
+    // Lưu dữ liệu
+    localStorage.setItem('fishing_count_' + userId, fishCount);
+    localStorage.setItem('fishing_coins_' + userId, coins);
+    localStorage.setItem('boat_level_' + userId, boatLevel);
+    localStorage.setItem('storage_level_' + userId, storageLevel);
+}
+
+// --- 3. LOGIC NÂNG CẤP KHO ---
+window.buyStorageUpgrade = function() {
+    const cost = storageLevel * 5000;
+    if (coins >= cost) {
+        coins -= cost;
+        storageLevel++;
+        updateDisplays();
+        alert(`📦 Mở rộng kho thành công! Sức chứa mới: ${getMaxStorage().toLocaleString()} cá.`);
+    } else {
+        alert(`Bạn cần thêm ${(cost - coins).toLocaleString()} Xu để mở rộng kho!`);
+    }
+};
+
+// Đảm bảo nút Bán cá và Nâng cấp thuyền vẫn hoạt động
+window.buyBoatUpgrade = function() {
+    const cost = boatLevel * 2000;
+    if (coins >= cost) {
+        coins -= cost;
+        boatLevel++;
+        updateDisplays();
+        alert(`🚀 Nâng cấp thuyền thành công lên Cấp ${boatLevel}!`);
+    } else alert("Thiếu xu!");
+};
