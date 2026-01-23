@@ -66,16 +66,17 @@ function handleStartFishing() {
 }
 
 function startCountdown() {
+    isFishing = true; // Thêm dòng này để kích hoạt trạng thái câu cá
     const btnText = document.getElementById('btn-text');
     const timerInterval = setInterval(() => {
         const timeLeft = endTime - Date.now();
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
-            isFishing = true;
+            isFishing = false;
             if(btnText) btnText.innerText = "🚢 RA KHƠI";
             localStorage.removeItem('fishing_endTime_' + userId);
         } else {
-            isFishing = true;
+            // Hiển thị đồng hồ đếm ngược
             const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
             const m = Math.floor((timeLeft % 3600000) / 60000).toString().padStart(2, '0');
             const s = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0');
@@ -83,6 +84,7 @@ function startCountdown() {
         }
     }, 1000);
 }
+
 
 // --- 4. BÁN CÁ & NÂNG CẤP (CÓ THÔNG BÁO) ---
 function sellFishAction() {
@@ -238,3 +240,20 @@ window.buyBoatUpgrade = function() {
         alert(`🚀 Nâng cấp thuyền thành công lên Cấp ${boatLevel}!`);
     } else alert("Thiếu xu!");
 };
+setInterval(() => {
+    const now = Date.now();
+    const maxStorage = getMaxStorage(); // Lấy sức chứa kho hiện tại
+    
+    if (isFishing && now < endTime) {
+        if (fishCount < maxStorage) {
+            // Tốc độ câu = Cơ bản (0.5) + (Cấp thuyền - 1) * 0.5
+            const speed = baseSpeed + (boatLevel - 1) * 0.5;
+            fishCount += speed;
+            
+            // Cập nhật mốc thời gian cuối cùng để tính cá offline sau này
+            localStorage.setItem('fishing_lastUpdate_' + userId, now);
+            
+            updateDisplays(); // Cập nhật số liệu lên màn hình
+        }
+    }
+}, 1000);
