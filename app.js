@@ -57,13 +57,20 @@ function switchTab(tabName) {
     updateDisplays();
 }
 
-function handleStartFishing() {
+window.handleStartFishing = function() { 
+    // Nếu đang trong thời gian đánh bắt thì không cho bấm lại
     if (isFishing) return;
-    endTime = Date.now() + (3 * 60 * 60 * 1000); // 3 giờ
+    
+    // Thiết lập thời gian kết thúc là 3 giờ tới
+    endTime = Date.now() + (3 * 60 * 60 * 1000); 
+    
+    // Lưu vào LocalStorage theo userId để không bị trùng
     localStorage.setItem('fishing_endTime_' + userId, endTime);
+    
     isFishing = true;
-    startCountdown();
-}
+    startCountdown(); // Gọi hàm đếm ngược
+};
+
 
 function startCountdown() {
 
