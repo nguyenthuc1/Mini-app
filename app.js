@@ -99,8 +99,8 @@ function startCountdown() {
         }
     }, 1000);
 }
-
-// --- 9. VẬN HÀNH (Chỉ cộng cá khi đang trong trạng thái ra khơi) ---
+updateDisplays();
+// --- 11. VẬN HÀNH (Chỉ cộng cá khi đang trong trạng thái ra khơi) ---
 setInterval(() => {
     if (isFishing) { // Thêm điều kiện này
         fishCount += (baseSpeed + (boatLevel - 1) * 0.5);
@@ -118,5 +118,49 @@ if (endTime && endTime > Date.now()) {
 }
 
 // Cập nhật hiển thị lần đầu khi vừa tải trang
-updateDisplays();
+// --- 9. KHÔI PHỤC TRẠNG THÁI & TÍNH CÁ NGOẠI TUYẾN ---
+function restoreGameState() {
+    const now = Date.now();
+    const lastUpdate = parseInt(localStorage.getItem('last_update_' + userId)) || now;
+    
+    // 1. Kiểm tra xem có đang trong thời gian ra khơi không
+    if (endTime && endTime > now) {
+        isFishing = true;
+        startCountdown();
+
+        // 2. TÍNH CÁ NGOẠI TUYẾN:
+        // Số giây đã trôi qua kể từ lần cuối đóng app
+        const secondsPassed = Math.floor((now - lastUpdate) / 1000);
+        if (secondsPassed > 0) {
+            const currentSpeed = baseSpeed + (boatLevel - 1) * 0.5;
+            const offlineFish = secondsPassed * currentSpeed;
+            
+            fishCount += offlineFish;
+            alert(`Chào mừng trở lại! Bạn đã câu được ${Math.floor(offlineFish)} cá khi vắng mặt.`);
+        }
+    } else {
+        isFishing = false;
+        localStorage.removeItem('fishing_endTime_' + userId);
+    }
+    
+    updateDisplays();
+}
+
+// Cập nhật mốc thời gian cuối cùng mỗi khi dữ liệu thay đổi
+function saveLastUpdate() {
+    localStorage.setItem('last_update_' + userId, Date.now());
+}
+
+// Gọi hàm khôi phục khi vừa tải trang
+restoreGameState();
+
+// Bổ sung vào vòng lặp cộng cá để luôn lưu mốc thời gian mới nhất
+setInterval(() => {
+    if (isFishing) {
+        fishCount += (baseSpeed + (boatLevel - 1) * 0.5);
+        saveLastUpdate(); // Lưu mốc thời gian mỗi giây
+        updateDisplays();
+    }
+}, 1000);
+
 
