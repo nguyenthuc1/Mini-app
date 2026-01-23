@@ -15,7 +15,20 @@ let isFishing = false;
 // --- 2. HÀM ĐỒNG BỘ GIAO DIỆN TẤT CẢ CÁC TRANG ---
 function updateDisplays() {
     const currentSpeed = baseSpeed + (boatLevel - 1) * 0.5;
-    const roundedFish = Math.floor(fishCount);
+    const bonusValue = (boatLevel - 1) * 0.5; // Số cá cộng thêm từ nâng cấp
+
+    // Hiển thị +0.5 (hoặc 1.0, 1.5...) bên cạnh tốc độ gốc
+    const bonusTag = document.getElementById('speed-bonus');
+    if (bonusTag) {
+        if (bonusValue > 0) {
+            bonusTag.innerText = `+${bonusValue.toFixed(1)}`;
+            bonusTag.classList.remove('hidden');
+        } else {
+            bonusTag.classList.add('hidden');
+        }
+    }
+    // ... các phần cập nhật hiển thị khác
+}
 
     // Cập nhật số cá & xu trên MỌI trang có ID tương ứng
     const elements = {
