@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SuperMoneyMine</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script
- src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
+    <script src="https://sad.adsgram.ai/js/adsgram-adbox.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 
-  <body class="lex flex-col h-screen bg-[#0c1524] text-white">
+<body class="flex flex-col h-screen bg-[#0c1524] text-white overflow-hidden">
 
 <div id="tab-content" class="flex-grow overflow-y-auto pb-24 p-4 space-y-6">
     
@@ -17,7 +17,6 @@
         <div class="relative bg-slate-800/50 border border-white/10 p-6 rounded-[2.5rem] shadow-2xl backdrop-blur-md">
             <div class="ocean-frame relative w-full aspect-square rounded-[2rem] overflow-hidden flex items-center justify-center bg-gradient-to-b from-blue-900/40 to-slate-900/60 shadow-inner border border-white/5">
                 <div id="boat" class="text-8xl animate-bounce" style="animation-duration: 3s;">🚢</div>
-                <div class="water-shadow"></div>
             </div>
             
             <div class="mt-6 flex justify-between items-center bg-black/20 p-4 rounded-2xl border border-white/5">
@@ -32,95 +31,65 @@
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-            <div class="bg-slate-800/50 border border-white/10 p-4 rounded-3xl text-center backdrop-blur-sm">
-                <p class="text-[10px] text-gray-400 uppercase font-bold">Kho cá</p>
+            <div class="bg-slate-800/50 border border-white/10 p-4 rounded-3xl text-center">
+                <p class="text-[10px] text-gray-400 font-bold uppercase">Kho cá</p>
                 <p class="text-2xl font-black text-white"><span id="fish-display">0</span> 🐟</p>
             </div>
-            <div class="bg-slate-800/50 border border-white/10 p-4 rounded-3xl text-center backdrop-blur-sm">
-                <p class="text-[10px] text-gray-400 uppercase font-bold">Số dư xu</p>
+            <div class="bg-slate-800/50 border border-white/10 p-4 rounded-3xl text-center">
+                <p class="text-[10px] text-gray-400 font-bold uppercase">Số dư xu</p>
                 <p class="text-2xl font-black text-yellow-400"><span id="coin-display">0</span> 💰</p>
             </div>
         </div>
     </div>
 
     <div id="page-upgrade" class="tab-page hidden space-y-4">
-        <div class="text-center py-2">
-            <h2 class="text-2xl font-black uppercase italic text-blue-400">Nâng cấp đội tàu</h2>
-        </div>
-        <div class="bg-gradient-to-b from-slate-800 to-slate-900 border border-white/10 p-6 rounded-[2.5rem] shadow-2xl">
+        <div class="text-center py-2"><h2 class="text-2xl font-black text-blue-400 uppercase italic">Nâng cấp</h2></div>
+        <div class="bg-slate-800 p-6 rounded-[2.5rem] border border-white/10">
             <div class="flex flex-col items-center mb-6">
-                <div class="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center border border-blue-500/30 mb-2">
-                    <span class="text-4xl">🚀</span>
-                </div>
+                <span class="text-5xl mb-2">🚀</span>
                 <h3 class="text-xl font-bold">Thuyền Cấp <span id="boat-level">1</span></h3>
             </div>
-            <div class="bg-black/20 p-4 rounded-2xl mb-6 border border-white/5">
-                <div class="flex justify-between text-sm mb-2">
-                    <span class="text-gray-400">Phí nâng cấp:</span>
-                    <span class="text-yellow-400 font-bold"><span id="upgrade-cost">2000</span> Xu</span>
-                </div>
-                <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
-                    <div class="bg-blue-500 h-full w-[20%]"></div>
-                </div>
-            </div>
-            <button onclick="buyBoatUpgrade()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black shadow-lg active:scale-95 transition-all uppercase tracking-widest">Nâng cấp ngay</button>
+            <button onclick="buyBoatUpgrade()" class="w-full bg-blue-600 py-4 rounded-2xl font-black shadow-lg active:scale-95 transition-all">
+                NÂNG CẤP (<span id="upgrade-cost">2000</span> XU)
+            </button>
         </div>
     </div>
 
     <div id="page-sell" class="tab-page hidden space-y-4">
-        <div class="bg-slate-800/50 border border-white/10 p-8 rounded-[2.5rem] text-center backdrop-blur-md">
-            <div class="mb-6 relative inline-block">
-                <div class="text-7xl">🧺</div>
-                <span class="absolute -top-2 -right-2 bg-red-500 text-[10px] font-black px-2 py-1 rounded-full border-2 border-slate-800">HOT</span>
-            </div>
-            <p class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2">Sẵn sàng để bán</p>
-            <h3 class="text-6xl font-black text-white mb-6"><span id="sell-fish-count">0</span></h3>
-            <div class="flex justify-center gap-4 mb-8">
-                <span class="bg-blue-500/20 text-blue-400 px-4 py-1 rounded-full text-xs font-bold border border-blue-400/20">10 Xu / Cá</span>
-            </div>
-            <button onclick="sellFishAction()" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-blue-900 py-5 rounded-2xl font-black text-xl shadow-xl active:scale-95 transition-all">BÁN LẤY XU VÀNG</button>
+        <div class="bg-slate-800/50 border border-white/10 p-8 rounded-[2.5rem] text-center">
+            <div class="text-7xl mb-4">🧺</div>
+            <p class="text-gray-400 text-xs font-bold uppercase">Cá trong giỏ</p>
+            <h3 class="text-6xl font-black text-white mb-6" id="sell-fish-count">0</h3>
+            <button onclick="sellFishAction()" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-blue-900 py-5 rounded-2xl font-black text-xl active:scale-95 transition-all">BÁN LẤY XU</button>
         </div>
     </div>
 
     <div id="page-wallet" class="tab-page hidden space-y-4">
-        <div class="bg-gradient-to-br from-indigo-700 via-blue-800 to-blue-900 p-8 rounded-[2.5rem] shadow-2xl border border-white/20 relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-6 opacity-10 text-6xl font-black italic">VISA</div>
-            <p class="text-blue-200/60 text-xs font-bold uppercase tracking-widest mb-1">Số dư tài khoản</p>
-            <h3 class="text-4xl font-black text-white mb-12"><span id="wallet-balance">0</span> <span class="text-lg text-yellow-400 italic">Xu</span></h3>
-            <div class="flex justify-between items-center">
-                <p class="text-white/40 text-[10px] font-mono tracking-widest italic uppercase">Fisherman Card</p>
-                <div class="flex -space-x-3">
-                    <div class="w-8 h-8 bg-red-500/60 rounded-full blur-[1px]"></div>
-                    <div class="w-8 h-8 bg-yellow-500/60 rounded-full blur-[1px]"></div>
-                </div>
-            </div>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-            <button class="bg-slate-800/80 p-4 rounded-2xl border border-white/5 opacity-50 flex flex-col items-center"><span class="text-xl">📤</span><span class="text-[10px] font-bold mt-1">RÚT TIỀN</span></button>
-            <button class="bg-slate-800/80 p-4 rounded-2xl border border-white/5 opacity-50 flex flex-col items-center"><span class="text-xl">📜</span><span class="text-[10px] font-bold mt-1">LỊCH SỬ</span></button>
+        <div class="bg-gradient-to-br from-indigo-700 to-blue-900 p-8 rounded-[2.5rem] shadow-2xl border border-white/20">
+            <p class="text-blue-200/60 text-xs font-bold uppercase">Số dư ví</p>
+            <h3 class="text-4xl font-black text-white mb-8"><span id="wallet-balance">0</span> <span class="text-lg text-yellow-400">Xu</span></h3>
+            <button class="w-full bg-white/10 py-3 rounded-xl font-bold border border-white/10">RÚT TIỀN (SẮP RA MẮT)</button>
         </div>
     </div>
 
 </div>
 
-   <nav class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-white/5 grid grid-cols-4 pb-6 pt-3 px-2 z-[100]">
-    <button onclick="switchTab('home')" class="flex flex-col items-center justify-center group">
-        <span class="text-xl group-active:scale-125 transition-transform">🏠</span>
-        <span class="text-[9px] font-bold mt-1 text-gray-500">HOME</span>
+<nav class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-white/5 grid grid-cols-4 pb-6 pt-3 px-2 z-[100]">
+    <button onclick="switchTab('home')" class="flex flex-col items-center justify-center">
+        <span class="text-xl">🏠</span><span class="text-[9px] font-bold mt-1 text-gray-500">HOME</span>
     </button>
-    <button onclick="switchTab('upgrade')" class="flex flex-col items-center justify-center group">
-        <span class="text-xl group-active:scale-125 transition-transform">🚀</span>
-        <span class="text-[9px] font-bold mt-1 text-gray-500">UPGRADE</span>
+    <button onclick="switchTab('upgrade')" class="flex flex-col items-center justify-center">
+        <span class="text-xl">🚀</span><span class="text-[9px] font-bold mt-1 text-gray-500">UPGRADE</span>
     </button>
-    <button onclick="switchTab('sell')" class="flex flex-col items-center justify-center group">
-        <span class="text-xl group-active:scale-125 transition-transform">🧺</span>
-        <span class="text-[9px] font-bold mt-1 text-gray-500">SELL</span>
+    <button onclick="switchTab('sell')" class="flex flex-col items-center justify-center">
+        <span class="text-xl">🧺</span><span class="text-[9px] font-bold mt-1 text-gray-500">SELL</span>
     </button>
-    <button onclick="switchTab('wallet')" class="flex flex-col items-center justify-center group">
-        <span class="text-xl group-active:scale-125 transition-transform">💳</span>
-        <span class="text-[9px] font-bold mt-1 text-gray-500">WALLET</span>
+    <button onclick="switchTab('wallet')" class="flex flex-col items-center justify-center">
+        <span class="text-xl">💳</span><span class="text-[9px] font-bold mt-1 text-gray-500">WALLET</span>
     </button>
 </nav>
 
-        
+<script src="app.js"></script>
+
+</body>
 </html>
