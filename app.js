@@ -153,4 +153,28 @@ function updateDisplays() {
     localStorage.setItem('fishing_coins', coins);
     localStorage.setItem('fishing_count', fishCount);
 }
+function switchTab(tabName) {
+    // 1. Ẩn tất cả các trang
+    const allPages = document.querySelectorAll('.tab-page');
+    allPages.forEach(page => {
+        page.classList.add('hidden');
+    });
+
+    // 2. Hiện trang được chọn dựa trên tabName
+    const activePage = document.getElementById('page-' + tabName);
+    if (activePage) {
+        activePage.classList.remove('hidden');
+    }
+
+    // 3. Đổi màu nút menu để người dùng biết mình đang ở đâu
+    const allButtons = document.querySelectorAll('.menu-btn');
+    allButtons.forEach(btn => {
+        btn.classList.replace('text-blue-400', 'text-gray-400');
+    });
+
+    // Cập nhật màu nút hiện tại (dùng event để xác định nút vừa bấm)
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.replace('text-gray-400', 'text-blue-400');
+    }
+}
 
