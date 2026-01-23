@@ -221,4 +221,66 @@ function sellFishAction() {
     
     alert(`Chúc mừng! Bạn đã nhận được ${earned} Xu.`);
 }
+// 1. CÁC BIẾN QUẢN LÝ NÂNG CẤP
+let boatLevel = parseInt(localStorage.getItem('boat_level')) || 1;
+let baseSpeed = 0.5; // Tốc độ mặc định 0.5 cá/giây
+let maxLevel = 14;
+
+// 2. TỰ ĐỘNG CỘNG CÁ (0.5 cá/giây mặc định + cấp độ)
+setInterval(() => {
+    // Tốc độ = 0.5 + (Cấp - 1) * 0.5. Ví dụ cấp 1 = 0.5, cấp 2 = 1.0...
+    let currentSpeed = baseSpeed + (boatLevel - 1) * 0.5;
+    fishCount += currentSpeed;
+    updateDisplays();
+}, 1000);
+
+// 3. HÀM NÂNG CẤP THUYỀN
+function buyBoatUpgrade() {
+    if (boatLevel >= maxLevel) return;
+
+    // Công thức tính giá: Cấp 1 lên 2 là 2000, mỗi cấp sau tăng thêm 2000 hoặc gấp đôi tùy bạn
+    let upgradeCost = boatLevel * 2000; 
+
+    if (coins >= upgradeCost) {
+        coins -= upgradeCost;
+        boatLevel++;
+        
+        // Lưu dữ liệu
+        localStorage.setItem('boat_level', boatLevel);
+        localStorage.setItem('fishing_coins', coins);
+        
+        updateDisplays();
+        alert(`Chúc mừng! Thuyền đã lên Cấp ${boatLevel}`);
+    } else {
+        alert(`Bạn cần ${upgradeCost.toLocaleString()} Xu để nâng cấp!`);
+    }
+}
+
+// 4. CẬP NHẬT HIỂN THỊ TOÀN APP
+function updateDisplays() {
+    // Hiển thị ở Trang chủ
+    if(document.getElementById('fish-display')) 
+        document.getElementById('fish-display').innerText = Math.floor(fishCount).toLocaleString();
+    if(document.getElementById('coin-display')) 
+        document.getElementById('coin-display').innerText = Math.floor(coins).toLocaleString();
+    
+    // Hiển thị ở Trang Nâng cấp
+    if(document.getElementById('boat-level')) 
+        document.getElementById('boat-level').innerText = boatLevel;
+    if(document.getElementById('boat-speed')) 
+        document.getElementById('boat-speed').innerText = (baseSpeed + (boatLevel - 1) * 0.5).toFixed(1);
+    
+    let upgradeCost = boatLevel * 2000;
+    if(document.getElementById('upgrade-cost')) 
+        document.getElementById('upgrade-cost').innerText = upgradeCost.toLocaleString();
+
+    // Xử lý khi đạt cấp Max
+    if (boatLevel >= maxLevel) {
+        if(document.getElementById('upgrade-info')) document.getElementById('upgrade-info').classList.add('hidden');
+        if(document.getElementById('max-level-msg')) document.getElementById('max-level-msg').classList.remove('hidden');
+    }
+}
+
+// Gọi cập nhật lần đầu khi tải trang
+updateDisplays();
 
