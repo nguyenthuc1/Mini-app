@@ -126,3 +126,53 @@ if (endTime > Date.now()) {
     startCountdown();
 }
 updateDisplays();
+// --- 6. VẬN HÀNH & OFFLINE MINING ---
+
+// Hàm tính toán cá khi quay lại App
+function calculateOfflineMining() {
+    const now = Date.now();
+    const lastUpdate = parseInt(localStorage.getItem('fishing_lastUpdate_' + userId)) || now;
+    
+    // Nếu đang trong trạng thái Ra khơi
+    if (isFishing && endTime > lastUpdate) {
+        // Chỉ tính thời gian từ lúc thoát đến lúc hết giờ (nếu đã hết) hoặc đến hiện tại
+        const limit = Math.min(now, endTime);
+        const secondsOffline = Math.floor((limit - lastUpdate) / 1000);
+        
+        if (secondsOffline > 0) {
+            const currentSpeed = baseSpeed + (boatLevel - 1) * 0.5;
+            const fishEarned = secondsOffline * currentSpeed;
+            fishCount += fishEarned;
+            
+            // Thông báo cho người dùng
+            alert(`🎣 Bạn đã đánh bắt được ${Math.floor(fishEarned).toLocaleString()} cá khi đang vắng mặt!`);
+        }
+    }
+    // Cập nhật mốc thời gian mới nhất
+    localStorage.setItem('fishing_lastUpdate_' + userId, now);
+    updateDisplays();
+}
+
+// Chạy mỗi giây để cộng cá khi đang mở App
+setInterval(() => {
+    const now = Date.now();
+    if (isFishing && now < endTime) {
+        fishCount += (baseSpeed + (boatLevel - 1) * 0.5);
+        localStorage.setItem('fishing_lastUpdate_' + userId, now);
+        updateDisplays();
+    } else if (isFishing && now >= endTime) {
+        isFishing = false;
+        document.getElementById('btn-text').innerText = "🚢 RA KHƠI";
+        localStorage.removeItem('fishing_endTime_' + userId);
+        updateDisplays();
+    }
+}, 1000);
+
+// Khởi tạo khi vào App
+if (endTime > Date.now()) {
+    isFishing = true;
+    startCountdown();
+    calculateOfflineMining(); // Tính cá vắng mặt ngay khi vào app
+} else {
+    updateDisplays();
+}
