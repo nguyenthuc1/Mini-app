@@ -91,24 +91,25 @@ window.handleStartFishing = function() {
             isFishing = false;
             if(btnText) btnText.innerText = "🚢 RA KHƠI";
             localStorage.removeItem('fishing_endTime_' + userId);
-        } else {
-            // --- THÊM LOGIC CỘNG CÁ VÀO ĐÂY ---
-            const maxStorage = getMaxStorage(); // Lấy giới hạn kho
-            if (fishCount < maxStorage) {
-                // Tốc độ: Cơ bản 0.5 + (Cấp thuyền - 1) * 0.5
-                fishCount += (0.5 + (boatLevel - 1) * 0.5); 
-                updateDisplays(); // Ép màn hình hiển thị số cá mới
-            }
-            // ---------------------------------
-
-            // Hiển thị đồng hồ (Giữ nguyên code của bạn)
-            const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
-            const m = Math.floor((timeLeft % 3600000) / 60000).toString().padStart(2, '0');
-            const s = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0');
-            if(btnText) btnText.innerText = `${h}:${m}:${s}`;
+            } else {
+        // 1. Logic cộng cá mỗi giây
+        const maxStorage = getMaxStorage(); 
+        if (fishCount < maxStorage) {
+            // Tốc độ = 0.5 + (Cấp thuyền - 1) * 0.5
+            fishCount += (0.5 + (boatLevel - 1) * 0.5);
+            
+            // 2. Cập nhật con số lên màn hình ngay lập tức
+            updateDisplays(); 
         }
-    }, 1000);
-}
+
+        // 3. Hiển thị đồng hồ đếm ngược (Giữ nguyên phần này)
+        const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
+        const m = Math.floor((timeLeft % 3600000) / 60000).toString().padStart(2, '0');
+        const s = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0');
+        const btnText = document.getElementById('btn-text');
+        if(btnText) btnText.innerText = `${h}:${m}:${s}`;
+    }
+
 
 
 
