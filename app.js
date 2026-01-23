@@ -281,8 +281,7 @@ function updateDisplays() {
     }
 }
 
-// Gọi cập nhật lần đầu khi tải trang
-updateDisplays();
+
 // Các biến khởi tạo
 let fishCount = parseFloat(localStorage.getItem('fishing_count')) || 0;
 let coins = parseInt(localStorage.getItem('fishing_coins')) || 0;
