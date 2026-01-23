@@ -3,97 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
-
-<script>
-    let coins = parseInt(localStorage.getItem('coins')) || 0;
-    let endTime = localStorage.getItem('fishingEndTime') || 0;
-    let fishInterval;
-
-    // Khởi tạo Adsgram (Thay 'YOUR_BLOCK_ID' bằng ID thật của bạn)
-    const AdController = window.Adsgram.init({ blockId: "YOUR_BLOCK_ID" });
-
-    function startFishingProcess() {
-        // 1. Gọi quảng cáo
-        AdController.show().then((result) => {
-            // Người dùng đã xem hết quảng cáo
-            setupFishingTime(3 * 60 * 60); // 3 tiếng = 10800 giây
-        }).catch((result) => {
-            // Lỗi hoặc người dùng bỏ ngang quảng cáo
-            alert("Bạn cần xem hết quảng cáo để có thể ra khơi!");
-        });
-    }
-
-    function setupFishingTime(seconds) {
-        const now = Date.now();
-        endTime = now + (seconds * 1000);
-        localStorage.setItem('fishingEndTime', endTime);
-        runFishingUI();
-    }
-
-    function runFishingUI() {
-        const btn = document.getElementById('btn-action');
-        const boat = document.getElementById('boat');
-        const speedDisplay = document.getElementById('speed-display');
-
-        if (fishInterval) clearInterval(fishInterval);
-
-        fishInterval = setInterval(() => {
-            const now = Date.now();
-            const remaining = endTime - now;
-
-            if (remaining <= 0) {
-                stopFishing();
-            } else {
-                // Đang trong thời gian đánh cá
-                createFishEffect();
-                coins += 1;
-                document.getElementById('coin-display').innerText = coins;
-                localStorage.setItem('coins', coins);
-
-                // Cập nhật giao diện
-                btn.disabled = true;
-                boat.classList.add('boat-float');
-                speedDisplay.innerText = "5";
-                
-                // Hiển thị đếm ngược thời gian còn lại
-                const h = Math.floor(remaining / 3600000);
-                const m = Math.floor((remaining % 3600000) / 60000);
-                const s = Math.floor((remaining % 60000) / 1000);
-                btn.innerText = `⏳ Còn ${h}h ${m}m ${s}s`;
-            }
-        }, 1000); // Mỗi giây cộng tiền và kiểm tra thời gian
-    }
-
-    function stopFishing() {
-        clearInterval(fishInterval);
-        const btn = document.getElementById('btn-action');
-        btn.disabled = false;
-        btn.innerText = "🚢 Ra khơi";
-        document.getElementById('boat').classList.remove('boat-float');
-        document.getElementById('speed-display').innerText = "0";
-        localStorage.removeItem('fishingEndTime');
-    }
-
-    // Tự động chạy lại nếu còn thời gian khi người dùng tải lại trang
-    window.onload = () => {
-        document.getElementById('coin-display').innerText = coins;
-        if (endTime && endTime > Date.now()) {
-            runFishingUI();
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
+    <title>Supermoneyfine - Fishing</title>
+    <style>
+        body { background-color: #0f172a; color: white; overflow: hidden; }
+        .ocean-frame { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border: 2px solid #334155; }
+        .boat-float { animation: floating 3s ease-in-out infinite; }
+        @keyframes floating {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(3deg); }
         }
-    };
+        .fish-particle {
+            position: absolute; pointer-events: none;
+            animation: flyUp 1.2s ease-out forwards;
+        }
+        @keyframes flyUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-120px) translateX(var(--tx)) scale(0.5); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center p-4 h-screen">
 
-    // Hàm tạo hiệu ứng cá (giữ nguyên như cũ)
-    function createFishEffect() {
-        const container = document.getElementById('effect-layer');
-        const fish = document.createElement('div');
-        const randomX = (Math.random() - 0.5) * 100;
-        fish.className = 'fish-particle text-2xl';
-        fish.innerHTML = '🐟 <span class="text-xs text-yellow-300 font-bold">+1</span>';
-        fish.style.left = '50%';
-        fish.style.top = '50%';
-        fish.style.setProperty('--tw-x', `${randomX}px`);
-        container.appendChild(fish);
-        setTimeout(() => fish.remove(), 1000);
-    }
-</script>
+    <div class="w-full flex justify-between items-center py-2 px-4">
+        <span class="text-lg font-semibold">✕ Supermoneyfine</span>
+        <span class="text-xl">⋮</span>
+    </div>
+
+    <div class="relative w-full aspect-[4/5] max-w-sm rounded-3xl ocean-frame shadow-inner mt-4 overflow-hidden flex items-center justify-center">
+        <div id="boat-area" class="relative z-10 transition-all duration-500 opacity-40">
+            <div id="boat" class="text-8xl">🚢</div>
+            <div class="w-20 h-4 bg-blue-400/20 rounded-[100%] blur-md mt-[-5px] mx-auto"></div>
+        </div>
+        <div id="effect-layer" class="absolute inset-0 z-20"></div>
+    </div>
+
+    <div class="w-full max-w-sm mt-auto mb-8 bg-[#22a1e4] rounded-3xl p-6 shadow-xl">
+        <div class="space-y-1 text-sm">
+            <p>🎣 Đánh cá kiếm xu</p>
+            <p>⚡ Tốc độ: <span id="speed-display">0</span> cá/giây</p>
+            <p>💰 Xu: <span id="coin-display" class="font-bold text-xl text-yellow-300">0</span></p>
+        </div>
+
+        <button onclick="handleStart()" id="btn-action" class="mt-4 bg-white text-blue-600 font-bold py-2 px-6 rounded-lg shadow active:scale-95 transition-all text-sm">
+            🚢 Ra khơi
+        </button>
+        
+        <p class="text-[10px] text-blue-100 mt-2">Xem quảng cáo để ra khơi và bắt cá</p>
+    </div>
+
+    <script>
+        // CẤU HÌNH: Thay 'YOUR_BLOCK_ID' bằng ID từ Adsgram
+        const BLOCK_ID = 'YOUR_BLOCK_ID'; 
+        let coins = parseInt(localStorage.getItem('fishing_coins')) || 0;
+        let endTime = localStorage.getItem('fishing_endTime') || 0;
+        let fishInterval;
+
+        const AdController = window.Adsgram ? window.Adsgram.init({ blockId: BLOCK_ID }) : null;
+
+        function handleStart() {
+            if (!AdController) {
+                alert("Không thể tải SDK quảng cáo. Hãy kiểm tra kết nối!");
+                return;
+            }
+
+            // Gọi quảng cáo Adsgram
+            AdController.show().then((result) => {
+                // Thành công: Bắt đầu 3 tiếng (10800 giây)
+                startFishing(10800);
+            }).catch((err) => {
+                alert("Bạn cần xem hết quảng cáo để ra khơi! Lỗi: " + (err.description || "Hủy bỏ"));
+            });
+        }
+
+        function startFishing(durationSeconds) {
+            endTime = Date.now() + (durationSeconds * 1000);
+            localStorage.setItem('fishing_endTime', endTime);
+            initLogic();
+        }
+
+        function initLogic() {
+            const btn = document.getElementById('btn-action');
+            const boatArea = document.getElementById('boat-area');
+            const boat = document.getElementById('boat');
+            const speed = document.getElementById('speed-display');
+
+            if (fishInterval) clearInterval(fishInterval);
+
+            fishInterval = setInterval(() => {
+                const now = Date.now();
+                const timeLeft = endTime - now;
+
+                if (timeLeft <= 0) {
+                    stopFishing();
+                } else {
+                    // Đang trong trạng thái hoạt động
+                    btn.disabled = true;
+                    boatArea.style.opacity = "1";
+                    boat.classList.add('boat-float');
+                    speed.innerText = "5";
+                    
+                    createFishEffect();
+                    coins += 1;
+                    document.getElementById('coin-display').innerText = coins;
+                    localStorage.setItem('fishing_coins', coins);
+
+                    // Đếm ngược trên nút
+                    const h = Math.floor(timeLeft / 3600000);
+                    const m = Math.floor((timeLeft % 3600000) / 60000);
+                    const s = Math.floor((timeLeft % 60000) / 1000);
+                    btn.innerText = `⏳ ${h}h ${m}m ${s}s`;
+                }
+            }, 1000);
+        }
+
+        function stopFishing() {
+            clearInterval(fishInterval);
+            const btn = document.getElementById('btn-action');
+            btn.disabled = false;
+            btn.innerText = "🚢 Ra khơi";
+            document.getElementById('boat-area').style.opacity = "0.4";
+            document.getElementById('boat').classList.remove('boat-float');
+            document.getElementById('speed-display').innerText = "0";
+            localStorage.removeItem('fishing_endTime');
+        }
+
+        function createFishEffect() {
+            const container = document.getElementById('effect-layer');
+            const fish = document.createElement('div');
+            const rx = (Math.random() - 0.5) * 150;
+            fish.className = 'fish-particle text-2xl';
+            fish.innerHTML = '🐟';
+            fish.style.left = '50%';
+            fish.style.top = '60%';
+            fish.style.setProperty('--tx', `${rx}px`);
+            container.appendChild(fish);
+            setTimeout(() => fish.remove(), 1200);
+        }
+
+        // Tự chạy khi tải trang nếu vẫn còn thời gian
+        window.onload = () => {
+            document.getElementById('coin-display').innerText = coins;
+            if (endTime && endTime > Date.now()) {
+                initLogic();
+            }
+        };
+    </script>
+</body>
+</html>
