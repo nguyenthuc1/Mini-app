@@ -100,11 +100,23 @@ function startCountdown() {
     }, 1000);
 }
 
-// --- 6. VẬN HÀNH (Chỉ cộng cá khi đang trong trạng thái ra khơi) ---
+// --- 9. VẬN HÀNH (Chỉ cộng cá khi đang trong trạng thái ra khơi) ---
 setInterval(() => {
     if (isFishing) { // Thêm điều kiện này
         fishCount += (baseSpeed + (boatLevel - 1) * 0.5);
         updateDisplays();
     }
 }, 1000);
+// --- 10. KHÔI PHỤC TRẠNG THÁI KHI VÀO LẠI APP ---
+if (endTime && endTime > Date.now()) {
+    isFishing = true; // Kích hoạt lại trạng thái câu cá
+    startCountdown(); // Chạy lại đồng hồ đếm ngược
+} else {
+    isFishing = false;
+    // Nếu hết hạn thì xóa bộ nhớ đếm ngược của User đó
+    localStorage.removeItem('fishing_endTime_' + userId);
+}
+
+// Cập nhật hiển thị lần đầu khi vừa tải trang
+updateDisplays();
 
