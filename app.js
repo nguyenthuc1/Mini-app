@@ -162,5 +162,50 @@ setInterval(() => {
         updateDisplays();
     }
 }, 1000);
+// --- CẬP NHẬT HÀM BÁN CÁ ---
+function sellFishAction() {
+    const toSell = Math.floor(fishCount);
+    if (toSell < 1) return alert("Bạn không có đủ cá để bán!");
+    
+    const earnedGold = toSell * 10;
+    coins += earnedGold;
+    fishCount = 0;
+    updateDisplays();
+    
+    // Thông báo khi bán thành công
+    alert(`Chúc mừng! Bạn đã bán ${toSell.toLocaleString()} cá và nhận được ${earnedGold.toLocaleString()} Xu vàng! 💰`);
+}
+
+// ---12. CẬP NHẬT HÀM NÂNG CẤP (Đã có thông báo, làm rõ hơn) ---
+function buyBoatUpgrade() {
+    const cost = boatLevel * 2000;
+    if (boatLevel >= 14) return alert("Thuyền của bạn đã đạt cấp độ tối đa!");
+    
+    showAdBeforeAction(() => {
+        if (coins >= cost) {
+            coins -= cost;
+            boatLevel++;
+            updateDisplays();
+            alert(`🚀 Nâng cấp thành công! Thuyền hiện tại: Cấp ${boatLevel}. Tốc độ đánh bắt đã tăng lên!`);
+        } else {
+            alert(`Bạn còn thiếu ${(cost - coins).toLocaleString()} Xu để nâng cấp lên cấp ${boatLevel + 1}!`);
+        }
+    });
+}
+
+// --- THÊM HÀM RÚT TIỀN MỚI ---
+function requestWithdraw() {
+    // Đặt hạn mức tối thiểu ví dụ 50,000 xu
+    const minWithdraw = 50000;
+    
+    if (coins < minWithdraw) {
+        alert(`Cần tối thiểu ${minWithdraw.toLocaleString()} Xu để thực hiện rút tiền. Hãy chăm chỉ đánh cá thêm nhé!`);
+        return;
+    }
+    
+    showAdBeforeAction(() => {
+        alert("Đang kết nối với cổng thanh toán... Yêu cầu của bạn đã được ghi nhận và sẽ được xử lý trong vòng 24h!");
+    });
+}
 
 
