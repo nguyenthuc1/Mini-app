@@ -1,1 +1,44 @@
+body {
+    background-color: #0c1524;
+}
+
+.ocean-frame {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 2px solid #334155;
+}
+
+.control-panel {
+    background-color: #22a1e4;
+}
+
+/* Hiệu ứng thuyền nhấp nhô */
+.boat-float {
+    animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(3deg); }
+}
+
+.water-shadow {
+    width: 80px;
+    height: 16px;
+    background: rgba(96, 165, 250, 0.2);
+    border-radius: 100%;
+    filter: blur(8px);
+    margin: -5px auto 0;
+}
+
+/* Hiệu ứng cá bay lên */
+.fish-particle {
+    position: absolute;
+    pointer-events: none;
+    animation: flyUp 1.2s ease-out forwards;
+}
+
+@keyframes flyUp {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-120px) translateX(var(--tx)) scale(0.5); }
+}
 
