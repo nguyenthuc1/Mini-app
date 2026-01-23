@@ -1,3 +1,15 @@
+// Khởi tạo Telegram WebApp
+const tele = window.Telegram.WebApp;
+tele.ready(); // Báo cho Telegram biết app đã sẵn sàng
+
+// Lấy thông tin User
+const user = tele.initDataUnsafe?.user;
+const userId = user?.id || "guest"; // Nếu không chạy trong Tele sẽ là guest
+const userName = user?.first_name || "Ngư dân";
+
+// Sau này, thay vì lưu chung chung, bạn sẽ lưu theo userId
+// Ví dụ: localStorage.setItem('fishing_coins_' + userId, coins);
+
 // --- 1. KHỞI TẠO DỮ LIỆU ---
 let coins = parseInt(localStorage.getItem('fishing_coins')) || 0;
 let fishCount = parseFloat(localStorage.getItem('fishing_count')) || 0;
