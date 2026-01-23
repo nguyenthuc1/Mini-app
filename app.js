@@ -1,54 +1,28 @@
-// Khởi tạo Telegram WebApp
-const tele = window.Telegram.WebApp;
-tele.ready(); // Báo cho Telegram biết app đã sẵn sàng
+// --- 1. KẾT NỐI TELEGRAM & LẤY ID NGƯỜI DÙNG ---
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand(); // Mở rộng hết màn hình
 
-// Lấy thông tin User
-const user = tele.initDataUnsafe?.user;
-const userId = user?.id || "guest"; // Nếu không chạy trong Tele sẽ là guest
-const userName = user?.first_name || "Ngư dân";
+// Lấy ID duy nhất của mỗi nick Telegram
+const userId = tg.initDataUnsafe?.user?.id || "guest_user";
 
-// Sau này, thay vì lưu chung chung, bạn sẽ lưu theo userId
-// Ví dụ: localStorage.setItem('fishing_coins_' + userId, coins);
+// --- 2. KHỞI TẠO DỮ LIỆU THEO USER ID ---
+let coins = parseInt(localStorage.getItem('fishing_coins_' + userId)) || 0;
+let fishCount = parseFloat(localStorage.getItem('fishing_count_' + userId)) || 0;
+let boatLevel = parseInt(localStorage.getItem('boat_level_' + userId)) || 1;
+let endTime = localStorage.getItem('fishing_endTime_' + userId) || 0;
 
-// --- 1. KHỞI TẠO DỮ LIỆU ---
-let coins = parseInt(localStorage.getItem('fishing_coins')) || 0;
-let fishCount = parseFloat(localStorage.getItem('fishing_count')) || 0;
-let boatLevel = parseInt(localStorage.getItem('boat_level')) || 1;
-let endTime = localStorage.getItem('fishing_endTime') || 0;
 const baseSpeed = 0.5;
 let isFishing = false;
-
-// --- 2. CẤU HÌNH ADSGRAM (An toàn) ---
-// Thay 'YOUR_BLOCK_ID' bằng ID thật từ Adsgram.ai nếu có
 const blockId = "YOUR_BLOCK_ID"; 
 
-async function showAdBeforeAction(successCallback) {
-    // Kiểm tra xem SDK Adsgram đã tải xong chưa
-    if (window.Adsgram && blockId !== "YOUR_BLOCK_ID") {
-        try {
-            const AdController = window.Adsgram.init({ blockId: blockId });
-            const result = await AdController.show();
-            if (result.done) {
-                successCallback();
-            } else {
-                alert("Bạn cần xem hết quảng cáo!");
-            }
-        } catch (error) {
-            console.log("Adsgram chưa sẵn sàng hoặc lỗi, bỏ qua quảng cáo.");
-            successCallback(); // Vẫn cho chạy game nếu lỗi quảng cáo
-        }
-    } else {
-        // Nếu chưa cấu hình Ads hoặc SDK chưa tải, cho chạy thẳng vào game
-        successCallback();
-    }
-}
-
-// --- 3. CÁC HÀM CẬP NHẬT GIAO DIỆN ---
+// --- 3. CÁC HÀM CẬP NHẬT GIAO DIỆN & LƯU TRỮ ---
 function updateDisplays() {
     const roundedFish = Math.floor(fishCount);
     const cost = boatLevel * 2000;
     const speed = baseSpeed + (boatLevel - 1) * 0.5;
 
+    // Cập nhật số liệu lên màn hình (giữ nguyên các ID từ file index.html của bạn)
     if(document.getElementById('fish-display')) document.getElementById('fish-display').innerText = roundedFish.toLocaleString();
     if(document.getElementById('sell-fish-count')) document.getElementById('sell-fish-count').innerText = roundedFish.toLocaleString();
     if(document.getElementById('coin-display')) document.getElementById('coin-display').innerText = coins.toLocaleString();
@@ -57,18 +31,30 @@ function updateDisplays() {
     if(document.getElementById('upgrade-cost')) document.getElementById('upgrade-cost').innerText = cost.toLocaleString();
     if(document.getElementById('speed-display')) document.getElementById('speed-display').innerText = speed.toFixed(1);
 
-    localStorage.setItem('fishing_count', fishCount);
-    localStorage.setItem('fishing_coins', coins);
-    localStorage.setItem('boat_level', boatLevel);
+    // LƯU DỮ LIỆU RIÊNG CHO TỪNG USER ID
+    localStorage.setItem('fishing_count_' + userId, fishCount);
+    localStorage.setItem('fishing_coins_' + userId, coins);
+    localStorage.setItem('boat_level_' + userId, boatLevel);
+    if (endTime) localStorage.setItem('fishing_endTime_' + userId, endTime);
 }
 
-// --- 4. CÁC NÚT BẤM (Đã gắn Ads) ---
+// --- 4. CÁC HÀM XỬ LÝ NÚT BẤM (GIỮ NGUYÊN LOGIC CŨ) ---
+async function showAdBeforeAction(successCallback) {
+    if (window.Adsgram && blockId !== "YOUR_BLOCK_ID") {
+        try {
+            const AdController = window.Adsgram.init({ blockId: blockId });
+            const result = await AdController.show();
+            if (result.done) successCallback();
+            else alert("Bạn cần xem hết quảng cáo!");
+        } catch (error) { successCallback(); }
+    } else { successCallback(); }
+}
 
 function handleStartFishing() {
     if (isFishing) return;
     showAdBeforeAction(() => {
         endTime = Date.now() + (3 * 60 * 60 * 1000);
-        localStorage.setItem('fishing_endTime', endTime);
+        updateDisplays();
         startCountdown();
     });
 }
@@ -76,16 +62,13 @@ function handleStartFishing() {
 function buyBoatUpgrade() {
     const cost = boatLevel * 2000;
     if (boatLevel >= 14) return alert("Cấp tối đa!");
-    
     showAdBeforeAction(() => {
         if (coins >= cost) {
             coins -= cost;
             boatLevel++;
             updateDisplays();
             alert("Nâng cấp thành công!");
-        } else {
-            alert("Thiếu xu!");
-        }
+        } else { alert("Thiếu xu!"); }
     });
 }
 
@@ -104,7 +87,6 @@ function switchTab(tabName) {
     updateDisplays();
 }
 
-// --- 5. LOGIC THỜI GIAN ---
 function startCountdown() {
     const btnText = document.getElementById('btn-text');
     const timerInterval = setInterval(() => {
@@ -113,7 +95,6 @@ function startCountdown() {
             clearInterval(timerInterval);
             isFishing = false;
             if(btnText) btnText.innerText = "🚢 RA KHƠI";
-            localStorage.removeItem('fishing_endTime');
         } else {
             isFishing = true;
             const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
@@ -124,6 +105,7 @@ function startCountdown() {
     }, 1000);
 }
 
+// Chạy tự động cộng cá mỗi giây
 setInterval(() => {
     fishCount += (baseSpeed + (boatLevel - 1) * 0.5);
     updateDisplays();
