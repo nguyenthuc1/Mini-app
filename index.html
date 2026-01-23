@@ -12,6 +12,28 @@
     <div class="py-2"></div>
 
     <div id="tab-content" class="flex-grow px-4 overflow-y-auto pb-24">
+    
+    <div id="page-home" class="tab-page">
+        </div>
+
+    <div id="page-sell" class="tab-page hidden text-center">
+        <h2 class="text-2xl font-bold mb-6 mt-4">Chợ Cá Mini</h2>
+        <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700 shadow-xl mb-6">
+            <div class="text-6xl mb-4">🐟</div>
+            <p class="text-gray-400">Bạn đang có</p>
+            <h3 class="text-3xl font-bold text-blue-400"><span id="sell-fish-count">0</span> Con cá</h3>
+            <p class="text-xs text-gray-500 mt-2">Giá thị trường: 10 Xu / 1 Cá</p>
+        </div>
+
+        <button onclick="sellFishAction()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-blue-900 font-extrabold py-4 rounded-2xl shadow-lg active:scale-95 transition-all">
+            💰 BÁN TOÀN BỘ LẤY XU
+        </button>
+        
+        <p class="text-[10px] text-gray-500 mt-4 italic">Lưu ý: Cá đã bán không thể hoàn tác</p>
+    </div>
+
+    </div>
+
         
         <div id="tab-home" class="tab-item">
             <div class="ocean-frame relative w-full aspect-[4/5] rounded-3xl overflow-hidden flex items-center justify-center border-2 border-slate-700">
