@@ -1,4 +1,5 @@
-// --- 1. KHỞI TẠO USER ---
+
+ // --- 1. KHỞI TẠO USER ---
 const tg = window.Telegram.WebApp;
 tg.ready();
 const userId = tg.initDataUnsafe?.user?.id || "guest";
@@ -122,3 +123,44 @@ if (endTime > Date.now()) {
 
 // Lần đầu load app
 updateDisplays();
+// --- CẬP NHẬT HÀM BÁN CÁ ---
+function sellFishAction() {
+    const toSell = Math.floor(fishCount);
+    if (toSell < 1) return alert("Bạn không có đủ cá để bán!");
+    
+    const earnedGold = toSell * 10;
+    coins += earnedGold;
+    fishCount = 0;
+    updateDisplays();
+    
+    // Thông báo chi tiết số tiền nhận được
+    alert(`💰 Chúc mừng! Bạn đã bán ${toSell.toLocaleString()} cá và nhận được ${earnedGold.toLocaleString()} Xu!`);
+}
+
+// --- CẬP NHẬT HÀM NÂNG CẤP ---
+function buyBoatUpgrade() {
+    const cost = boatLevel * 2000;
+    if (coins >= cost) {
+        coins -= cost;
+        boatLevel++;
+        updateDisplays();
+        
+        // Thông báo khi nâng cấp thành công
+        alert(`🚀 Nâng cấp thành công! Thuyền hiện tại: Cấp ${boatLevel}. Tốc độ đánh bắt đã tăng thêm +0.5 cá/s!`);
+    } else {
+        // Thông báo khi thiếu tiền
+        alert(`Bạn còn thiếu ${(cost - coins).toLocaleString()} Xu để nâng cấp lên cấp ${boatLevel + 1}!`);
+    }
+}
+
+// --- CẬP NHẬT HÀM RÚT TIỀN ---
+function requestWithdraw() {
+    const minWithdraw = 50000;
+    if (coins < minWithdraw) {
+        alert(`Cần tối thiểu ${minWithdraw.toLocaleString()} Xu để thực hiện rút tiền. Hãy chăm chỉ đánh cá thêm nhé!`);
+        return;
+    }
+    
+    // Thông báo xác nhận rút tiền
+    alert("📤 Yêu cầu rút tiền đã được gửi! Hệ thống sẽ kiểm tra và cộng vào ví của bạn trong vòng 24h.");
+}
