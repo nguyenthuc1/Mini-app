@@ -23,14 +23,16 @@
 
     <div class="control-panel w-full max-w-sm mt-auto mb-8 rounded-3xl p-6 shadow-xl">
         <div class="space-y-1 text-sm text-white">
-            <p>🎣 Đánh cá kiếm xu</p>
-            <p>⚡ Tốc độ: <span id="speed-display">0</span> cá/giây</p>
-            <p>🐟 cá: <span id="coin-display" class="font-bold text-xl text-yellow-300">0</span></p>
-        </div>
+    <p>🎣 Đánh cá kiếm cá</p>
+    <p>⚡ Tốc độ: <span id="speed-display">0</span> cá/giây</p>
+    <p>🐟 Cá hiện có: <span id="fish-display" class="font-bold text-xl text-blue-200">0</span> con</p>
+    <p>💰 Xu: <span id="coin-display" class="font-bold text-xl text-yellow-300">0</span></p>
+</div>
 
-        <button id="btn-action" class="mt-4 bg-white text-blue-600 font-bold py-2 px-6 rounded-lg shadow active:scale-95 transition-all text-sm">
-            🚢 Ra khơi
-        </button>
+<button onclick="sellFish()" id="btn-sell" class="mt-2 w-full bg-yellow-500 text-white font-bold py-2 px-6 rounded-lg shadow active:scale-95 transition-all text-sm">
+    💰 Bán toàn bộ cá lấy Xu
+</button>
+
     </div>
 
     <script src="app.js"></script>
