@@ -53,10 +53,16 @@ function startCountdown() {
 function switchTab(tabName) {
     const pages = document.querySelectorAll('.tab-page');
     pages.forEach(p => p.classList.add('hidden'));
+
     const target = document.getElementById('page-' + tabName);
-    if (target) target.classList.remove('hidden');
+    if (target) {
+        target.classList.remove('hidden');
+    }
+    
+    // Gọi update ngay lập tức để màn hình mới có số liệu mới nhất
     updateDisplays();
 }
+
 
 function getCurrentSpeed() {
     return baseSpeed + (boatLevel - 1) * 0.5;
