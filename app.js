@@ -1,4 +1,4 @@
-// --- 1. KHỞI TẠO DỮ LIỆU ---
+// --- 1. KHỞI TẠO BIẾN ---
 let coins = parseInt(localStorage.getItem('fishing_coins')) || 0;
 let fishCount = parseFloat(localStorage.getItem('fishing_count')) || 0;
 let boatLevel = parseInt(localStorage.getItem('boat_level')) || 1;
@@ -6,27 +6,21 @@ let endTime = localStorage.getItem('fishing_endTime') || 0;
 const baseSpeed = 0.5;
 let isFishing = false;
 
-// --- 2. CẬP NHẬT GIAO DIỆN (Đồng bộ tất cả) ---
+// --- 2. HÀM CẬP NHẬT HIỂN THỊ (Đồng bộ tất cả tab) ---
 function updateDisplays() {
     const roundedFish = Math.floor(fishCount);
     const upgradeCost = boatLevel * 2000;
     const currentSpeed = baseSpeed + (boatLevel - 1) * 0.5;
 
     // Cập nhật số cá
-    const fishIds = ['fish-display', 'sell-fish-count'];
-    fishIds.forEach(id => {
-        let el = document.getElementById(id);
-        if(el) el.innerText = roundedFish.toLocaleString();
-    });
-
+    if(document.getElementById('fish-display')) document.getElementById('fish-display').innerText = roundedFish.toLocaleString();
+    if(document.getElementById('sell-fish-count')) document.getElementById('sell-fish-count').innerText = roundedFish.toLocaleString();
+    
     // Cập nhật số xu
-    const coinIds = ['coin-display', 'wallet-balance'];
-    coinIds.forEach(id => {
-        let el = document.getElementById(id);
-        if(el) el.innerText = coins.toLocaleString();
-    });
-
-    // Cập nhật thông số thuyền
+    if(document.getElementById('coin-display')) document.getElementById('coin-display').innerText = coins.toLocaleString();
+    if(document.getElementById('wallet-balance')) document.getElementById('wallet-balance').innerText = coins.toLocaleString();
+    
+    // Cập nhật thông số nâng cấp
     if(document.getElementById('boat-level')) document.getElementById('boat-level').innerText = boatLevel;
     if(document.getElementById('upgrade-cost')) document.getElementById('upgrade-cost').innerText = upgradeCost.toLocaleString();
     if(document.getElementById('speed-display')) document.getElementById('speed-display').innerText = currentSpeed.toFixed(1);
@@ -37,7 +31,21 @@ function updateDisplays() {
     localStorage.setItem('boat_level', boatLevel);
 }
 
-// --- 3. LOGIC NÂNG CẤP (Fix lỗi bấm không ăn) ---
+// --- 3. HÀM CHUYỂN TAB (Fix lỗi không bấm được) ---
+function switchTab(tabName) {
+    // Ẩn tất cả các trang
+    const pages = document.querySelectorAll('.tab-page');
+    pages.forEach(p => p.classList.add('hidden'));
+
+    // Hiện trang được chọn
+    const target = document.getElementById('page-' + tabName);
+    if (target) {
+        target.classList.remove('hidden');
+    }
+    updateDisplays();
+}
+
+// --- 4. HÀM NÂNG CẤP & BÁN CÁ ---
 function buyBoatUpgrade() {
     let cost = boatLevel * 2000;
     if (boatLevel >= 14) return alert("Thuyền đã đạt cấp tối đa!");
@@ -46,26 +54,19 @@ function buyBoatUpgrade() {
         coins -= cost;
         boatLevel++;
         updateDisplays();
-        alert("Nâng cấp thành công! Cấp hiện tại: " + boatLevel);
+        alert("Nâng cấp thành công lên cấp " + boatLevel);
     } else {
-        alert("Bạn còn thiếu " + (cost - coins).toLocaleString() + " xu!");
+        alert("Bạn cần thêm " + (cost - coins).toLocaleString() + " xu!");
     }
 }
 
-// --- 4. BÁN CÁ & CHUYỂN TAB ---
 function sellFishAction() {
     let toSell = Math.floor(fishCount);
     if (toSell < 1) return alert("Không có cá để bán!");
     coins += (toSell * 10);
     fishCount = 0;
     updateDisplays();
-}
-
-function switchTab(tabName) {
-    document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
-    let target = document.getElementById('page-' + tabName);
-    if (target) target.classList.remove('hidden');
-    updateDisplays();
+    alert("Đã bán cá thành công!");
 }
 
 // --- 5. LOGIC ĐẾM NGƯỢC 3 TIẾNG ---
