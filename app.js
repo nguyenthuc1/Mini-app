@@ -52,17 +52,25 @@ function updateDisplays() {
 // --- 3. QUẢN LÝ MENU & RA KHƠI ---
 
 function switchTab(tabName) {
-    // Ẩn tất cả các trang có class .tab-page
-    document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
+    console.log("Đang chuyển sang tab:", tabName); // Thêm dòng này để kiểm tra trong Console
     
-    // Hiện trang được chọn
+    // 1. Ẩn tất cả các trang
+    const pages = document.querySelectorAll('.tab-page');
+    pages.forEach(p => p.classList.add('hidden'));
+
+    // 2. Hiện trang đích
     const target = document.getElementById('page-' + tabName);
     if (target) {
         target.classList.remove('hidden');
     }
-    updateDisplays();
+    
+    // 3. Cập nhật lại giao diện số liệu
+    if (typeof updateDisplays === "function") {
+        updateDisplays();
+    }
 }
-// Gán vào window để chắc chắn HTML gọi được
+
+// Gán vào window để HTML gọi được
 window.switchTab = switchTab;
 
 //-----------------------------------
