@@ -71,7 +71,7 @@ function startCountdown() {
         const timeLeft = endTime - Date.now();
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
-            isFishing = false;
+            isFishing = true;
             if(btnText) btnText.innerText = "🚢 RA KHƠI";
             localStorage.removeItem('fishing_endTime_' + userId);
         } else {
