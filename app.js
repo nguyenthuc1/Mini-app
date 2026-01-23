@@ -100,10 +100,11 @@ function startCountdown() {
     }, 1000);
 }
 
+// --- 6. VẬN HÀNH (Chỉ cộng cá khi đang trong trạng thái ra khơi) ---
 setInterval(() => {
-    fishCount += (baseSpeed + (boatLevel - 1) * 0.5);
-    updateDisplays();
+    if (isFishing) { // Thêm điều kiện này
+        fishCount += (baseSpeed + (boatLevel - 1) * 0.5);
+        updateDisplays();
+    }
 }, 1000);
 
-if (endTime && endTime > Date.now()) startCountdown();
-updateDisplays();
