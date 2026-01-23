@@ -92,27 +92,21 @@
         <h2 class="text-white text-center mt-10">Rút tiền về ví TON</h2>
         </div>
 </div>
-   <nav class="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-slate-800 grid grid-cols-4 py-3 shadow-2xl z-50">
-    <button onclick="showTab('home')" class="flex flex-col items-center text-blue-400">
-        <span class="text-xl">🏠</span>
-        <span class="text-[10px]">Trang chủ</span>
+  <nav class="fixed bottom-0 left-0 right-0 bg-[#16213e] grid grid-cols-4 py-3 border-t border-slate-800 z-50">
+    <button onclick="switchTab('home')" class="menu-btn text-blue-400">
+        <span>🏠</span><p class="text-[10px]">Trang chủ</p>
     </button>
-
-    <button onclick="showTab('upgrade')" class="flex flex-col items-center text-gray-400">
-        <span class="text-xl">🚀</span>
-        <span class="text-[10px]">Upgrade</span>
+    <button onclick="switchTab('upgrade')" class="menu-btn text-gray-400">
+        <span>🚀</span><p class="text-[10px]">Upgrade</p>
     </button>
-
-    <button onclick="sellFish()" class="flex flex-col items-center text-yellow-500 font-bold">
-        <span class="text-xl">💰</span>
-        <span class="text-[10px]">Bán cá</span>
+    <button onclick="switchTab('sell')" class="menu-btn text-yellow-500">
+        <span>💰</span><p class="text-[10px]">Bán cá</p>
     </button>
-
-    <button onclick="showTab('wallet')" class="flex flex-col items-center text-gray-400">
-        <span class="text-xl">👛</span>
-        <span class="text-[10px]">Rút tiền</span>
+    <button onclick="switchTab('wallet')" class="menu-btn text-gray-400">
+        <span>👛</span><p class="text-[10px]">Rút tiền</p>
     </button>
 </nav>
+
 
 
     <script src="app.js"></script>
