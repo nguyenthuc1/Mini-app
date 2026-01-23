@@ -8,7 +8,7 @@ let fishCount = parseFloat(localStorage.getItem('fishing_count_' + userId)) || 0
 let boatLevel = parseInt(localStorage.getItem('boat_level_' + userId)) || 1;
 let endTime = parseInt(localStorage.getItem('fishing_endTime_' + userId)) || 0;
 const baseSpeed = 0.5;
-let isFishing = true;
+let isFishing = false;
 
 // --- 2. CẬP NHẬT GIAO DIỆN (ĐỒNG BỘ) ---
 function updateDisplays() {
@@ -50,30 +50,35 @@ function updateDisplays() {
 }
 
 // --- 3. QUẢN LÝ MENU & RA KHƠI ---
-window.switchTab = function(tabName) {
-    // Ẩn tất cả các trang
+
+function switchTab(tabName) {
+    // Ẩn tất cả các trang có class .tab-page
     document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
     
-    // Hiện trang được chọn dựa trên ID (Ví dụ: page-home, page-upgrade)
+    // Hiện trang được chọn
     const target = document.getElementById('page-' + tabName);
     if (target) {
         target.classList.remove('hidden');
     }
-    updateDisplays(); // Cập nhật số liệu ngay khi chuyển trang
-};
+    updateDisplays();
+}
+// Gán vào window để chắc chắn HTML gọi được
+window.switchTab = switchTab;
 
-window.handleStartFishing = function() {
+//-----------------------------------
+
+function handleStartFishing() {
     if (isFishing) return; // Nếu đang câu thì không cho bấm lại
-    
-    // Thiết lập thời gian kết thúc (3 giờ)
-    endTime = Date.now() + (3 * 60 * 60 * 1000); 
-    
-    // Lưu vào LocalStorage theo userId để không bị trùng dữ liệu
+
+    // Thiết lập 3 giờ (3 * 60 * 60 * 1000 ms)
+    endTime = Date.now() + (3 * 60 * 60 * 1000);
     localStorage.setItem('fishing_endTime_' + userId, endTime);
-    
+
     isFishing = true;
-    startCountdown(); // Gọi hàm bắt đầu đếm ngược
-};
+    startCountdown(); // Phải đảm bảo hàm này tồn tại
+}
+window.handleStartFishing = handleStartFishing;
+
 
 //------lập lại---------
 
@@ -111,7 +116,7 @@ window.handleStartFishing = function() {
     }
 
 
-
+//------------------------------------
 
 // --- 4. BÁN CÁ & NÂNG CẤP (CÓ THÔNG BÁO) ---
 function sellFishAction() {
