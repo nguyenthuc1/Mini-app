@@ -19,6 +19,7 @@ let timerInterval = null;
 function updateUI() {
   document.getElementById("gold").innerText = Math.floor(gold);
   document.getElementById("speed").innerText = speed;
+  document.getElementById("sailBtn").onclick = watchAdAndSail;
 }
 
 // ================== ADS ==================
