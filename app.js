@@ -1,61 +1,101 @@
-// --- 1. KẾT NỐI TELEGRAM & NHẬN DIỆN USER ---
+// --- 1. NHẬN DIỆN USER (Chống trùng dữ liệu) ---
 const tg = window.Telegram.WebApp;
 tg.ready();
-// Lấy ID duy nhất của người dùng Telegram
 const userId = tg.initDataUnsafe?.user?.id || "guest";
 
-// --- 2. KHỞI TẠO DỮ LIỆU THEO USER ID ---
+// --- 2. KHỞI TẠO DỮ LIỆU ---
 let coins = parseInt(localStorage.getItem('fishing_coins_' + userId)) || 0;
 let fishCount = parseFloat(localStorage.getItem('fishing_count_' + userId)) || 0;
 let boatLevel = parseInt(localStorage.getItem('boat_level_' + userId)) || 1;
 let endTime = localStorage.getItem('fishing_endTime_' + userId) || 0;
-const baseSpeed = 0.5;
+const baseSpeed = 0.5; // Tốc độ gốc cấp 1
 let isFishing = false;
 
-// --- 3. HÀM QUẢNG CÁO (AN TOÀN) ---
-async function showAdBeforeAction(successCallback) {
-    const blockId = "YOUR_BLOCK_ID"; 
-    if (window.Adsgram && blockId !== "YOUR_BLOCK_ID") {
-        try {
-            const AdController = window.Adsgram.init({ blockId: blockId });
-            const result = await AdController.show();
-            if (result.done) successCallback();
-        } catch (error) { successCallback(); }
-    } else {
-        successCallback(); // Nếu chưa có Ads thật vẫn cho chạy game
-    }
-}
-
-// --- 4. CẬP NHẬT GIAO DIỆN & LƯU TRỮ ---
+// --- 3. CẬP NHẬT GIAO DIỆN ---
 function updateDisplays() {
     const roundedFish = Math.floor(fishCount);
+    const cost = boatLevel * 2000;
+    // Công thức: Tốc độ = 0.5 + (Cấp - 1) * 0.5
     const speed = baseSpeed + (boatLevel - 1) * 0.5;
 
-    // Hiển thị lên màn hình
+    // Hiển thị tốc độ và cá
+    if(document.getElementById('speed-display')) document.getElementById('speed-display').innerText = speed.toFixed(1);
     if(document.getElementById('fish-display')) document.getElementById('fish-display').innerText = roundedFish.toLocaleString();
     if(document.getElementById('sell-fish-count')) document.getElementById('sell-fish-count').innerText = roundedFish.toLocaleString();
+    
+    // Hiển thị tiền và nâng cấp
     if(document.getElementById('coin-display')) document.getElementById('coin-display').innerText = coins.toLocaleString();
     if(document.getElementById('wallet-balance')) document.getElementById('wallet-balance').innerText = coins.toLocaleString();
     if(document.getElementById('boat-level')) document.getElementById('boat-level').innerText = boatLevel;
-    if(document.getElementById('upgrade-cost')) document.getElementById('upgrade-cost').innerText = (boatLevel * 2000).toLocaleString();
+    if(document.getElementById('upgrade-cost')) document.getElementById('upgrade-cost').innerText = cost.toLocaleString();
 
-    // Lưu vào bộ nhớ THEO USER ID
+    // HIỂN THỊ +0.5 TRÊN HOME NẾU ĐÃ NÂNG CẤP
+    const bonusTag = document.getElementById('speed-bonus');
+    if (bonusTag) {
+        if (boatLevel > 1) {
+            bonusTag.classList.remove('hidden');
+            bonusTag.innerText = `+${((boatLevel - 1) * 0.5).toFixed(1)}`;
+        } else {
+            bonusTag.classList.add('hidden');
+        }
+    }
+
+    // Lưu dữ liệu theo ID
     localStorage.setItem('fishing_count_' + userId, fishCount);
     localStorage.setItem('fishing_coins_' + userId, coins);
     localStorage.setItem('boat_level_' + userId, boatLevel);
 }
 
-// --- 5. XỬ LÝ NÚT RA KHƠI ---
+// --- 4. LOGIC QUẢNG CÁO & NÂNG CẤP ---
+const blockId = "YOUR_BLOCK_ID"; 
+async function showAdBeforeAction(successCallback) {
+    if (window.Adsgram && blockId !== "YOUR_BLOCK_ID") {
+        try {
+            const AdController = window.Adsgram.init({ blockId: blockId });
+            const result = await AdController.show();
+            if (result.done) successCallback();
+            else alert("Bạn cần xem hết quảng cáo!");
+        } catch (error) { successCallback(); }
+    } else { successCallback(); }
+}
+
+function buyBoatUpgrade() {
+    const cost = boatLevel * 2000;
+    if (boatLevel >= 14) return alert("Cấp tối đa!");
+    
+    showAdBeforeAction(() => {
+        if (coins >= cost) {
+            coins -= cost;
+            boatLevel++;
+            updateDisplays();
+            alert(`🚀 Nâng cấp thành công! Tốc độ hiện tại: ${(baseSpeed + (boatLevel - 1) * 0.5).toFixed(1)} cá/s`);
+        } else {
+            alert("Thiếu xu!");
+        }
+    });
+}
+
+// --- 5. RA KHƠI & BÁN CÁ ---
 function handleStartFishing() {
     if (isFishing) return;
     showAdBeforeAction(() => {
         endTime = Date.now() + (3 * 60 * 60 * 1000);
         localStorage.setItem('fishing_endTime_' + userId, endTime);
+        isFishing = true;
         startCountdown();
     });
 }
 
-// --- 6. CHUYỂN PAGE ---
+function sellFishAction() {
+    const toSell = Math.floor(fishCount);
+    if (toSell < 1) return alert("Không có cá!");
+    const earned = toSell * 10;
+    coins += earned;
+    fishCount = 0;
+    updateDisplays();
+    alert(`💰 Bạn đã bán ${toSell} cá và nhận được ${earned} Xu!`);
+}
+
 function switchTab(tabName) {
     document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
     const target = document.getElementById('page-' + tabName);
@@ -63,32 +103,7 @@ function switchTab(tabName) {
     updateDisplays();
 }
 
-// --- 7. BÁN CÁ & NÂNG CẤP ---
-function sellFishAction() {
-    const toSell = Math.floor(fishCount); // Lấy số lượng cá hiện có
-    if (toSell < 1) return alert("Không có cá!"); // Thông báo nếu không có cá để bán
-    
-    const earned = toSell * 10; // Tính toán số tiền kiếm được (giá 10 xu/cá)
-    coins += earned; // Cộng tiền vào tổng số xu
-    fishCount = 0; // Đưa số lượng cá về 0
-    
-    updateDisplays(); // Cập nhật lại giao diện
-    
-    // Thêm thông báo hiển thị số tiền nhận được
-    alert("Bạn đã bán " + toSell.toLocaleString() + " cá và nhận được " + earned.toLocaleString() + " xu! 💰");
-}
-
-
-function buyBoatUpgrade() {
-    const cost = boatLevel * 2000;
-    if (coins >= cost) {
-        coins -= cost;
-        boatLevel++;
-        updateDisplays();
-    } else { alert("Thiếu xu!"); }
-}
-
-// --- 8. ĐẾM NGƯỢC & VẬN HÀNH ---
+// --- 6. VẬN HÀNH ---
 function startCountdown() {
     const btnText = document.getElementById('btn-text');
     const timerInterval = setInterval(() => {
@@ -97,6 +112,7 @@ function startCountdown() {
             clearInterval(timerInterval);
             isFishing = false;
             if(btnText) btnText.innerText = "🚢 RA KHƠI";
+            localStorage.removeItem('fishing_endTime_' + userId);
         } else {
             isFishing = true;
             const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
@@ -106,113 +122,17 @@ function startCountdown() {
         }
     }, 1000);
 }
-updateDisplays();
-// --- 11. VẬN HÀNH (Chỉ cộng cá khi đang trong trạng thái ra khơi) ---
-setInterval(() => {
-    if (isFishing) { // Thêm điều kiện này
-        fishCount += (baseSpeed + (boatLevel - 1) * 0.5);
-        updateDisplays();
-    }
-}, 1000);
-// --- 10. KHÔI PHỤC TRẠNG THÁI KHI VÀO LẠI APP ---
-if (endTime && endTime > Date.now()) {
-    isFishing = true; // Kích hoạt lại trạng thái câu cá
-    startCountdown(); // Chạy lại đồng hồ đếm ngược
-} else {
-    isFishing = false;
-    // Nếu hết hạn thì xóa bộ nhớ đếm ngược của User đó
-    localStorage.removeItem('fishing_endTime_' + userId);
-}
 
-// Cập nhật hiển thị lần đầu khi vừa tải trang
-// --- 9. KHÔI PHỤC TRẠNG THÁI & TÍNH CÁ NGOẠI TUYẾN ---
-function restoreGameState() {
-    const now = Date.now();
-    const lastUpdate = parseInt(localStorage.getItem('last_update_' + userId)) || now;
-    
-    // 1. Kiểm tra xem có đang trong thời gian ra khơi không
-    if (endTime && endTime > now) {
-        isFishing = true;
-        startCountdown();
-
-        // 2. TÍNH CÁ NGOẠI TUYẾN:
-        // Số giây đã trôi qua kể từ lần cuối đóng app
-        const secondsPassed = Math.floor((now - lastUpdate) / 1000);
-        if (secondsPassed > 0) {
-            const currentSpeed = baseSpeed + (boatLevel - 1) * 0.5;
-            const offlineFish = secondsPassed * currentSpeed;
-            
-            fishCount += offlineFish;
-            alert(`Chào mừng trở lại! Bạn đã câu được ${Math.floor(offlineFish)} cá khi vắng mặt.`);
-        }
-    } else {
-        isFishing = false;
-        localStorage.removeItem('fishing_endTime_' + userId);
-    }
-    
-    updateDisplays();
-}
-
-// Cập nhật mốc thời gian cuối cùng mỗi khi dữ liệu thay đổi
-function saveLastUpdate() {
-    localStorage.setItem('last_update_' + userId, Date.now());
-}
-
-// Gọi hàm khôi phục khi vừa tải trang
-restoreGameState();
-
-// Bổ sung vào vòng lặp cộng cá để luôn lưu mốc thời gian mới nhất
+// Chỉ cộng cá khi ĐANG RA KHƠI
 setInterval(() => {
     if (isFishing) {
         fishCount += (baseSpeed + (boatLevel - 1) * 0.5);
-        saveLastUpdate(); // Lưu mốc thời gian mỗi giây
         updateDisplays();
     }
 }, 1000);
-// --- CẬP NHẬT HÀM BÁN CÁ ---
-function sellFishAction() {
-    const toSell = Math.floor(fishCount);
-    if (toSell < 1) return alert("Bạn không có đủ cá để bán!");
-    
-    const earnedGold = toSell * 10;
-    coins += earnedGold;
-    fishCount = 0;
-    updateDisplays();
-    
-    // Thông báo khi bán thành công
-    alert(`Chúc mừng! Bạn đã bán ${toSell.toLocaleString()} cá và nhận được ${earnedGold.toLocaleString()} Xu vàng! 💰`);
+
+if (endTime && endTime > Date.now()) {
+    isFishing = true;
+    startCountdown();
 }
-
-// ---12. CẬP NHẬT HÀM NÂNG CẤP (Đã có thông báo, làm rõ hơn) ---
-function buyBoatUpgrade() {
-    const cost = boatLevel * 2000;
-    if (boatLevel >= 14) return alert("Thuyền của bạn đã đạt cấp độ tối đa!");
-    
-    showAdBeforeAction(() => {
-        if (coins >= cost) {
-            coins -= cost;
-            boatLevel++;
-            updateDisplays();
-            alert(`🚀 Nâng cấp thành công! Thuyền hiện tại: Cấp ${boatLevel}. Tốc độ đánh bắt đã tăng lên!`);
-        } else {
-            alert(`Bạn còn thiếu ${(cost - coins).toLocaleString()} Xu để nâng cấp lên cấp ${boatLevel + 1}!`);
-        }
-    });
-}
-
-// --- THÊM HÀM RÚT TIỀN MỚI ---
-function requestWithdraw() {
-    // Đặt hạn mức tối thiểu ví dụ 50,000 xu
-    const minWithdraw = 50000;
-    
-    if (coins < minWithdraw) {
-        alert(`Cần tối thiểu ${minWithdraw.toLocaleString()} Xu để thực hiện rút tiền. Hãy chăm chỉ đánh cá thêm nhé!`);
-        return;
-    }
-    
-    showAdBeforeAction(() => {
-        alert("Đang kết nối với cổng thanh toán... Yêu cầu của bạn đã được ghi nhận và sẽ được xử lý trong vòng 24h!");
-    });
-}
-
-
+updateDisplays();
