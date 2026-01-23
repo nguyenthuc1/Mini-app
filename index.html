@@ -11,103 +11,44 @@
 
     <div class="py-2"></div>
 
-    <div id="tab-content" class="flex-grow px-4 overflow-y-auto pb-24">
+    <div id="tab-content" class="flex-grow overflow-y-auto pb-20">
     
     <div id="page-home" class="tab-page">
         </div>
 
-    <div id="page-sell" class="tab-page hidden text-center">
-        <h2 class="text-2xl font-bold mb-6 mt-4">Chợ Cá Mini</h2>
-        <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700 shadow-xl mb-6">
-            <div class="text-6xl mb-4">🐟</div>
-            <p class="text-gray-400">Bạn đang có</p>
+    <div id="page-sell" class="tab-page hidden">
+        <h2 class="text-white text-center mt-6 text-2xl font-bold">Chợ Cá Mini</h2>
+        <div class="bg-slate-800 m-4 p-6 rounded-3xl text-center border border-slate-700">
+            <div class="text-5xl mb-2">🐟</div>
+            <p class="text-gray-400 text-sm">Bạn đang có</p>
             <h3 class="text-3xl font-bold text-blue-400"><span id="sell-fish-count">0</span> Con cá</h3>
-            <p class="text-xs text-gray-500 mt-2">Giá thị trường: 10 Xu / 1 Cá</p>
-        </div>
-
-        <button onclick="sellFishAction()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-blue-900 font-extrabold py-4 rounded-2xl shadow-lg active:scale-95 transition-all">
-            💰 BÁN TOÀN BỘ LẤY XU
-        </button>
-        
-        <p class="text-[10px] text-gray-500 mt-4 italic">Lưu ý: Cá đã bán không thể hoàn tác</p>
-    </div>
-
-    </div>
-
-        
-        <div id="tab-home" class="tab-item">
-            <div class="ocean-frame relative w-full aspect-[4/5] rounded-3xl overflow-hidden flex items-center justify-center border-2 border-slate-700">
-                <div id="boat-area" class="relative z-10 opacity-40">
-                    <div id="boat" class="text-8xl">🚢</div>
-                    <div class="water-shadow"></div>
-                </div>
-                <div id="effect-layer" class="absolute inset-0 z-20"></div>
-            </div>
-            
-            <div class="mt-4 bg-[#22a1e4] p-4 rounded-2xl shadow-xl flex justify-between items-center">
-                <div>
-                    <p class="text-xs opacity-80">Cá: <span id="fish-display" class="font-bold text-lg">0</span></p>
-                    <p class="text-xs opacity-80">Xu: <span id="coin-display" class="font-bold text-lg text-yellow-300">0</span></p>
-                </div>
-                <button id="btn-action" class="bg-white text-blue-600 font-bold py-2 px-6 rounded-xl text-sm">🚢 RA KHƠI</button>
-            </div>
-        </div>
-
-        <div id="tab-upgrade" class="tab-item hidden">
-            <h2 class="text-xl font-bold mb-4 mt-2">Nâng cấp & Nhiệm vụ</h2>
-            <div class="space-y-3">
-                <div onclick="upgradeBoat()" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700">
-                    <div>
-                        <p class="font-bold">🛠 Nâng cấp thuyền</p>
-                        <p class="text-xs text-gray-400">Tăng tốc độ đánh cá (+1 cá/s)</p>
-                    </div>
-                    <span class="text-yellow-500 font-bold">500 Xu</span>
-                </div>
-                <div onclick="sellFish()" class="bg-yellow-600 p-4 rounded-xl flex justify-between items-center shadow-lg">
-                    <p class="font-bold">💰 Bán toàn bộ cá</p>
-                    <span class="text-white text-xs">Đổi lấy Xu</span>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-wallet" class="tab-item hidden">
-            <h2 class="text-xl font-bold mb-4 mt-2">Ví của bạn</h2>
-            <div class="bg-slate-800 p-6 rounded-2xl text-center border border-slate-700">
-                <p class="text-gray-400">Số dư khả dụng</p>
-                <h3 class="text-3xl font-bold text-yellow-400 my-2"><span id="wallet-balance">0</span> Xu</h3>
-                <button class="w-full bg-blue-500 py-3 rounded-xl font-bold mt-4 opacity-50">Rút tiền (Min 10,000 Xu)</button>
-            </div>
+            <button onclick="sellFishAction()" class="w-full bg-yellow-500 text-blue-900 font-extrabold py-4 rounded-2xl mt-6 shadow-lg active:scale-95">💰 BÁN TẤT CẢ</button>
         </div>
     </div>
-<div id="tab-content" class="flex-grow">
-    
-    <div id="page-home" class="tab-page">
-        </div>
 
     <div id="page-upgrade" class="tab-page hidden">
-        <h2 class="text-white text-center mt-10">Cửa hàng nâng cấp</h2>
+        <h2 class="text-white text-center mt-6 text-2xl font-bold">Nâng cấp</h2>
         </div>
 
     <div id="page-wallet" class="tab-page hidden">
-        <h2 class="text-white text-center mt-10">Rút tiền về ví TON</h2>
+        <h2 class="text-white text-center mt-6 text-2xl font-bold">Ví tiền</h2>
         </div>
 </div>
-  <nav class="fixed bottom-0 left-0 right-0 bg-[#16213e] grid grid-cols-4 py-3 border-t border-slate-800 z-50">
-    <button onclick="switchTab('home')" class="menu-btn text-blue-400">
-        <span>🏠</span><p class="text-[10px]">Trang chủ</p>
+
+<nav class="fixed bottom-0 left-0 right-0 bg-[#16213e] grid grid-cols-4 py-3 border-t border-slate-800 z-50">
+    <button onclick="switchTab('home')" class="flex flex-col items-center text-blue-400 opacity-100">
+        <span class="text-xl">🏠</span><p class="text-[10px]">Trang chủ</p>
     </button>
-    <button onclick="switchTab('upgrade')" class="menu-btn text-gray-400">
+    <button onclick="switchTab('upgrade')" class="flex flex-col items-center text-gray-400 opacity-60">
         <span>🚀</span><p class="text-[10px]">Upgrade</p>
     </button>
-    <button onclick="switchTab('sell')" class="menu-btn text-yellow-500">
+    <button onclick="switchTab('sell')" class="flex flex-col items-center text-yellow-500 opacity-60">
         <span>💰</span><p class="text-[10px]">Bán cá</p>
     </button>
-    <button onclick="switchTab('wallet')" class="menu-btn text-gray-400">
+    <button onclick="switchTab('wallet')" class="flex flex-col items-center text-gray-400 opacity-60">
         <span>👛</span><p class="text-[10px]">Rút tiền</p>
     </button>
 </nav>
-
-
 
     <script src="app.js"></script>
 </body>
