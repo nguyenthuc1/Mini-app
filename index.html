@@ -1,96 +1,128 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Mini App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Fishing Mini App</title>
+    <style>
+        body { background-color: #0c1a2b; color: white; font-family: 'Segoe UI', sans-serif; }
+        
+        /* Hiệu ứng thuyền nhấp nhô */
+        .boat-float {
+            animation: floating 3s ease-in-out infinite;
+        }
+        @keyframes floating {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
 
-  <!-- BẮT BUỘC cho Telegram -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+        /* Hiệu ứng cá bay lên */
+        .fish-particle {
+            position: absolute;
+            pointer-events: none;
+            animation: flyUp 1s ease-out forwards;
+        }
+        @keyframes flyUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-100px) translateX(var(--tw-x)) scale(0.5); }
+        }
 
-  <link rel="stylesheet" href="style.css">
+        .ocean-bg {
+            background: linear-gradient(to bottom, #2a5298, #1e3c72);
+        }
+    </style>
 </head>
-<script>
-function watchAdAndSail() {
-  document.getElementById("sea-area")
-    .classList.remove("hidden");
-}
-</script>
-  <script>
-let gold = 0;
-let fishingInterval = null;
-let fishingTimeout = null;
+<body class="flex flex-col items-center p-4 h-screen">
 
-const FISH_DURATION = 3 * 60 * 60 * 1000;
-const CATCH_INTERVAL = 2000;
-
-
-  if (fishingInterval) return;
-
-  sea.classList.remove("hidden");
-  sea.classList.add("fishing");
-
-  fishingInterval = setInterval(catchFish, CATCH_INTERVAL);
-  fishingTimeout = setTimeout(stopFishing, FISH_DURATION);
-}
-
-function catchFish() {
-  gold++;
-  document.getElementById("gold").innerText = gold;
-
-  const fishes = document.querySelectorAll(".fish");
-  const fish = fishes[Math.floor(Math.random() * fishes.length)];
-  fish.style.opacity = "0.2";
-  setTimeout(() => fish.style.opacity = "1", 300);
-}
-
-function stopFishing() {
-  clearInterval(fishingInterval);
-  clearTimeout(fishingTimeout);
-
-  fishingInterval = null;
-  fishingTimeout = null;
-
-  document.getElementById("sea-area")
-    .classList.remove("fishing");
-
-  alert("⛵ Hết chuyến ra khơi!");
-    }
-  </script>
-<body>
-  <div id="app">
-
-    <div id="content">
-      <div id="screen-khai-thac" class="screen">
-<!-- KHU BIỂN ĐÁNH CÁ -->
-<div id="sea-area" class="sea-area hidden">
-  <div class="sea">
-    <div class="boat">🚤</div>
-    <div class="fish fish1">🐟</div>
-    <div class="fish fish2">🐠</div>
-    <div class="fish fish3">🐡</div>
-  </div>
-</div>
-  <div class="ocean-wrapper">
-    <div class="ocean-card">
-
-      <div class="sea-header">
-        🎣 Đánh cá kiếm xu
-      </div>
-
-      <div class="ocean-info">
-        <div>⚡ Tốc độ: <span id="speed">0</span> cá/giây</div>
-        <div>💰 Xu: <span id="gold">0</span></div>
-      </div>
-
-      <button id="sailBtn">Ra khơi</button>
-
-      <div class="hint">
-        Xem quảng cáo để ra khơi và bắt cá
-      </div>
-
+    <div class="w-full flex justify-between items-center mb-6">
+        <span class="text-xl font-bold">✕ Supermoneyfine</span>
+        <span class="text-xl">⋮</span>
     </div>
-  </div>
 
-      </div>
-<script src="app.js"></script>
+    <div class="relative w-full aspect-square max-w-sm rounded-3xl ocean-bg shadow-2xl overflow-hidden border border-blue-400/30 flex items-center justify-center">
+        <div class="absolute bottom-0 w-full h-20 bg-blue-500/20 blur-xl"></div>
+        
+        <div id="boat-container" class="relative z-10">
+            <div id="boat" class="text-8xl transition-all duration-300">🚢</div>
+            <div class="w-24 h-4 bg-white/20 rounded-[100%] blur-md mt-[-10px] mx-auto animate-pulse"></div>
+        </div>
+
+        <div id="effect-layer" class="absolute inset-0 pointer-events-none"></div>
+    </div>
+
+    <div class="w-full max-w-sm mt-8 bg-sky-500 rounded-3xl p-6 shadow-lg border-b-4 border-sky-700">
+        <div class="space-y-2 text-lg font-medium">
+            <div class="flex items-center gap-2">
+                <span>🎣</span> Đánh cá kiếm xu
+            </div>
+            <div class="flex items-center gap-2">
+                <span>⚡</span> Tốc độ: <span id="speed-display">0</span> cá/giây
+            </div>
+            <div class="flex items-center gap-2">
+                <span>💰</span> Xu: <span id="coin-display" class="font-bold text-yellow-200">0</span>
+            </div>
+        </div>
+
+        <button onclick="startFishing()" id="btn-action" class="mt-4 bg-white text-blue-600 font-bold py-3 px-8 rounded-xl shadow-md hover:bg-blue-50 active:scale-95 transition-all flex items-center gap-2">
+            🚢 Ra khơi
+        </button>
+        
+        <p class="text-xs text-blue-100 mt-3 opacity-80">Xem quảng cáo để ra khơi và bắt cá</p>
+    </div>
+
+    <script>
+        let coins = 0;
+        let isFishing = false;
+        let fishInterval;
+
+        function startFishing() {
+            if (isFishing) return;
+
+            isFishing = true;
+            document.getElementById('boat').classList.add('boat-float');
+            document.getElementById('btn-action').innerText = " sedang Đang đánh cá...";
+            document.getElementById('btn-action').disabled = true;
+            document.getElementById('speed-display').innerText = "5";
+
+            // Tạo cá bay ra liên tục trong 10 giây
+            fishInterval = setInterval(() => {
+                createFishEffect();
+                coins += 1;
+                document.getElementById('coin-display').innerText = coins;
+            }, 500);
+
+            // Sau 10 giây thì dừng (giả lập 1 lượt ra khơi)
+            setTimeout(() => {
+                stopFishing();
+            }, 10000);
+        }
+
+        function stopFishing() {
+            isFishing = false;
+            clearInterval(fishInterval);
+            document.getElementById('boat').classList.remove('boat-float');
+            document.getElementById('btn-action').innerText = "🚢 Ra khơi";
+            document.getElementById('btn-action').disabled = false;
+            document.getElementById('speed-display').innerText = "0";
+        }
+
+        function createFishEffect() {
+            const container = document.getElementById('effect-layer');
+            const fish = document.createElement('div');
+            const randomX = (Math.random() - 0.5) * 100; // Bay ngẫu nhiên sang trái hoặc phải
+            
+            fish.className = 'fish-particle text-2xl';
+            fish.innerHTML = '🐟 <span class="text-xs text-yellow-300 font-bold">+1 Xu</span>';
+            fish.style.left = '50%';
+            fish.style.top = '50%';
+            fish.style.setProperty('--tw-x', `${randomX}px`);
+
+            container.appendChild(fish);
+
+            // Xóa element sau khi diễn xong animation để tránh nặng máy
+            setTimeout(() => fish.remove(), 1000);
+        }
+    </script>
+</body>
+</html>
