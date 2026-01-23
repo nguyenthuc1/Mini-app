@@ -177,4 +177,44 @@ function switchTab(tabName) {
         event.currentTarget.classList.replace('text-gray-400', 'text-blue-400');
     }
 }
+// Hàm chuyển Tab
+function switchTab(tabName) {
+    // Ẩn tất cả trang
+    document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
+    
+    // Hiện trang được chọn
+    const activePage = document.getElementById('page-' + tabName);
+    if (activePage) activePage.classList.remove('hidden');
+
+    // Cập nhật số cá hiển thị riêng cho trang bán cá khi mở tab đó
+    if (tabName === 'sell') {
+        document.getElementById('sell-fish-count').innerText = fishCount;
+    }
+
+    // Đổi màu icon menu
+    document.querySelectorAll('.menu-btn').forEach(btn => btn.style.opacity = "0.5");
+    event.currentTarget.style.opacity = "1";
+}
+
+// Hàm thực hiện hành động bán cá (khi bấm nút to trong trang bán cá)
+function sellFishAction() {
+    if (fishCount <= 0) {
+        alert("Bạn không có cá để bán!");
+        return;
+    }
+
+    const price = 10;
+    const earned = fishCount * price;
+    
+    coins += earned;
+    fishCount = 0;
+
+    // Cập nhật tất cả các vị trí hiển thị
+    updateDisplays();
+    
+    // Cập nhật riêng con số trên trang bán cá
+    document.getElementById('sell-fish-count').innerText = "0";
+    
+    alert(`Chúc mừng! Bạn đã nhận được ${earned} Xu.`);
+}
 
