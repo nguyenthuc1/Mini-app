@@ -1,10 +1,8 @@
-
- // --- 1. KHỞI TẠO USER ---
+// --- 1. KHỞI TẠO ---
 const tg = window.Telegram.WebApp;
 tg.ready();
 const userId = tg.initDataUnsafe?.user?.id || "guest";
 
-// Ép kiểu Number để tránh lỗi cộng chuỗi
 let coins = parseInt(localStorage.getItem('fishing_coins_' + userId)) || 0;
 let fishCount = parseFloat(localStorage.getItem('fishing_count_' + userId)) || 0;
 let boatLevel = parseInt(localStorage.getItem('boat_level_' + userId)) || 1;
@@ -12,32 +10,13 @@ let endTime = parseInt(localStorage.getItem('fishing_endTime_' + userId)) || 0;
 const baseSpeed = 0.5;
 let isFishing = false;
 
-// --- 2. HÀM ĐỒNG BỘ GIAO DIỆN TẤT CẢ CÁC TRANG ---
+// --- 2. CẬP NHẬT GIAO DIỆN (ĐỒNG BỘ) ---
 function updateDisplays() {
     const roundedFish = Math.floor(fishCount);
-    const speed = baseSpeed + (boatLevel - 1) * 0.5;
-    const bonusValue = (boatLevel - 1) * 0.5; // Giá trị cộng thêm
+    const currentSpeed = baseSpeed + (boatLevel - 1) * 0.5;
+    const bonusValue = (boatLevel - 1) * 0.5;
 
-    // ... các dòng getElementById hiện có của bạn ...
-
-    // THÊM ĐOẠN NÀY ĐỂ HIỆN +0.5
-    const bonusTag = document.getElementById('speed-bonus');
-    if (bonusTag) {
-        if (bonusValue > 0) {
-            bonusTag.innerText = `+${bonusValue.toFixed(1)}`;
-            bonusTag.classList.remove('hidden');
-        } else {
-            bonusTag.classList.add('hidden');
-        }
-    }
-    
-    // Đảm bảo lưu dữ liệu theo userId
-    localStorage.setItem('fishing_count_' + userId, fishCount);
-    localStorage.setItem('fishing_coins_' + userId, coins);
-    localStorage.setItem('boat_level_' + userId, boatLevel);
-}
-
-    // Cập nhật số cá & xu trên MỌI trang có ID tương ứng
+    // Cập nhật tất cả các ID
     const elements = {
         'fish-display': roundedFish.toLocaleString(),
         'sell-fish-count': roundedFish.toLocaleString(),
@@ -53,38 +32,43 @@ function updateDisplays() {
         if (el) el.innerText = elements[id];
     }
 
-    // Lưu dữ liệu vào LocalStorage theo userId
+    // Hiển thị +0.5 khi nâng cấp
+    const bonusTag = document.getElementById('speed-bonus');
+    if (bonusTag) {
+        if (bonusValue > 0) {
+            bonusTag.innerText = `+${bonusValue.toFixed(1)}`;
+            bonusTag.classList.remove('hidden');
+        } else {
+            bonusTag.classList.add('hidden');
+        }
+    }
+
+    // Lưu dữ liệu
     localStorage.setItem('fishing_count_' + userId, fishCount);
     localStorage.setItem('fishing_coins_' + userId, coins);
     localStorage.setItem('boat_level_' + userId, boatLevel);
 }
 
-// --- 3. XỬ LÝ QUẢNG CÁO & NÚT RA KHƠI ---
-// Nếu bạn chưa có Block ID của Adsgram, hàm này sẽ tự động chạy lệnh mà không lỗi
-function showAdBeforeAction(callback) {
-    if (typeof AdController !== 'undefined') {
-        AdController.show().then(() => callback()).catch(() => callback());
-    } else {
-        callback(); // Chạy luôn nếu không có SDK quảng cáo
-    }
+// --- 3. QUẢN LÝ MENU & RA KHƠI ---
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
+    const target = document.getElementById('page-' + tabName);
+    if (target) target.classList.remove('hidden');
+    updateDisplays();
 }
 
 function handleStartFishing() {
     if (isFishing) return;
-
-    showAdBeforeAction(() => {
-        endTime = Date.now() + (3 * 60 * 60 * 1000); // 3 tiếng
-        localStorage.setItem('fishing_endTime_' + userId, endTime);
-        isFishing = true;
-        startCountdown();
-    });
+    endTime = Date.now() + (3 * 60 * 60 * 1000); // 3 giờ
+    localStorage.setItem('fishing_endTime_' + userId, endTime);
+    isFishing = true;
+    startCountdown();
 }
 
 function startCountdown() {
     const btnText = document.getElementById('btn-text');
     const timerInterval = setInterval(() => {
         const timeLeft = endTime - Date.now();
-        
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             isFishing = false;
@@ -100,20 +84,16 @@ function startCountdown() {
     }, 1000);
 }
 
-// --- 4. CHUYỂN TRANG & CHẠY GAME ---
-function switchTab(tabName) {
-    document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
-    const target = document.getElementById('page-' + tabName);
-    if (target) target.classList.remove('hidden');
-    updateDisplays(); // Đồng bộ ngay khi chuyển trang
-}
-
+// --- 4. BÁN CÁ & NÂNG CẤP (CÓ THÔNG BÁO) ---
 function sellFishAction() {
     const toSell = Math.floor(fishCount);
-    if (toSell < 1) return alert("Không có cá!");
-    coins += (toSell * 10);
+    if (toSell < 1) return alert("Bạn không có đủ cá để bán!");
+    
+    const earned = toSell * 10;
+    coins += earned;
     fishCount = 0;
     updateDisplays();
+    alert(`💰 Bán thành công! Bạn nhận được ${earned.toLocaleString()} Xu từ ${toSell} cá.`);
 }
 
 function buyBoatUpgrade() {
@@ -122,12 +102,17 @@ function buyBoatUpgrade() {
         coins -= cost;
         boatLevel++;
         updateDisplays();
+        alert(`🚀 Nâng cấp thành công lên Cấp ${boatLevel}! Tốc độ tăng thêm +0.5.`);
     } else {
-        alert("Thiếu xu!");
+        alert(`Thiếu ${(cost - coins).toLocaleString()} Xu để nâng cấp!`);
     }
 }
 
-// Chạy ngầm để cộng cá mỗi giây
+function requestWithdraw() {
+    alert("📤 Yêu cầu rút tiền đang được xử lý (Tối thiểu 50,000 Xu).");
+}
+
+// --- 5. VẬN HÀNH ---
 setInterval(() => {
     if (isFishing) {
         fishCount += (baseSpeed + (boatLevel - 1) * 0.5);
@@ -135,52 +120,9 @@ setInterval(() => {
     }
 }, 1000);
 
-// Kiểm tra nếu đang đánh bắt dở dang khi vào app
+// Khôi phục trạng thái khi vào lại app
 if (endTime > Date.now()) {
     isFishing = true;
     startCountdown();
 }
-
-// Lần đầu load app
 updateDisplays();
-// --- CẬP NHẬT HÀM BÁN CÁ ---
-function sellFishAction() {
-    const toSell = Math.floor(fishCount);
-    if (toSell < 1) return alert("Bạn không có đủ cá để bán!");
-    
-    const earnedGold = toSell * 10;
-    coins += earnedGold;
-    fishCount = 0;
-    updateDisplays();
-    
-    // Thông báo chi tiết số tiền nhận được
-    alert(`💰 Chúc mừng! Bạn đã bán ${toSell.toLocaleString()} cá và nhận được ${earnedGold.toLocaleString()} Xu!`);
-}
-        updateDisplays();
-// --- CẬP NHẬT HÀM NÂNG CẤP ---
-function buyBoatUpgrade() {
-    const cost = boatLevel * 2000;
-    if (coins >= cost) {
-        coins -= cost;
-        boatLevel++;
-        updateDisplays();
-        
-        // Thông báo khi nâng cấp thành công
-        alert(`🚀 Nâng cấp thành công! Thuyền hiện tại: Cấp ${boatLevel}. Tốc độ đánh bắt đã tăng thêm +0.5 cá/s!`);
-    } else {
-        // Thông báo khi thiếu tiền
-        alert(`Bạn còn thiếu ${(cost - coins).toLocaleString()} Xu để nâng cấp lên cấp ${boatLevel + 1}!`);
-    }
-}
-
-// --- CẬP NHẬT HÀM RÚT TIỀN ---
-function requestWithdraw() {
-    const minWithdraw = 50000;
-    if (coins < minWithdraw) {
-        alert(`Cần tối thiểu ${minWithdraw.toLocaleString()} Xu để thực hiện rút tiền. Hãy chăm chỉ đánh cá thêm nhé!`);
-        return;
-    }
-    
-    // Thông báo xác nhận rút tiền
-    alert("📤 Yêu cầu rút tiền đã được gửi! Hệ thống sẽ kiểm tra và cộng vào ví của bạn trong vòng 24h.");
-}
