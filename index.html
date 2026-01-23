@@ -13,20 +13,38 @@
     <div id="tab-content" class="flex-grow overflow-y-auto pb-20 p-4">
         
         <div id="page-home" class="tab-page">
-            <div class="ocean-frame relative w-full aspect-[4/5] rounded-3xl overflow-hidden flex items-center justify-center border border-slate-700 bg-slate-900/50">
-                <div id="boat-area" class="relative z-10 opacity-40">
-                    <div id="boat" class="text-8xl">🚢</div>
-                </div>
+    <div class="ocean-frame relative w-full aspect-[4/5] rounded-3xl overflow-hidden flex items-center justify-center border border-slate-700 bg-slate-900/40 shadow-inner">
+        <div id="boat-area" class="relative z-10">
+            <div id="boat" class="text-8xl transition-transform duration-500 hover:scale-110">🚢</div>
+            <div class="water-shadow"></div>
+        </div>
+        <div id="effect-layer" class="absolute inset-0 z-20 pointer-events-none"></div>
+    </div>
+    
+    <div class="mt-4 space-y-3">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-400 p-4 rounded-2xl shadow-lg flex justify-between items-center">
+            <div>
+                <p class="text-[10px] uppercase font-bold opacity-80">Giỏ cá hiện tại</p>
+                <h3 class="text-2xl font-black"><span id="fish-display">0</span> 🐟</h3>
             </div>
-            
-            <div class="mt-4 bg-[#22a1e4] p-4 rounded-2xl flex justify-between items-center shadow-lg">
-                <div class="text-sm">
-                    <p>🐟 Cá: <span id="fish-display" class="font-bold">0</span></p>
-                    <p>💰 Xu: <span id="coin-display" class="font-bold text-yellow-300">0</span></p>
-                </div>
-                <button id="btn-action" class="bg-white text-blue-600 font-bold py-2 px-4 rounded-xl text-xs uppercase">Ra khơi</button>
+            <div class="text-right">
+                <p class="text-[10px] uppercase font-bold opacity-80">Tốc độ tự động</p>
+                <p class="font-bold text-lg"><span id="speed-display">0.5</span> <span class="text-xs">cá/s</span></p>
             </div>
         </div>
+
+        <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl shadow-lg flex justify-between items-center">
+            <div>
+                <p class="text-[10px] uppercase font-bold text-gray-400">Số dư Xu</p>
+                <h3 class="text-xl font-bold text-yellow-400"><span id="coin-display">0</span> 💰</h3>
+            </div>
+            <button id="btn-action" class="bg-white text-blue-600 font-black py-3 px-6 rounded-xl shadow-md active:scale-95 transition-all text-sm uppercase">
+                🚢 Ra khơi
+            </button>
+        </div>
+    </div>
+</div>
+
 
       <div id="page-upgrade" class="tab-page hidden">
     <h2 class="text-xl font-bold text-center mt-6 mb-4">Nâng Cấp Thuyền</h2>
