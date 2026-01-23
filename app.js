@@ -179,23 +179,25 @@ function switchTab(tabName) {
 }
 // Hàm chuyển Tab
 function switchTab(tabName) {
-    // 1. Tìm tất cả các trang có class 'tab-page' và ẩn chúng đi
+    // 1. Ẩn tất cả các trang có class 'tab-page'
     const pages = document.querySelectorAll('.tab-page');
-    pages.forEach(page => {
-        page.classList.add('hidden');
-    });
+    pages.forEach(p => p.classList.add('hidden'));
 
-    // 2. Hiện trang mà người dùng vừa bấm vào
-    const targetPage = document.getElementById('page-' + tabName);
-    if (targetPage) {
-        targetPage.classList.remove('hidden');
+    // 2. Hiện trang có id tương ứng (ví dụ: page-home, page-sell...)
+    const target = document.getElementById('page-' + tabName);
+    if (target) {
+        target.classList.remove('hidden');
     }
 
-    // 3. (Tùy chọn) Cập nhật số liệu riêng cho trang Bán Cá nếu mở trang đó
+    // 3. Cập nhật số liệu hiển thị khi vào từng tab cụ thể
     if (tabName === 'sell') {
         document.getElementById('sell-fish-count').innerText = fishCount;
     }
+    if (tabName === 'wallet') {
+        document.getElementById('wallet-balance').innerText = coins;
+    }
 }
+
 
 
 // Hàm thực hiện hành động bán cá (khi bấm nút to trong trang bán cá)
