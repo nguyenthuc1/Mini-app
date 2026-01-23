@@ -60,11 +60,16 @@ body {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
-.hidden {
-    display: none !important;
+.hidden { 
+    display: none !important; 
 }
 
-/* Thêm hiệu ứng xuất hiện cho mượt */
+.tab-page {
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* Hiệu ứng xuất hiện mượt */
 .tab-page:not(.hidden) {
     animation: fadeIn 0.3s ease-out;
 }
@@ -74,10 +79,6 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-}
-.hidden {
-    display: none !important;
-}
 /* Ép buộc ẩn các trang khi có class hidden */
 .hidden { 
     display: none !important; 
