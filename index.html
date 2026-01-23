@@ -64,25 +64,78 @@
     </div>
 </div>
 
-        <div id="page-sell" class="tab-page hidden text-center">
-            <h2 class="text-xl font-bold mb-6">Chợ Cá Mini</h2>
-            <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-xl">
-                <p class="text-gray-400 text-sm mb-2">Số cá bạn có</p>
-                <h3 class="text-4xl font-bold text-blue-400 mb-6"><span id="sell-fish-count">0</span></h3>
-                <button onclick="sellFishAction()" class="w-full bg-yellow-500 text-blue-900 font-bold py-4 rounded-2xl shadow-lg active:scale-95">BÁN LẤY XU</button>
-            </div>
+       <div id="page-sell" class="tab-page hidden">
+    <div class="text-center mb-8">
+        <h2 class="text-2xl font-black text-yellow-500 uppercase tracking-widest">Chợ cá</h2>
+        <p class="text-gray-400 text-sm">Đổi cá lấy Xu vàng</p>
+    </div>
+
+    <div class="bg-slate-800 border border-slate-700 p-8 rounded-3xl text-center shadow-2xl">
+        <div class="w-24 h-24 bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
+            <span class="text-5xl">🐟</span>
         </div>
+        
+        <p class="text-gray-400 text-sm mb-1">Số cá đang có</p>
+        <h3 class="text-5xl font-black text-white mb-2">
+            <span id="sell-fish-count">0</span>
+        </h3>
+        <p class="text-blue-400 text-xs mb-8 font-bold">Giá thị trường: 10 xu / cá</p>
+
+        <button onclick="sellFishAction()" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-blue-950 font-black py-5 rounded-2xl shadow-lg active:scale-95 transition-all text-lg uppercase">
+            Bán toàn bộ cá
+        </button>
+        
+        <p class="mt-4 text-slate-500 text-[10px]">Lưu ý: Chỉ bán được số lượng cá nguyên con</p>
+    </div>
+</div>
 
         <div id="page-wallet" class="tab-page hidden">
-            <h2 class="text-xl font-bold text-center mb-6">Ví của bạn</h2>
-            <div class="bg-gradient-to-br from-blue-600 to-blue-800 p-6 rounded-3xl shadow-2xl">
-                <p class="text-blue-100 text-sm">Tổng số dư</p>
-                <h3 class="text-3xl font-bold mt-2"><span id="wallet-balance">0</span> Xu</h3>
-                <button class="w-full bg-white/20 mt-6 py-3 rounded-xl font-bold text-sm">Rút tiền (Sắp ra mắt)</button>
+    <div class="text-center mb-8">
+        <h2 class="text-2xl font-black text-blue-400 uppercase tracking-widest">Ví Tài Khoản</h2>
+        <p class="text-gray-400 text-sm">Quản lý thu nhập của bạn</p>
+    </div>
+
+    <div class="relative bg-gradient-to-br from-indigo-600 to-blue-800 p-8 rounded-[2rem] shadow-2xl border border-white/10 overflow-hidden mb-8">
+        <div class="flex justify-between items-start mb-12">
+            <div class="w-12 h-10 bg-yellow-400/80 rounded-lg border border-white/20"></div>
+            <div class="text-white/20 text-4xl font-black italic">FISHER</div>
+        </div>
+
+        <div class="space-y-1">
+            <p class="text-blue-100/70 text-xs uppercase tracking-widest">Tổng số dư khả dụng</p>
+            <div class="flex items-baseline gap-2">
+                <h3 class="text-4xl font-black text-white"><span id="wallet-balance">0</span></h3>
+                <span class="text-yellow-400 font-bold">💰 Xu</span>
             </div>
         </div>
 
+        <div class="mt-8 flex justify-between items-end">
+            <div class="text-blue-100/50 text-[10px] tracking-taller">
+                OWNER: TELEGRAM USER
+            </div>
+            <div class="flex -space-x-3">
+                <div class="w-8 h-8 bg-red-500/80 rounded-full"></div>
+                <div class="w-8 h-8 bg-yellow-500/80 rounded-full"></div>
+            </div>
+        </div>
+
+        <div class="absolute top-0 right-0 w-full h-full bg-gradient-to-tr from-transparent via-white/5 to-transparent pointer-events-none"></div>
     </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <button class="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex flex-col items-center gap-2 active:scale-95 transition-all opacity-50 cursor-not-allowed">
+            <span class="text-2xl">💸</span>
+            <span class="text-xs font-bold text-gray-400">Rút tiền</span>
+        </button>
+        <button class="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex flex-col items-center gap-2 active:scale-95 transition-all opacity-50 cursor-not-allowed">
+            <span class="text-2xl">📊</span>
+            <span class="text-xs font-bold text-gray-400">Lịch sử</span>
+        </button>
+    </div>
+    
+    <p class="text-center text-slate-500 text-[10px] mt-6 italic">Tính năng rút tiền sẽ sớm được ra mắt trong bản cập nhật tới.</p>
+</div>
+
 
     <nav class="fixed bottom-0 left-0 right-0 bg-[#16213e] grid grid-cols-4 py-3 border-t border-slate-800 z-50">
         <button onclick="switchTab('home')" class="flex flex-col items-center">🏠<span class="text-[10px]">Trang chủ</span></button>
