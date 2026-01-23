@@ -179,21 +179,21 @@ function switchTab(tabName) {
 }
 // Hàm chuyển Tab
 function switchTab(tabName) {
-    // 1. Ẩn tất cả các trang có class 'tab-page'
+    // 1. Ẩn tất cả các trang
     const pages = document.querySelectorAll('.tab-page');
     pages.forEach(p => p.classList.add('hidden'));
 
-    // 2. Hiện trang có id tương ứng (ví dụ: page-home, page-sell...)
+    // 2. Hiện trang được chọn
     const target = document.getElementById('page-' + tabName);
     if (target) {
         target.classList.remove('hidden');
     }
 
-    // 3. Cập nhật số liệu hiển thị khi vào từng tab cụ thể
-    if (tabName === 'sell') {
-        document.getElementById('sell-fish-count').innerText = fishCount;
+    // 3. Cập nhật số liệu hiển thị (ví dụ cho trang bán cá và ví)
+    if (tabName === 'sell' && document.getElementById('sell-fish-count')) {
+        document.getElementById('sell-fish-count').innerText = Math.floor(fishCount);
     }
-    if (tabName === 'wallet') {
+    if (tabName === 'wallet' && document.getElementById('wallet-balance')) {
         document.getElementById('wallet-balance').innerText = coins;
     }
 }
