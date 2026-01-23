@@ -8,7 +8,7 @@ let fishCount = parseFloat(localStorage.getItem('fishing_count_' + userId)) || 0
 let boatLevel = parseInt(localStorage.getItem('boat_level_' + userId)) || 1;
 let endTime = parseInt(localStorage.getItem('fishing_endTime_' + userId)) || 0;
 const baseSpeed = 0.5;
-let isFishing = false;
+let isFishing = true;
 
 // --- 2. CẬP NHẬT GIAO DIỆN (ĐỒNG BỘ) ---
 function updateDisplays() {
