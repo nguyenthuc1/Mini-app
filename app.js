@@ -149,7 +149,7 @@ function sellFishAction() {
     // Thông báo chi tiết số tiền nhận được
     alert(`💰 Chúc mừng! Bạn đã bán ${toSell.toLocaleString()} cá và nhận được ${earnedGold.toLocaleString()} Xu!`);
 }
-
+        updateDisplays();
 // --- CẬP NHẬT HÀM NÂNG CẤP ---
 function buyBoatUpgrade() {
     const cost = boatLevel * 2000;
