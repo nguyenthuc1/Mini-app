@@ -101,3 +101,56 @@ function spawnFish() {
 window.onload = () => {
     if (endTime && endTime > Date.now()) runLogic();
 };
+// ... Giữ lại các biến coins, fishCount, endTime từ code cũ ...
+
+// HÀM CHUYỂN ĐỔI TAB
+function showTab(tabName) {
+    // Ẩn tất cả các tab
+    document.querySelectorAll('.tab-item').forEach(el => el.classList.add('hidden'));
+    // Hiện tab được chọn
+    document.getElementById('tab-' + tabName).classList.remove('hidden');
+    
+    // Cập nhật màu sắc menu (giả lập)
+    document.getElementById('wallet-balance').innerText = coins;
+}
+
+// HÀM NÂNG CẤP (Ví dụ)
+let fishingPower = 1; // Mặc định 1 cá/giây
+function upgradeBoat() {
+    let cost = 500;
+    if (coins >= cost) {
+        coins -= cost;
+        fishingPower += 1; // Nâng cấp sức mạnh
+        updateDisplays();
+        alert("Chúc mừng! Thuyền của bạn đã mạnh hơn.");
+    } else {
+        alert("Bạn không đủ Xu để nâng cấp!");
+    }
+}
+
+// Sửa lại hàm runLogic để dùng fishingPower
+function runLogic() {
+    if (fishInterval) clearInterval(fishInterval);
+    fishInterval = setInterval(() => {
+        const now = Date.now();
+        const timeLeft = endTime - now;
+
+        if (timeLeft <= 0) {
+            stopFishing();
+        } else {
+            // Hiệu ứng và cộng cá dựa trên sức mạnh nâng cấp
+            fishCount += fishingPower; 
+            updateDisplays();
+            spawnFish();
+            // ... (code đếm ngược thời gian trên nút) ...
+        }
+    }, 1000);
+}
+
+function updateDisplays() {
+    document.getElementById('coin-display').innerText = coins;
+    document.getElementById('fish-display').innerText = fishCount;
+    localStorage.setItem('fishing_coins', coins);
+    localStorage.setItem('fishing_count', fishCount);
+}
+
