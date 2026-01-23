@@ -42,11 +42,7 @@ function runLogic() {
             document.getElementById('boat-area').style.opacity = "1";
             document.getElementById('boat').classList.add('boat-float');
             
-            // Mỗi giây cộng 1 con cá
-            fishCount += 1;
-            fishDisplay.innerText = fishCount;
-            localStorage.setItem('fishing_count', fishCount);
-
+           
             // Hiển thị đếm ngược trên nút
             const h = Math.floor(timeLeft / 3600000);
             const m = Math.floor((timeLeft % 3600000) / 60000);
@@ -179,17 +175,21 @@ function switchTab(tabName) {
 }
 // Hàm chuyển Tab
 function switchTab(tabName) {
-    // 1. Ẩn tất cả các trang
+    // 1. Ẩn tất cả các trang có class 'tab-page'
     const pages = document.querySelectorAll('.tab-page');
-    pages.forEach(p => p.classList.add('hidden'));
+    pages.forEach(page => {
+        page.classList.add('hidden');
+    });
 
-    // 2. Hiện trang được chọn
-    const target = document.getElementById('page-' + tabName);
-    if (target) {
-        target.classList.remove('hidden');
+    // 2. Hiển thị trang mục tiêu dựa trên ID (ví dụ: page-home)
+    const targetPage = document.getElementById('page-' + tabName);
+    if (targetPage) {
+        targetPage.classList.remove('hidden');
+    } else {
+        console.error("Không tìm thấy trang: page-" + tabName);
     }
 
-    // 3. Cập nhật số liệu hiển thị (ví dụ cho trang bán cá và ví)
+    // 3. Cập nhật dữ liệu hiển thị riêng cho từng tab
     if (tabName === 'sell' && document.getElementById('sell-fish-count')) {
         document.getElementById('sell-fish-count').innerText = Math.floor(fishCount);
     }
@@ -197,6 +197,7 @@ function switchTab(tabName) {
         document.getElementById('wallet-balance').innerText = coins;
     }
 }
+
 
 
 
