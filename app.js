@@ -66,6 +66,7 @@ function handleStartFishing() {
 }
 
 function startCountdown() {
+
     isFishing = true; // Thêm dòng này để kích hoạt trạng thái câu cá
     const btnText = document.getElementById('btn-text');
     const timerInterval = setInterval(() => {
@@ -75,15 +76,30 @@ function startCountdown() {
             isFishing = false;
             if(btnText) btnText.innerText = "🚢 RA KHƠI";
             localStorage.removeItem('fishing_endTime_' + userId);
-        } else {
-            // Hiển thị đồng hồ đếm ngược
-            const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
-            const m = Math.floor((timeLeft % 3600000) / 60000).toString().padStart(2, '0');
-            const s = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0');
-            if(btnText) btnText.innerText = `${h}:${m}:${s}`;
+           } else {
+        // --- ĐOẠN CẦN SỬA/THÊM ---
+        // 1. Logic cộng cá mỗi giây
+        const maxStorage = getMaxStorage(); 
+        if (fishCount < maxStorage) {
+            // Tốc độ dựa trên cấp thuyền (ví dụ 0.5 + nâng cấp)
+            const speed = 0.5 + (boatLevel - 1) * 0.5;
+            fishCount += speed;
+            
+            // 2. Lưu lại mốc thời gian cập nhật cuối cùng
+            localStorage.setItem('fishing_lastUpdate_' + userId, Date.now());
+            
+            // 3. Cập nhật số liệu lên màn hình ngay lập tức
+            updateDisplays(); 
         }
-    }, 1000);
-}
+        // --- KẾT THÚC ĐOẠN SỬA ---
+
+        // Hiển thị đồng hồ đếm ngược (Giữ nguyên phần này của bạn)
+        const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
+        const m = Math.floor((timeLeft % 3600000) / 60000).toString().padStart(2, '0');
+        const s = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0');
+        if(btnText) btnText.innerText = `${h}:${m}:${s}`;
+    }
+
 
 
 // --- 4. BÁN CÁ & NÂNG CẤP (CÓ THÔNG BÁO) ---
