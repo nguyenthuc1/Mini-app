@@ -7,49 +7,66 @@
     <script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex flex-col h-screen bg-[#0c1524] text-white overflow-hidden">
 
-    <div class="py-2"></div>
+  <body class="flex flex-col h-screen bg-[#0c1524] text-white">
 
-    <div id="tab-content" class="flex-grow overflow-y-auto pb-20">
-    
-    <div id="page-home" class="tab-page">
+    <div id="tab-content" class="flex-grow overflow-y-auto pb-20 p-4">
+        
+        <div id="page-home" class="tab-page">
+            <div class="ocean-frame relative w-full aspect-[4/5] rounded-3xl overflow-hidden flex items-center justify-center border border-slate-700 bg-slate-900/50">
+                <div id="boat-area" class="relative z-10 opacity-40">
+                    <div id="boat" class="text-8xl">🚢</div>
+                </div>
+            </div>
+            
+            <div class="mt-4 bg-[#22a1e4] p-4 rounded-2xl flex justify-between items-center shadow-lg">
+                <div class="text-sm">
+                    <p>🐟 Cá: <span id="fish-display" class="font-bold">0</span></p>
+                    <p>💰 Xu: <span id="coin-display" class="font-bold text-yellow-300">0</span></p>
+                </div>
+                <button id="btn-action" class="bg-white text-blue-600 font-bold py-2 px-4 rounded-xl text-xs uppercase">Ra khơi</button>
+            </div>
         </div>
 
-    <div id="page-sell" class="tab-page hidden">
-        <h2 class="text-white text-center mt-6 text-2xl font-bold">Chợ Cá Mini</h2>
-        <div class="bg-slate-800 m-4 p-6 rounded-3xl text-center border border-slate-700">
-            <div class="text-5xl mb-2">🐟</div>
-            <p class="text-gray-400 text-sm">Bạn đang có</p>
-            <h3 class="text-3xl font-bold text-blue-400"><span id="sell-fish-count">0</span> Con cá</h3>
-            <button onclick="sellFishAction()" class="w-full bg-yellow-500 text-blue-900 font-extrabold py-4 rounded-2xl mt-6 shadow-lg active:scale-95">💰 BÁN TẤT CẢ</button>
+        <div id="page-upgrade" class="tab-page hidden">
+            <h2 class="text-xl font-bold text-center mb-6">Nâng cấp thuyền</h2>
+            <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 mb-4 flex justify-between items-center">
+                <div>
+                    <p class="font-bold">Cần câu xịn</p>
+                    <p class="text-xs text-gray-400">+1 cá mỗi giây</p>
+                </div>
+                <button onclick="buyUpgrade()" class="bg-blue-500 px-4 py-2 rounded-lg text-xs">500 Xu</button>
+            </div>
         </div>
+
+        <div id="page-sell" class="tab-page hidden text-center">
+            <h2 class="text-xl font-bold mb-6">Chợ Cá Mini</h2>
+            <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-xl">
+                <p class="text-gray-400 text-sm mb-2">Số cá bạn có</p>
+                <h3 class="text-4xl font-bold text-blue-400 mb-6"><span id="sell-fish-count">0</span></h3>
+                <button onclick="sellFishAction()" class="w-full bg-yellow-500 text-blue-900 font-bold py-4 rounded-2xl shadow-lg active:scale-95">BÁN LẤY XU</button>
+            </div>
+        </div>
+
+        <div id="page-wallet" class="tab-page hidden">
+            <h2 class="text-xl font-bold text-center mb-6">Ví của bạn</h2>
+            <div class="bg-gradient-to-br from-blue-600 to-blue-800 p-6 rounded-3xl shadow-2xl">
+                <p class="text-blue-100 text-sm">Tổng số dư</p>
+                <h3 class="text-3xl font-bold mt-2"><span id="wallet-balance">0</span> Xu</h3>
+                <button class="w-full bg-white/20 mt-6 py-3 rounded-xl font-bold text-sm">Rút tiền (Sắp ra mắt)</button>
+            </div>
+        </div>
+
     </div>
 
-    <div id="page-upgrade" class="tab-page hidden">
-        <h2 class="text-white text-center mt-6 text-2xl font-bold">Nâng cấp</h2>
-        </div>
-
-    <div id="page-wallet" class="tab-page hidden">
-        <h2 class="text-white text-center mt-6 text-2xl font-bold">Ví tiền</h2>
-        </div>
-</div>
-
-<nav class="fixed bottom-0 left-0 right-0 bg-[#16213e] grid grid-cols-4 py-3 border-t border-slate-800 z-50">
-    <button onclick="switchTab('home')" class="flex flex-col items-center text-blue-400 opacity-100">
-        <span class="text-xl">🏠</span><p class="text-[10px]">Trang chủ</p>
-    </button>
-    <button onclick="switchTab('upgrade')" class="flex flex-col items-center text-gray-400 opacity-60">
-        <span>🚀</span><p class="text-[10px]">Upgrade</p>
-    </button>
-    <button onclick="switchTab('sell')" class="flex flex-col items-center text-yellow-500 opacity-60">
-        <span>💰</span><p class="text-[10px]">Bán cá</p>
-    </button>
-    <button onclick="switchTab('wallet')" class="flex flex-col items-center text-gray-400 opacity-60">
-        <span>👛</span><p class="text-[10px]">Rút tiền</p>
-    </button>
-</nav>
+    <nav class="fixed bottom-0 left-0 right-0 bg-[#16213e] grid grid-cols-4 py-3 border-t border-slate-800 z-50">
+        <button onclick="switchTab('home')" class="flex flex-col items-center">🏠<span class="text-[10px]">Trang chủ</span></button>
+        <button onclick="switchTab('upgrade')" class="flex flex-col items-center">🚀<span class="text-[10px]">Upgrade</span></button>
+        <button onclick="switchTab('sell')" class="flex flex-col items-center text-yellow-500">💰<span class="text-[10px]">Bán cá</span></button>
+        <button onclick="switchTab('wallet')" class="flex flex-col items-center">👛<span class="text-[10px]">Rút tiền</span></button>
+    </nav>
 
     <script src="app.js"></script>
 </body>
+
 </html>
