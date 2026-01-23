@@ -33,15 +33,17 @@
             </div>
         </div>
 
-        <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl shadow-lg flex justify-between items-center">
-            <div>
-                <p class="text-[10px] uppercase font-bold text-gray-400">Số dư Xu</p>
-                <h3 class="text-xl font-bold text-yellow-400"><span id="coin-display">0</span> 💰</h3>
-            </div>
-            <button id="btn-action" class="bg-white text-blue-600 font-black py-3 px-6 rounded-xl shadow-md active:scale-95 transition-all text-sm uppercase">
-                🚢 Ra khơi
-            </button>
-        </div>
+       <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl shadow-lg flex justify-between items-center">
+    <div>
+        <p class="text-[10px] uppercase font-bold text-gray-400">Số dư Xu</p>
+        <h3 class="text-xl font-bold text-yellow-400"><span id="coin-display">0</span> 💰</h3>
+    </div>
+    
+    <button id="btn-action" onclick="handleStartFishing()" class="bg-white text-blue-600 font-black py-3 px-6 rounded-xl shadow-md active:scale-95 transition-all text-sm uppercase min-w-[120px]">
+        <span id="btn-text">🚢 Ra khơi</span>
+    </button>
+</div>
+
     </div>
 </div>
 
