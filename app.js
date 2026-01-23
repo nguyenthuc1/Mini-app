@@ -63,13 +63,34 @@ function getCurrentSpeed() {
 }
 
 function updateDisplays() {
-    if(document.getElementById('fish-display')) document.getElementById('fish-display').innerText = Math.floor(fishCount).toLocaleString();
-    if(document.getElementById('coin-display')) document.getElementById('coin-display').innerText = coins.toLocaleString();
-    if(document.getElementById('speed-display')) document.getElementById('speed-display').innerText = getCurrentSpeed().toFixed(1);
+    const roundedFish = Math.floor(fishCount);
+
+    // Cập nhật ở trang Home
+    if(document.getElementById('fish-display')) {
+        document.getElementById('fish-display').innerText = roundedFish.toLocaleString();
+    }
     
+    // Cập nhật ở trang Bán cá (Thêm dòng này để đồng bộ)
+    if(document.getElementById('sell-fish-count')) {
+        document.getElementById('sell-fish-count').innerText = roundedFish.toLocaleString();
+    }
+    
+    // Cập nhật các thông số khác
+    if(document.getElementById('coin-display')) {
+        document.getElementById('coin-display').innerText = coins.toLocaleString();
+    }
+    if(document.getElementById('speed-display')) {
+        document.getElementById('speed-display').innerText = getCurrentSpeed().toFixed(1);
+    }
+    if(document.getElementById('wallet-balance')) {
+        document.getElementById('wallet-balance').innerText = coins.toLocaleString();
+    }
+
+    // Lưu dữ liệu
     localStorage.setItem('fishing_count', fishCount);
     localStorage.setItem('fishing_coins', coins);
 }
+
 
 // --- 4. CHẠY KHI MỞ APP ---
 setInterval(() => {
