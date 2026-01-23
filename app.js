@@ -68,34 +68,40 @@ function getCurrentSpeed() {
     return baseSpeed + (boatLevel - 1) * 0.5;
 }
 
-function updateDisplays() {
+
+   function updateDisplays() {
     const roundedFish = Math.floor(fishCount);
 
-    // Cập nhật ở trang Home
+    // 1. Đồng bộ số cá lên TẤT CẢ các tab (Home và Sell)
     if(document.getElementById('fish-display')) {
         document.getElementById('fish-display').innerText = roundedFish.toLocaleString();
     }
-    
-    // Cập nhật ở trang Bán cá (Thêm dòng này để đồng bộ)
     if(document.getElementById('sell-fish-count')) {
         document.getElementById('sell-fish-count').innerText = roundedFish.toLocaleString();
     }
     
-    // Cập nhật các thông số khác
+    // 2. Đồng bộ số xu lên Home và Wallet
+    const formattedCoins = coins.toLocaleString();
     if(document.getElementById('coin-display')) {
-        document.getElementById('coin-display').innerText = coins.toLocaleString();
+        document.getElementById('coin-display').innerText = formattedCoins;
     }
+    if(document.getElementById('wallet-balance')) {
+        document.getElementById('wallet-balance').innerText = formattedCoins;
+    }
+
+    // 3. Cập nhật tốc độ và cấp độ
     if(document.getElementById('speed-display')) {
         document.getElementById('speed-display').innerText = getCurrentSpeed().toFixed(1);
     }
-    if(document.getElementById('wallet-balance')) {
-        document.getElementById('wallet-balance').innerText = coins.toLocaleString();
+    if(document.getElementById('boat-level')) {
+        document.getElementById('boat-level').innerText = boatLevel;
     }
 
-    // Lưu dữ liệu
+    // Lưu dữ liệu vào bộ nhớ
     localStorage.setItem('fishing_count', fishCount);
     localStorage.setItem('fishing_coins', coins);
 }
+
 
 
 // --- 4. CHẠY KHI MỞ APP ---
