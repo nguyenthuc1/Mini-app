@@ -38,7 +38,7 @@ function showAd(onSuccess) {
 
 // ================== GAME LOGIC ==================
 function watchAdAndSail() {
-  showAd(startSailing);
+  startSailing(); // BỎ ADS
 }
 
 function startSailing() {
