@@ -1,65 +1,4 @@
-body {
-    background-color: #0c1524;
-}
-
-.ocean-frame {
-    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-    border: 2px solid #334155;
-}
-
-.control-panel {
-    background-color: #22a1e4;
-}
-
-/* Hiệu ứng thuyền nhấp nhô */
-.boat-float {
-    animation: floating 3s ease-in-out infinite;
-}
-
-@keyframes floating {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-15px) rotate(3deg); }
-}
-
-.water-shadow {
-    width: 80px;
-    height: 16px;
-    background: rgba(96, 165, 250, 0.2);
-    border-radius: 100%;
-    filter: blur(8px);
-    margin: -5px auto 0;
-}
-
-/* Hiệu ứng cá bay lên */
-.fish-particle {
-    position: absolute;
-    pointer-events: none;
-    animation: flyUp 1.2s ease-out forwards;
-}
-
-@keyframes flyUp {
-    0% { opacity: 1; transform: translateY(0) scale(1); }
-    100% { opacity: 0; transform: translateY(-120px) translateX(var(--tx)) scale(0.5); }
-}
-
-.menu-btn.active {
-    color: #60a5fa; /* Màu xanh sáng khi nút được chọn */
-}
-
-
-/* Đảm bảo nội dung không bị tràn màn hình */
-body {
-    overflow: hidden;
-    touch-action: manipulation;
-}
-.hidden {
-    display: none !important;
-}
-
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* 4. Giao diện & Trải nghiệm người dùng */
 .hidden { 
     display: none !important; 
 }
@@ -67,9 +6,10 @@ body {
 .tab-page {
     width: 100%;
     min-height: 100vh;
+    padding: 20px;
 }
 
-/* Hiệu ứng xuất hiện mượt */
+/* Hiệu ứng fadeIn giúp giao diện chuyên nghiệp hơn */
 .tab-page:not(.hidden) {
     animation: fadeIn 0.3s ease-out;
 }
@@ -78,15 +18,3 @@ body {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
-/* Ép buộc ẩn các trang khi có class hidden */
-.hidden { 
-    display: none !important; 
-}
-
-/* Đảm bảo trang hiện tại chiếm toàn bộ không gian nội dung */
-.tab-page {
-    width: 100%;
-    display: block; /* Hiện mặc định khi không có class hidden */
-}
-
