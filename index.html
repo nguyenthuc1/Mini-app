@@ -58,17 +58,28 @@
         </div>
     </div>
 
-    <div class="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-slate-800 grid grid-cols-3 py-3 shadow-2xl z-50">
-        <button onclick="showTab('home')" class="flex flex-col items-center text-blue-400">
-            <span class="text-xl">🏠</span><span class="text-[10px]">Trang chủ</span>
-        </button>
-        <button onclick="showTab('upgrade')" class="flex flex-col items-center text-gray-400">
-            <span class="text-xl">🚀</span><span class="text-[10px]">Nâng cấp</span>
-        </button>
-        <button onclick="showTab('wallet')" class="flex flex-col items-center text-gray-400">
-            <span class="text-xl">👛</span><span class="text-[10px]">Rút tiền</span>
-        </button>
-    </div>
+   <nav class="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-slate-800 grid grid-cols-4 py-3 shadow-2xl z-50">
+    <button onclick="showTab('home')" class="flex flex-col items-center text-blue-400">
+        <span class="text-xl">🏠</span>
+        <span class="text-[10px]">Trang chủ</span>
+    </button>
+
+    <button onclick="showTab('upgrade')" class="flex flex-col items-center text-gray-400">
+        <span class="text-xl">🚀</span>
+        <span class="text-[10px]">Upgrade</span>
+    </button>
+
+    <button onclick="sellFish()" class="flex flex-col items-center text-yellow-500 font-bold">
+        <span class="text-xl">💰</span>
+        <span class="text-[10px]">Bán cá</span>
+    </button>
+
+    <button onclick="showTab('wallet')" class="flex flex-col items-center text-gray-400">
+        <span class="text-xl">👛</span>
+        <span class="text-[10px]">Rút tiền</span>
+    </button>
+</nav>
+
 
     <script src="app.js"></script>
 </body>
