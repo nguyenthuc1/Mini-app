@@ -78,4 +78,14 @@ body {
 .hidden {
     display: none !important;
 }
+/* Ép buộc ẩn các trang khi có class hidden */
+.hidden { 
+    display: none !important; 
+}
+
+/* Đảm bảo trang hiện tại chiếm toàn bộ không gian nội dung */
+.tab-page {
+    width: 100%;
+    display: block; /* Hiện mặc định khi không có class hidden */
+}
 
