@@ -283,4 +283,42 @@ function updateDisplays() {
 
 // Gọi cập nhật lần đầu khi tải trang
 updateDisplays();
+// Các biến khởi tạo
+let fishCount = parseFloat(localStorage.getItem('fishing_count')) || 0;
+let coins = parseInt(localStorage.getItem('fishing_coins')) || 0;
+let boatLevel = parseInt(localStorage.getItem('boat_level')) || 1;
+const baseSpeed = 0.5;
+
+// Hàm tính tốc độ hiện tại dựa trên Level
+function getCurrentSpeed() {
+    return baseSpeed + (boatLevel - 1) * 0.5;
+}
+
+// Logic tự động cộng cá mỗi giây
+setInterval(() => {
+    fishCount += getCurrentSpeed();
+    updateDisplays();
+}, 1000);
+
+// Hàm cập nhật hiển thị (Fix lỗi ID hiển thị trên trang chủ)
+function updateDisplays() {
+    // Cập nhật số cá (Làm tròn xuống để nhìn cho đẹp)
+    if(document.getElementById('fish-display')) 
+        document.getElementById('fish-display').innerText = Math.floor(fishCount).toLocaleString();
+    
+    // Cập nhật số xu
+    if(document.getElementById('coin-display')) 
+        document.getElementById('coin-display').innerText = coins.toLocaleString();
+    
+    // Cập nhật tốc độ đánh cá
+    if(document.getElementById('speed-display')) 
+        document.getElementById('speed-display').innerText = getCurrentSpeed().toFixed(1);
+
+    // Lưu dữ liệu vào bộ nhớ
+    localStorage.setItem('fishing_count', fishCount);
+    localStorage.setItem('fishing_coins', coins);
+}
+
+// Gọi cập nhật ngay khi mở app
+updateDisplays();
 
