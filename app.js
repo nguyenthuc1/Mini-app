@@ -50,62 +50,65 @@ function updateDisplays() {
 }
 
 // --- 3. QUẢN LÝ MENU & RA KHƠI ---
-function switchTab(tabName) {
+window.switchTab = function(tabName) {
+    // Ẩn tất cả các trang
     document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
-    const target = document.getElementById('page-' + tabName);
-    if (target) target.classList.remove('hidden');
-    updateDisplays();
-}
-
-window.handleStartFishing = function() { 
-    // Nếu đang trong thời gian đánh bắt thì không cho bấm lại
-    if (isFishing) return;
     
-    // Thiết lập thời gian kết thúc là 3 giờ tới
+    // Hiện trang được chọn dựa trên ID (Ví dụ: page-home, page-upgrade)
+    const target = document.getElementById('page-' + tabName);
+    if (target) {
+        target.classList.remove('hidden');
+    }
+    updateDisplays(); // Cập nhật số liệu ngay khi chuyển trang
+};
+
+window.handleStartFishing = function() {
+    if (isFishing) return; // Nếu đang câu thì không cho bấm lại
+    
+    // Thiết lập thời gian kết thúc (3 giờ)
     endTime = Date.now() + (3 * 60 * 60 * 1000); 
     
-    // Lưu vào LocalStorage theo userId để không bị trùng
+    // Lưu vào LocalStorage theo userId để không bị trùng dữ liệu
     localStorage.setItem('fishing_endTime_' + userId, endTime);
     
     isFishing = true;
-    startCountdown(); // Gọi hàm đếm ngược
+    startCountdown(); // Gọi hàm bắt đầu đếm ngược
 };
 
+//------lập lại---------
 
-function startCountdown() {
 
-    isFishing = true; // Thêm dòng này để kích hoạt trạng thái câu cá
+
+    function startCountdown() {
+    isFishing = true;
     const btnText = document.getElementById('btn-text');
+    
     const timerInterval = setInterval(() => {
         const timeLeft = endTime - Date.now();
+        
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             isFishing = false;
             if(btnText) btnText.innerText = "🚢 RA KHƠI";
             localStorage.removeItem('fishing_endTime_' + userId);
-           } else {
-        // --- ĐOẠN CẦN SỬA/THÊM ---
-        // 1. Logic cộng cá mỗi giây
-        const maxStorage = getMaxStorage(); 
-        if (fishCount < maxStorage) {
-            // Tốc độ dựa trên cấp thuyền (ví dụ 0.5 + nâng cấp)
-            const speed = 0.5 + (boatLevel - 1) * 0.5;
-            fishCount += speed;
-            
-            // 2. Lưu lại mốc thời gian cập nhật cuối cùng
-            localStorage.setItem('fishing_lastUpdate_' + userId, Date.now());
-            
-            // 3. Cập nhật số liệu lên màn hình ngay lập tức
-            updateDisplays(); 
-        }
-        // --- KẾT THÚC ĐOẠN SỬA ---
+        } else {
+            // --- THÊM LOGIC CỘNG CÁ VÀO ĐÂY ---
+            const maxStorage = getMaxStorage(); // Lấy giới hạn kho
+            if (fishCount < maxStorage) {
+                // Tốc độ: Cơ bản 0.5 + (Cấp thuyền - 1) * 0.5
+                fishCount += (0.5 + (boatLevel - 1) * 0.5); 
+                updateDisplays(); // Ép màn hình hiển thị số cá mới
+            }
+            // ---------------------------------
 
-        // Hiển thị đồng hồ đếm ngược (Giữ nguyên phần này của bạn)
-        const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
-        const m = Math.floor((timeLeft % 3600000) / 60000).toString().padStart(2, '0');
-        const s = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0');
-        if(btnText) btnText.innerText = `${h}:${m}:${s}`;
-    }
+            // Hiển thị đồng hồ (Giữ nguyên code của bạn)
+            const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
+            const m = Math.floor((timeLeft % 3600000) / 60000).toString().padStart(2, '0');
+            const s = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0');
+            if(btnText) btnText.innerText = `${h}:${m}:${s}`;
+        }
+    }, 1000);
+}
 
 
 
