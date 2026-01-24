@@ -74,24 +74,33 @@ function checkOfflineMining() {
 
     if (elapsed <= 0) return;
 
-    // 1. Nếu đã quá 3 tiếng
+    // Trường hợp 1: Đã quá 3 tiếng -> Kết thúc phiên
     if (elapsed >= MINING_DURATION) {
         const fishEarned = Math.floor((MINING_DURATION / 1000) * data.miningSpeed);
         data.fish += fishEarned;
         tg.showAlert(`🚢 Hết thời gian đào!\nBạn nhận được ${fishEarned.toLocaleString()} 🐟`);
-        stopMining(); // Hàm này sẽ set data.startTime = null
+        stopMining(); 
     } 
-    // 2. Nếu vẫn đang trong 3 tiếng
+    // Trường hợp 2: Vẫn còn trong 3 tiếng -> Cộng cá bù và CHẠY TIẾP
     else {
         const fishEarned = Math.floor((elapsed / 1000) * data.miningSpeed);
         if (fishEarned >= 1) {
             data.fish += fishEarned;
-            tg.showAlert(`🚢 Chào mừng trở lại!\nBạn nhận được ${fishEarned.toLocaleString()} 🐟`);
             
-            // QUAN TRỌNG: Thay vì đẩy startTime, ta trừ trực tiếp elapsed vào logic đồng hồ 
-            // Hoặc đơn giản là cập nhật startTime tiến lên để đồng hồ chạy tiếp từ mốc đó
+            // SỬA TẠI ĐÂY: Thay vì cộng dồn vào startTime (gây reset đồng hồ),
+            // ta cập nhật startTime tiến lên đúng bằng số cá đã nhận 
+            // để bảo toàn thời gian còn lại chính xác.
             data.startTime = start + (fishEarned * 1000 / data.miningSpeed);
         }
+        
+        // Hiện lại UI đồng hồ và icon tàu ngay khi vào lại app
+        if (timerDisplay) timerDisplay.classList.remove('hidden');
+        if (shipIcon) shipIcon.classList.add('mining');
+        if (btnMine) {
+            btnMine.disabled = true;
+            btnMine.innerText = "ĐANG RA KHƠI...";
+        }
+        
         startMiningSession(); 
     }
 
@@ -199,8 +208,17 @@ function switchTab(name) {
 // Khởi chạy
 window.onload = () => {
     updateUI();
+    
+    // Nếu đang đào, khôi phục trạng thái nút bấm ngay lập tức
+    if (data.startTime) {
+        btnMine.disabled = true;
+        btnMine.innerText = "ĐANG RA KHƠI...";
+        shipIcon?.classList.add('mining');
+    }
+    
     checkOfflineMining();
 };
+
 // Thêm vào cuối file app.js
 if (btnMine) btnMine.onclick = startAds;
 if (btnUpgrade) btnUpgrade.onclick = handleUpgrade;
