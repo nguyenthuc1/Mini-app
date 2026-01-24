@@ -107,21 +107,21 @@ function startMiningSession() {
     clearInterval(mInterval);
     clearInterval(tInterval);
 
-    // Tính toán cá dựa trên mốc thời gian thực để không bao giờ sai lệch
     mInterval = setInterval(() => {
-        const currentElapsed = Date.now() - start;
-        // Số cá thực tế phải có = (thời gian đã trôi qua / 1000) * tốc độ
-        // Cách này giúp cá luôn khớp với đồng hồ dù có reset bao nhiêu lần
-        const totalFishTarget = (currentElapsed / 1000) * data.miningSpeed;
+        const now = Date.now();
+        const elapsed = (now - start) / 1000;
         
-        // Cập nhật hiển thị (không cộng dồn liên tục để tránh sai số)
-        fishDisplay.innerText = Math.floor(data.fish + totalFishTarget);
+        // Tính toán số cá hiện tại (đã bao gồm phần trừ âm khi bán)
+        const currentDisplayFish = data.fish + (elapsed * data.miningSpeed);
+        
+        // Luôn dùng Math.max(0, ...) để không bao giờ hiện số âm
+        fishDisplay.innerText = Math.floor(Math.max(0, currentDisplayFish)); 
     }, 1000);
 
     tInterval = setInterval(() => {
         const secondsLeft = Math.floor((MINING_DURATION - (Date.now() - start)) / 1000);
         if (secondsLeft <= 0) {
-            // Trước khi dừng, cộng số cá đào được vào tài khoản chính
+            // Khi hết 3 tiếng, chốt số cá thực tế vào data.fish
             data.fish += (MINING_DURATION / 1000) * data.miningSpeed;
             stopMining();
         } else {
@@ -164,7 +164,7 @@ function updateTimerUI(seconds) {
 // 6. TÍNH NĂNG BÁN & NÂNG CẤP
 
 function handleSell() {
-    // 1. Tính tổng số cá thực tế đang có (bao gồm cả số đang đào trên màn hình)
+    // 1. Tính tổng số cá đang có (Cá trong kho + Cá đang đào thực tế)
     let currentMiningFish = 0;
     if (data.startTime) {
         const elapsedSeconds = (Date.now() - parseInt(data.startTime)) / 1000;
@@ -174,29 +174,23 @@ function handleSell() {
     const totalFishToSell = Math.floor(data.fish + currentMiningFish);
 
     if (totalFishToSell >= 1) {
-        // 2. Thực hiện bán
+        // 2. Cộng tiền
         data.coins += totalFishToSell * 2;
         
-        // 3. QUAN TRỌNG: Reset cả kho cá VÀ mốc thời gian đào
-        data.fish = 0; 
-        
+        // 3. QUAN TRỌNG: Để số cá về 0 mà KHÔNG ĐỔI đồng hồ
+        // Ta set data.fish về một con số âm sao cho: data.fish + cá_đang_đào = 0
         if (data.startTime) {
-            // Đặt lại startTime thành "Bây giờ" để bộ đếm bắt đầu tính từ 0 cá
-            data.startTime = Date.now(); 
+            const elapsedSeconds = (Date.now() - parseInt(data.startTime)) / 1000;
+            data.fish = -(elapsedSeconds * data.miningSpeed); 
+        } else {
+            data.fish = 0;
         }
 
-        // 4. Lưu và cập nhật giao diện
         saveData();
         updateUI();
-        
-        // Khởi động lại bộ đếm để nó nhận mốc startTime mới ngay lập tức
-        if (data.startTime) {
-            startMiningSession();
-        }
-
-        tg.showAlert(`💰 Đã bán xong! Bạn nhận được ${(totalFishToSell * 2).toLocaleString()} xu.`);
+        tg.showAlert(`💰 Đã bán! Nhận được ${(totalFishToSell * 2).toLocaleString()} xu.\nĐồng hồ vẫn đang chạy!`);
     } else {
-        tg.showAlert("❌ Bạn không có đủ cá để bán!");
+        tg.showAlert("❌ Bạn không có cá để bán!");
     }
 }
 
