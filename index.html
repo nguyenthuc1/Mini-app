@@ -2,94 +2,112 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SuperMoneyMine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperMoneyMine - Telegram Mini App</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        .hidden { display: none !important; }
-        body { -webkit-user-select: none; user-select: none; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex flex-col h-screen bg-[#0c1524] text-white overflow-hidden">
+<body class="bg-[#0f172a] text-white font-sans overflow-hidden">
 
-    <div id="tab-content" class="flex-grow overflow-y-auto pb-24 p-4">
+    <div id="app" class="flex flex-col h-screen relative">
         
-        <div id="page-home" class="tab-page space-y-4">
-            <div class="bg-slate-800/50 border border-white/10 p-6 rounded-[2.5rem] shadow-2xl">
-                <div class="w-full aspect-square rounded-[2rem] flex items-center justify-center bg-blue-900/20 border border-white/5">
-                    <div id="boat" class="text-8xl animate-bounce">🚢</div>
-                </div>
-                
-                <div class="mt-6 flex justify-between items-center bg-black/20 p-4 rounded-2xl">
-                    <div>
-                        <p class="text-[10px] text-gray-400 uppercase font-bold">Tốc độ</p>
-                        <div class="flex items-center gap-2">
-                            <p class="text-xl font-black text-green-400"><span id="speed-display">0.5</span> <span class="text-xs">cá/s</span></p>
-                            <span id="speed-bonus" class="hidden bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-full border border-blue-400/30 font-bold">+0.5</span>
-                        </div>
+        <main class="flex-1 overflow-y-auto p-4 pb-24">
+            
+            <section id="tab-home" class="tab-content">
+                <div class="bg-[#1e293b] rounded-3xl p-8 mb-4 flex flex-col items-center shadow-lg border border-slate-700">
+                    <div class="text-7xl mb-4 animate-bounce">🚢</div>
+                    <div class="flex items-center justify-between w-full mt-4 bg-[#0f172a]/60 p-3 rounded-xl border border-slate-600">
+                        <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Tốc độ</span>
+                        <span class="text-green-400 font-bold text-lg" id="mining-speed">0.5 cá/s</span>
+                        <button class="bg-blue-600 hover:bg-blue-500 px-4 py-1 rounded-full text-xs font-black shadow-lg transition-all active:scale-95">RA KHƠI</button>
                     </div>
-             <button id="main-fishing-btn" onclick="handleStartFishing()"><span id="btn-text">🚢 RA KHƠI</span>
-                 </button>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-slate-800/50 p-4 rounded-3xl text-center border border-white/10">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase">Kho cá</p>
-                    <p class="text-2xl font-black"><span id="fish-display">0</span> 🐟</p>
                 </div>
-                <div class="bg-slate-800/50 p-4 rounded-3xl text-center border border-white/10">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase">Số dư xu</p>
-                    <p class="text-2xl font-black text-yellow-400"><span id="coin-display">0</span> 💰</p>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-[#1e293b] p-4 rounded-2xl flex flex-col items-center border border-slate-700">
+                        <p class="text-[10px] text-gray-400 uppercase font-bold">Kho Cá</p>
+                        <div class="flex items-center gap-2 my-2">
+                            <span class="text-2xl font-black text-blue-300" id="fish-count">0</span>
+                            <span class="text-xl">🐟</span>
+                        </div>
+                        <button onclick="handleSell()" class="w-full bg-orange-500 hover:bg-orange-600 text-[10px] py-2 rounded-lg font-black transition-all active:scale-95 shadow-md">
+                            SELL (BÁN)
+                        </button>
+                    </div>
+
+                    <div class="bg-[#1e293b] p-4 rounded-2xl flex flex-col items-center border border-slate-700">
+                        <p class="text-[10px] text-gray-400 uppercase font-bold">Số dư xu</p>
+                        <div class="flex items-center gap-2 my-2">
+                            <span class="text-2xl font-black text-yellow-400" id="coin-balance">0</span>
+                            <span class="text-xl">💰</span>
+                        </div>
+                        <button onclick="handleUpgrade()" class="w-full bg-purple-600 hover:bg-purple-700 text-[10px] py-2 rounded-lg font-black transition-all active:scale-95 shadow-md">
+                            UPGRADE
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-       
-            <div id="page-upgrade" class="tab-page hidden space-y-6">
-    <div class="bg-slate-800 p-6 rounded-[2.5rem] border border-white/10 text-center shadow-xl">
-        <span class="text-5xl mb-2 block">🚢</span>
-        <h3 class="text-lg font-bold">Thuyền Cấp <span id="boat-level">1</span></h3>
-        <p class="text-gray-400 text-xs mb-4">Tăng tốc độ đánh bắt (+0.5/s)</p>
-        <button onclick="buyBoatUpgrade()" class="w-full bg-blue-600 py-3 rounded-2xl font-black shadow-lg active:scale-95">
-            NÂNG CẤP (<span id="upgrade-cost">2000</span> XU)
-        </button>
+            <section id="tab-tasks" class="tab-content hidden">
+                <h2 class="text-xl font-bold mb-4">Nhiệm vụ hàng ngày</h2>
+                <div class="space-y-3">
+                    <div class="bg-[#1e293b] p-4 rounded-xl flex justify-between items-center border border-slate-700">
+                        <div>
+                            <p class="font-bold">Follow X (Twitter)</p>
+                            <p class="text-xs text-yellow-400">+100 💰</p>
+                        </div>
+                        <button class="bg-white text-black px-4 py-1 rounded-full text-xs font-bold">Làm</button>
+                    </div>
+                    <div class="bg-[#1e293b] p-4 rounded-xl flex justify-between items-center border border-slate-700">
+                        <div>
+                            <p class="font-bold">Join Telegram Group</p>
+                            <p class="text-xs text-yellow-400">+50 💰</p>
+                        </div>
+                        <button class="bg-white text-black px-4 py-1 rounded-full text-xs font-bold">Làm</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-friends" class="tab-content hidden text-center">
+                <div class="text-5xl mb-4">👥</div>
+                <h2 class="text-xl font-bold">Mời bạn bè</h2>
+                <p class="text-gray-400 text-sm mb-6">Nhận 10% số cá bạn bè đào được</p>
+                <div class="bg-[#0f172a] p-4 rounded-xl border border-dashed border-slate-500 mb-4">
+                    <p class="text-xs text-gray-500 mb-2">Link giới thiệu của bạn</p>
+                    <p class="font-mono text-blue-400">t.me/miniapp?start=12345</p>
+                </div>
+                <button class="w-full bg-blue-600 py-3 rounded-xl font-bold">SAO CHÉP LINK</button>
+            </section>
+
+            <section id="tab-wallet" class="tab-content hidden">
+                <div class="bg-gradient-to-br from-indigo-600 to-purple-700 p-6 rounded-3xl mb-4">
+                    <p class="text-sm opacity-80">Tổng tài sản</p>
+                    <h2 class="text-3xl font-black mt-1">$0.00</h2>
+                </div>
+                <button class="w-full bg-[#1e293b] py-4 rounded-2xl font-bold border border-slate-700">KẾT NỐI VÍ TON</button>
+            </section>
+
+        </main>
+
+        <nav class="fixed bottom-0 left-0 right-0 bg-[#1e293b]/95 backdrop-blur-md border-t border-slate-800 flex justify-around items-center py-3 px-2 z-50">
+            <button onclick="switchTab('home')" class="nav-item flex flex-col items-center flex-1 text-blue-400" id="nav-home">
+                <span class="text-xl">🏠</span>
+                <span class="text-[10px] mt-1 font-bold">HOME</span>
+            </button>
+            <button onclick="switchTab('tasks')" class="nav-item flex flex-col items-center flex-1 text-gray-500" id="nav-tasks">
+                <span class="text-xl">📋</span>
+                <span class="text-[10px] mt-1 font-bold">NHIỆM VỤ</span>
+            </button>
+            <button onclick="switchTab('friends')" class="nav-item flex flex-col items-center flex-1 text-gray-500" id="nav-friends">
+                <span class="text-xl">👥</span>
+                <span class="text-[10px] mt-1 font-bold">MỜI BẠN</span>
+            </button>
+            <button onclick="switchTab('wallet')" class="nav-item flex flex-col items-center flex-1 text-gray-500" id="nav-wallet">
+                <span class="text-xl">💳</span>
+                <span class="text-[10px] mt-1 font-bold">WALLET</span>
+            </button>
+        </nav>
     </div>
-
-    <div class="bg-slate-800 p-6 rounded-[2.5rem] border border-white/10 text-center shadow-xl">
-        <span class="text-5xl mb-2 block">📦</span>
-        <h3 class="text-lg font-bold">Kho Cấp <span id="storage-level">1</span></h3>
-        <p class="text-gray-400 text-xs mb-4">Sức chứa: <span id="max-storage-display-up">2000</span> cá</p>
-        <button onclick="buyStorageUpgrade()" class="w-full bg-indigo-600 py-3 rounded-2xl font-black shadow-lg active:scale-95">
-            MỞ RỘNG KHO (<span id="storage-upgrade-cost">5000</span> XU)
-        </button>
-    </div>
-</div>
-
-        <div id="page-sell" class="tab-page hidden">
-            <div class="bg-slate-800/50 border border-white/10 p-8 rounded-[2.5rem] text-center">
-                <p class="text-gray-400 text-xs font-bold uppercase mb-2">Cá trong giỏ</p>
-                <h3 class="text-6xl font-black text-white mb-6" id="sell-fish-count">0</h3>
-                <button onclick="sellFishAction()" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-blue-900 py-5 rounded-2xl font-black text-xl">BÁN LẤY XU</button>
-            </div>
-        </div>
-
-        <div id="page-wallet" class="tab-page hidden">
-            <div class="bg-gradient-to-br from-indigo-700 to-blue-900 p-8 rounded-[2.5rem]">
-                <p class="text-blue-200/60 text-xs font-bold uppercase">Số dư ví</p>
-                <h3 class="text-4xl font-black text-white mb-8"><span id="wallet-balance">0</span> Xu</h3>
-                <button onclick="requestWithdraw()" class="w-full bg-white/10 py-3 rounded-xl font-bold border border-white/10">RÚT TIỀN</button>
-            </div>
-        </div>
-    </div>
-
-    <nav class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-white/5 grid grid-cols-4 pb-8 pt-4 px-2">
-        <button onclick="switchTab('home')" class="flex flex-col items-center">🏠<span class="text-[9px] mt-1">HOME</span></button>
-        <button onclick="switchTab('upgrade')" class="flex flex-col items-center">🚀<span class="text-[9px] mt-1">UPGRADE</span></button>
-        <button onclick="switchTab('sell')" class="flex flex-col items-center">🧺<span class="text-[9px] mt-1">SELL</span></button>
-        <button onclick="switchTab('wallet')" class="flex flex-col items-center">💳<span class="text-[9px] mt-1">WALLET</span></button>
-    </nav>
 
     <script src="app.js"></script>
 </body>
