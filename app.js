@@ -215,7 +215,9 @@ window.onload = () => {
     updateUI();
     checkOfflineMining();
 };
-btnMine.addEventListener('click', startAds); 
-btnUpgrade.addEventListener('click', handleUpgrade);
-// Tìm nút bán cá trong HTML và gán:
-document.getElementById('btn-sell').addEventListener('click', handleSell);
+// Thêm vào cuối file app.js
+if (btnMine) btnMine.onclick = startAds;
+if (btnUpgrade) btnUpgrade.onclick = handleUpgrade;
+// Nút Bán cá không có ID trong HTML, bạn nên dùng querySelector
+const btnSell = document.querySelector('button[onclick="handleSell()"]');
+if (btnSell) btnSell.onclick = handleSell;
