@@ -71,26 +71,26 @@ function checkOfflineMining() {
     const elapsed = now - start;
 
     if (elapsed >= MINING_DURATION) {
-        // Nếu đã quá 3 tiếng: Cộng tối đa 3 tiếng và dừng
+        // Quá 3 tiếng: Cộng tối đa và dừng
         const fishEarned = Math.floor((MINING_DURATION / 1000) * data.miningSpeed);
         data.fish += fishEarned;
         tg.showAlert(`🚢 Hết thời gian đào!\nBạn nhận được ${fishEarned.toLocaleString()} 🐟`);
-        stopMining();
+        stopMining(); // Hàm này sẽ set startTime = null
     } else {
-        // Nếu vẫn trong 3 tiếng: Cộng bù cá offline
+        // Vẫn trong 3 tiếng: Cộng bù cá
         const fishEarned = Math.floor((elapsed / 1000) * data.miningSpeed);
         if (fishEarned >= 1) {
             data.fish += fishEarned;
             tg.showAlert(`🚢 Bạn nhận được ${fishEarned.toLocaleString()} 🐟 khi vắng mặt.`);
         }
-        // Tiếp tục đào nhưng KHÔNG reset startTime
-        // Chỉ cần chạy lại session để bắt đầu lại vòng lặp setInterval
+        // QUAN TRỌNG: KHÔNG cập nhật data.startTime = now ở đây
         startMiningSession(); 
     }
     
     saveData();
     updateUI();
 }
+
 
 function startAds() {
     if (data.startTime) return;
