@@ -230,6 +230,8 @@ window.onload = () => {
 // Thêm vào cuối file app.js
 if (btnMine) btnMine.onclick = startAds;
 if (btnUpgrade) btnUpgrade.onclick = handleUpgrade;
-// Nút Bán cá không có ID trong HTML, bạn nên dùng querySelector
-const btnSell = document.querySelector('button[onclick="handleSell()"]');
+
+// Sửa lại dòng gán cho nút Sell bằng ID đã thêm ở Bước 1
+const btnSell = document.getElementById('btn-sell');
 if (btnSell) btnSell.onclick = handleSell;
+
