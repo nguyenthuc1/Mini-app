@@ -167,6 +167,19 @@ function updateTimerUI(seconds) {
     let s = (seconds % 60).toString().padStart(2, '0');
     timerDisplay.innerText = `${h}:${m}:${s}`;
 }
+// Thêm hàm này vào bất cứ đâu trong file app.js (thường là gần cuối)
+function resetDataForDev() {
+    // Lưu ý: Đảm bảo biến STORAGE_KEY đã được định nghĩa ở đầu file app.js của bạn
+    localStorage.removeItem(STORAGE_KEY);
+    
+    // Hiển thị thông báo của Telegram (thay vì alert thường cho đẹp)
+    tg.showConfirm("Bạn có chắc chắn muốn xóa sạch dữ liệu và chơi lại từ đầu không?", (confirmed) => {
+        if (confirmed) {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+    });
+}
 
 // 6. TÍNH NĂNG BÁN & NÂNG CẤP
 
@@ -227,14 +240,8 @@ window.onload = () => {
     
     checkOfflineMining();
 };
-function resetDataForDev() {
-    // Xóa dữ liệu theo KEY của user hiện tại
-    localStorage.removeItem(STORAGE_KEY);
-    // Thông báo cho người dùng
-    alert("Dữ liệu đã được xóa sạch. App sẽ khởi động lại!");
-    // Tải lại trang
-    location.reload();
-}
+
+
 
 // Thêm vào cuối file app.js
 if (btnMine) btnMine.onclick = startAds;
