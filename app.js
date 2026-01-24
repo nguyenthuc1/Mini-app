@@ -45,7 +45,7 @@ function updateUI() {
     speedDisplay.innerText = `${data.miningSpeed.toFixed(1)} cá/s`;
     
     const btnUpgrade = document.getElementById('btn-upgrade');
-    const cost = 50 * (data.upgradeCount + 1);
+    const cost = 500 * (data.upgradeCount + 1);
     if (data.upgradeCount >= MAX_UPGRADES) {
         btnUpgrade.innerText = "MAX LEVEL (10/10)";
         btnUpgrade.classList.replace('bg-purple-600', 'bg-slate-600');
