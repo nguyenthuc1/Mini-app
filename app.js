@@ -162,43 +162,41 @@ function updateTimerUI(seconds) {
 }
 
 // 6. TÍNH NĂNG BÁN & NÂNG CẤP
+
 function handleSell() {
-    // Tính tổng cá: cá đã lưu + cá đang đào được trong phiên hiện tại
+    // 1. Tính tổng số cá thực tế đang có (bao gồm cả số đang đào trên màn hình)
     let currentMiningFish = 0;
     if (data.startTime) {
-        const elapsed = (Date.now() - parseInt(data.startTime)) / 1000;
-        currentMiningFish = elapsed * data.miningSpeed;
+        const elapsedSeconds = (Date.now() - parseInt(data.startTime)) / 1000;
+        currentMiningFish = elapsedSeconds * data.miningSpeed;
     }
+    
+    const totalFishToSell = Math.floor(data.fish + currentMiningFish);
 
-    const totalFish = Math.floor(data.fish + currentMiningFish);
-
-    if (totalFish >= 1) {
-        data.coins += totalFish * 2; // Cộng tiền (1 cá = 2 xu)
-        data.fish = 0;               // Reset cá về 0
+    if (totalFishToSell >= 1) {
+        // 2. Thực hiện bán
+        data.coins += totalFishToSell * 2;
         
-        // Nếu đang đào, reset mốc thời gian về hiện tại để đào lại từ 0 cá
+        // 3. QUAN TRỌNG: Reset cả kho cá VÀ mốc thời gian đào
+        data.fish = 0; 
+        
         if (data.startTime) {
+            // Đặt lại startTime thành "Bây giờ" để bộ đếm bắt đầu tính từ 0 cá
             data.startTime = Date.now(); 
         }
 
+        // 4. Lưu và cập nhật giao diện
         saveData();
         updateUI();
-        tg.showAlert(`💰 Bạn đã bán cá và nhận được ${(totalFish * 2).toLocaleString()} xu!`);
+        
+        // Khởi động lại bộ đếm để nó nhận mốc startTime mới ngay lập tức
+        if (data.startTime) {
+            startMiningSession();
+        }
+
+        tg.showAlert(`💰 Đã bán xong! Bạn nhận được ${(totalFishToSell * 2).toLocaleString()} xu.`);
     } else {
         tg.showAlert("❌ Bạn không có đủ cá để bán!");
-    }
-}
-
-function handleUpgrade() {
-    const cost = UPGRADE_COSTS[data.upgradeCount];
-    if (data.coins >= cost && data.upgradeCount < MAX_UPGRADES) {
-        data.coins -= cost;
-        data.upgradeCount++;
-        data.miningSpeed += 0.5;
-        saveData();
-        updateUI();
-    } else if (data.upgradeCount < MAX_UPGRADES) {
-        alert(`Bạn cần ${cost.toLocaleString()} xu!`);
     }
 }
 
