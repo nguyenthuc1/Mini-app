@@ -94,21 +94,16 @@ function startMiningSession(msLeft) {
     clearInterval(mInterval);
     clearInterval(tInterval);
 
-    mInterval = setInterval(() => {
-        data.fish += data.miningSpeed;
-        fishDisplay.innerText = Math.floor(data.fish);
-        if(Math.floor(data.fish) % 10 === 0) saveData();
-    }, 1000);
+  miningInterval = setInterval(() => {
+    data.fish += data.miningSpeed;
+    fishDisplay.innerText = Math.floor(data.fish);
+    
+    // Cứ mỗi khi số cá là số chẵn (hoặc sau mỗi 10 giây) thì lưu một lần
+    if (Math.floor(data.fish) % 10 === 0) {
+        saveData(); 
+    }
+}, 1000);
 
-    tInterval = setInterval(() => {
-        secondsLeft--;
-        let h = Math.floor(secondsLeft/3600).toString().padStart(2,'0');
-        let m = Math.floor((secondsLeft%3600)/60).toString().padStart(2,'0');
-        let s = (secondsLeft%60).toString().padStart(2,'0');
-        timerDisplay.innerText = `${h}:${m}:${s}`;
-        if(secondsLeft <= 0) stopMining();
-    }, 1000);
-}
 
 function stopMining() {
     clearInterval(mInterval);
