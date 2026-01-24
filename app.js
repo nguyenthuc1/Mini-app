@@ -48,14 +48,21 @@ const STORAGE_KEY = `fish_mining_data_${userId}`; //
 }
 
 function updateUI() {
-    fishDisplay.innerText = Math.floor(data.fish);
+    let currentDisplayFish = data.fish;
+    if (data.startTime) {
+        const elapsed = (Date.now() - parseInt(data.startTime)) / 1000;
+        currentDisplayFish = data.fish + (elapsed * data.miningSpeed);
+    }
+    
+    // Luôn hiển thị số cá >= 0 và làm tròn xuống
+    fishDisplay.innerText = Math.floor(Math.max(0, currentDisplayFish));
+    
     coinDisplay.innerText = data.coins.toLocaleString();
     speedDisplay.innerText = `${data.miningSpeed.toFixed(1)} cá/s`;
-    
-    // Cập nhật trạng thái nút Nâng cấp
+
+    // Phần logic nút Nâng cấp (Nhớ thêm hàm handleUpgrade nếu chưa có)
     if (data.upgradeCount >= MAX_UPGRADES) {
         btnUpgrade.innerText = "MAX LEVEL (10/10)";
-        btnUpgrade.classList.add('bg-slate-600');
         btnUpgrade.disabled = true;
     } else {
         const cost = UPGRADE_COSTS[data.upgradeCount];
@@ -164,33 +171,35 @@ function updateTimerUI(seconds) {
 // 6. TÍNH NĂNG BÁN & NÂNG CẤP
 
 function handleSell() {
-    // 1. Tính tổng số cá đang có (Cá trong kho + Cá đang đào thực tế)
+    // 1. Tính toán chính xác số cá đang có tại thời điểm bấm nút
     let currentMiningFish = 0;
     if (data.startTime) {
         const elapsedSeconds = (Date.now() - parseInt(data.startTime)) / 1000;
         currentMiningFish = elapsedSeconds * data.miningSpeed;
     }
-    
+
     const totalFishToSell = Math.floor(data.fish + currentMiningFish);
 
     if (totalFishToSell >= 1) {
-        // 2. Cộng tiền
+        // 2. Cộng tiền vào túi
         data.coins += totalFishToSell * 2;
-        
-        // 3. QUAN TRỌNG: Để số cá về 0 mà KHÔNG ĐỔI đồng hồ
-        // Ta set data.fish về một con số âm sao cho: data.fish + cá_đang_đào = 0
+
+        // 3. LOGIC QUAN TRỌNG: 
+        // Thay vì reset startTime (làm tăng lại 3 tiếng), ta "khấu trừ" số cá đã bán vào data.fish
+        // Công thức: data.fish (mới) = - (số cá đang được sinh ra bởi thời gian)
         if (data.startTime) {
-            const elapsedSeconds = (Date.now() - parseInt(data.startTime)) / 1000;
-            data.fish = -(elapsedSeconds * data.miningSpeed); 
+            const elapsedSinceStart = (Date.now() - parseInt(data.startTime)) / 1000;
+            data.fish = -(elapsedSinceStart * data.miningSpeed);
         } else {
             data.fish = 0;
         }
 
         saveData();
-        updateUI();
-        tg.showAlert(`💰 Đã bán! Nhận được ${(totalFishToSell * 2).toLocaleString()} xu.\nĐồng hồ vẫn đang chạy!`);
+        updateUI(); // Cập nhật màn hình ngay lập tức
+        
+        tg.showAlert(`💰 Đã bán ${totalFishToSell.toLocaleString()} 🐟\nNhận được ${(totalFishToSell * 2).toLocaleString()} xu!`);
     } else {
-        tg.showAlert("❌ Bạn không có cá để bán!");
+        tg.showAlert("❌ Bạn chưa có cá để bán!");
     }
 }
 
