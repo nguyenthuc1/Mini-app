@@ -1,20 +1,20 @@
 // Khởi tạo Telegram WebApp
 const tg = window.Telegram.WebApp;
-tg.ready(); // Thông báo WebApp đã sẵn sàng
+tg.ready();
 
-// Lấy User ID từ Telegram (nếu chạy ngoài Telegram sẽ dùng 'guest')
+// Lấy User ID từ Telegram để tránh trùng lặp dữ liệu
 const userId = tg.initDataUnsafe?.user?.id || 'guest';
-
-// --- KHỞI TẠO DỮ LIỆU RIÊNG CHO TỪNG USER ID ---
 const storageKey = `mining_data_${userId}`;
 
+// --- KHỞI TẠO DỮ LIỆU ---
 function loadUserData() {
     const savedData = JSON.parse(localStorage.getItem(storageKey)) || {};
     return {
         fish: parseFloat(savedData.fish) || 0,
         coins: parseInt(savedData.coins) || 0,
         miningSpeed: parseFloat(savedData.miningSpeed) || 0.5,
-        startTime: savedData.startTime || null
+        startTime: savedData.startTime || null,
+        upgradeCount: parseInt(savedData.upgradeCount) || 0 // Thêm biến đếm số lần nâng cấp
     };
 }
 
@@ -23,6 +23,7 @@ let fish = userData.fish;
 let coins = userData.coins;
 let miningSpeed = userData.miningSpeed;
 let startTime = userData.startTime;
+let upgradeCount = userData.upgradeCount;
 
 // Các phần tử giao diện
 const fishDisplay = document.getElementById('fish-count');
@@ -31,36 +32,75 @@ const speedDisplay = document.getElementById('mining-speed');
 const btnMine = document.getElementById('btn-mine');
 const timerDisplay = document.getElementById('timer-display');
 
-const MINING_DURATION = 3 * 60 * 60 * 1000;
-let timerInterval, miningInterval;
+const MINING_DURATION = 3 * 60 * 60 * 1000; // 3 tiếng
+const MAX_UPGRADES = 10; // Giới hạn 10 lần nâng cấp
 
 window.onload = () => {
     updateUI();
     checkOfflineMining();
-    // Hiển thị tên người dùng nếu có
-    if(tg.initDataUnsafe?.user?.first_name) {
-        console.log("Chào mừng " + tg.initDataUnsafe.user.first_name);
-    }
 };
 
-// Lưu dữ liệu vào LocalStorage kèm theo ID người dùng
+// 1. LƯU DỮ LIỆU
 function saveData() {
     const dataToSave = {
         fish: fish,
         coins: coins,
         miningSpeed: miningSpeed,
-        startTime: startTime
+        startTime: startTime,
+        upgradeCount: upgradeCount
     };
     localStorage.setItem(storageKey, JSON.stringify(dataToSave));
 }
 
-// --- CÁC LOGIC CÒN LẠI (GIỮ NGUYÊN NHƯ CODE TRƯỚC) ---
+// 2. TÍNH TOÁN GIÁ NÂNG CẤP (Công thức: 50 * (lần_nâng + 1))
+function getUpgradeCost() {
+    return 50 * (upgradeCount + 1);
+}
 
+// 3. LOGIC NÂNG CẤP (UPGRADE)
+function handleUpgrade() {
+    if (upgradeCount >= MAX_UPGRADES) {
+        alert("Bạn đã đạt cấp độ tối đa (10/10)!");
+        return;
+    }
+
+    const currentCost = getUpgradeCost();
+
+    if (coins >= currentCost) {
+        coins -= currentCost;
+        upgradeCount++; // Tăng số lần đã nâng
+        miningSpeed += 0.5; // Tăng tốc độ đào
+        
+        saveData();
+        updateUI();
+        
+        alert(`Nâng cấp thành công lần ${upgradeCount}/10!\nGiá lần tới: ${getUpgradeCost()} 💰`);
+    } else {
+        alert(`Bạn cần ${currentCost} xu để nâng cấp!`);
+    }
+}
+
+// 4. CẬP NHẬT GIAO DIỆN
+function updateUI() {
+    fishDisplay.innerText = Math.floor(fish);
+    coinDisplay.innerText = coins;
+    speedDisplay.innerText = `${miningSpeed.toFixed(1)} cá/s`;
+    
+    // Cập nhật text trên nút Upgrade (nếu bạn muốn hiển thị giá trên nút)
+    const btnUpgrade = document.querySelector('button[onclick="handleUpgrade()"]');
+    if (upgradeCount >= MAX_UPGRADES) {
+        btnUpgrade.innerHTML = "MAX LEVEL";
+        btnUpgrade.classList.replace('bg-purple-600', 'bg-gray-600');
+    } else {
+        btnUpgrade.innerHTML = `UPGRADE (${getUpgradeCost()} 💰)`;
+    }
+}
+
+// 5. CÁC LOGIC ĐÀO CÁ & OFFLINE (Giữ nguyên từ bản trước)
 function checkOfflineMining() {
     if (!startTime) return;
     const now = Date.now();
-    const start = parseInt(startTime);
-    const elapsed = now - start;
+    const elapsed = now - parseInt(startTime);
 
     if (elapsed < MINING_DURATION) {
         fish += (elapsed / 1000) * miningSpeed;
@@ -84,6 +124,7 @@ function startAds() {
     }, 3000);
 }
 
+let timerInterval, miningInterval;
 function startMiningSession(durationLeft) {
     let timeLeft = Math.floor(durationLeft / 1000);
     btnMine.disabled = true;
@@ -118,12 +159,6 @@ function stopMiningSession() {
     saveData();
 }
 
-function updateUI() {
-    fishDisplay.innerText = Math.floor(fish);
-    coinDisplay.innerText = coins;
-    speedDisplay.innerText = `${miningSpeed.toFixed(1)} cá/s`;
-}
-
 function updateTimerUI(seconds) {
     let hrs = Math.floor(seconds / 3600);
     let mins = Math.floor((seconds % 3600) / 60);
@@ -135,15 +170,6 @@ function handleSell() {
     if (fish >= 1) {
         coins += Math.floor(fish) * 2;
         fish = 0;
-        saveData();
-        updateUI();
-    }
-}
-
-function handleUpgrade() {
-    if (coins >= 50) {
-        coins -= 50;
-        miningSpeed += 0.5;
         saveData();
         updateUI();
     }
