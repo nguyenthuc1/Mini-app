@@ -227,6 +227,14 @@ window.onload = () => {
     
     checkOfflineMining();
 };
+function resetDataForDev() {
+    // Xóa dữ liệu theo KEY của user hiện tại
+    localStorage.removeItem(STORAGE_KEY);
+    // Thông báo cho người dùng
+    alert("Dữ liệu đã được xóa sạch. App sẽ khởi động lại!");
+    // Tải lại trang
+    location.reload();
+}
 
 // Thêm vào cuối file app.js
 if (btnMine) btnMine.onclick = startAds;
