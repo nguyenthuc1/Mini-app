@@ -37,6 +37,10 @@ const btnUpgrade = document.getElementById('btn-upgrade');
 
 // 4. CÁC HÀM CỐT LÕI
 function saveData() {
+    // Đảm bảo các con số là hợp lệ trước khi lưu
+    if (isNaN(data.fish)) data.fish = 0;
+    if (isNaN(data.coins)) data.coins = 0;
+    
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
