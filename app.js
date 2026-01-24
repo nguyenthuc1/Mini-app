@@ -92,18 +92,19 @@ function checkOfflineMining() {
     updateUI();
 }
 
-
 function startAds() {
     if (data.startTime) return;
     btnMine.disabled = true;
     btnMine.innerHTML = `<span class="loading-spinner"></span> ĐANG XEM...`;
     
     setTimeout(() => {
-        data.startTime = Date.now();
+        data.startTime = Date.now(); // Lưu mốc bắt đầu
         saveData();
-        startMiningSession(MINING_DURATION);
+        startMiningSession(); // Bắt đầu đào
     }, 3000);
 }
+
+
 
 function startMiningSession() {
     if (!data.startTime) return;
