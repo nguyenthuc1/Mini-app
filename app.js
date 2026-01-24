@@ -149,15 +149,26 @@ function startAds() {
 }
 
 function stopMining() {
+    // 1. Chốt số cá đào được sau 3 tiếng vào kho
+    const totalFishFromSession = (MINING_DURATION / 1000) * data.miningSpeed;
+    data.fish += totalFishFromSession;
+
+    // 2. Dừng các bộ đếm
     clearInterval(mInterval);
     clearInterval(tInterval);
-    data.startTime = null; // Xóa mốc thời gian khi hết hạn hoặc dừng
+    
+    // 3. Reset trạng thái đào
+    data.startTime = null; 
+    
+    // 4. Cập nhật UI về trạng thái nghỉ
     btnMine.disabled = false;
     btnMine.innerText = "RA KHƠI";
-    btnMine.classList.replace('bg-green-600', 'bg-blue-600');
+    btnMine.classList.remove('opacity-50'); // Đảm bảo nút sáng lại
     timerDisplay?.classList.add('hidden');
     shipIcon?.classList.remove('mining');
+    
     saveData();
+    updateUI();
 }
 
 function updateTimerUI(seconds) {
@@ -169,24 +180,33 @@ function updateTimerUI(seconds) {
 }
 // 6. TÍNH NĂNG BÁN & NÂNG CẤP
 
-function handleSell() {
-    // 1. Tính toán chính xác số cá đang có tại thời điểm bấm nút
+ function handleSell() {
     let currentMiningFish = 0;
+
     if (data.startTime) {
-        const elapsedSeconds = (Date.now() - parseInt(data.startTime)) / 1000;
-        currentMiningFish = elapsedSeconds * data.miningSpeed;
+        const now = Date.now();
+        const start = parseInt(data.startTime);
+        const elapsed = now - start;
+
+        // Nếu thời gian trôi qua vượt quá 3 tiếng, chỉ tính đúng 3 tiếng
+        const effectiveElapsed = Math.min(elapsed, MINING_DURATION);
+        currentMiningFish = (effectiveElapsed / 1000) * data.miningSpeed;
+
+        // Nếu đã quá 3 tiếng, tiện tay dừng đào luôn
+        if (elapsed >= MINING_DURATION) {
+            stopMining();
+            return; // Sau khi stopMining, nó đã tự cộng cá và updateUI nên thoát luôn
+        }
     }
 
     const totalFishToSell = Math.floor(data.fish + currentMiningFish);
 
     if (totalFishToSell >= 1) {
-        // 2. Cộng tiền vào túi
         data.coins += totalFishToSell * 2;
-
-        // 3. LOGIC QUAN TRỌNG: 
-        // Thay vì reset startTime (làm tăng lại 3 tiếng), ta "khấu trừ" số cá đã bán vào data.fish
-        // Công thức: data.fish (mới) = - (số cá đang được sinh ra bởi thời gian)
+        
+        // Reset cá về 0
         if (data.startTime) {
+            // "Nợ" lại số giây đã trôi qua để đồng hồ vẫn chạy chuẩn mà cá về 0
             const elapsedSinceStart = (Date.now() - parseInt(data.startTime)) / 1000;
             data.fish = -(elapsedSinceStart * data.miningSpeed);
         } else {
@@ -194,11 +214,10 @@ function handleSell() {
         }
 
         saveData();
-        updateUI(); // Cập nhật màn hình ngay lập tức
-        
-        tg.showAlert(`💰 Đã bán ${totalFishToSell.toLocaleString()} 🐟\nNhận được ${(totalFishToSell * 2).toLocaleString()} xu!`);
+        updateUI();
+        tg.showAlert(`💰 Đã bán! Nhận được ${(totalFishToSell * 2).toLocaleString()} xu.`);
     } else {
-        tg.showAlert("❌ Bạn chưa có cá để bán!");
+        tg.showAlert("❌ Bạn không có cá để bán!");
     }
 }
 
