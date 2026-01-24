@@ -96,8 +96,6 @@ function checkOfflineMining() {
     saveData();
     updateUI();
 }
-
-
     // 3. Kiểm tra xem phiên đào đã kết thúc chưa
     if (elapsed >= MINING_DURATION) {
         stopMining(); // Hết 3 tiếng thì dừng và xóa startTime
@@ -116,8 +114,6 @@ function startAds() {
         startMiningSession(); // Bắt đầu đào
     }, 3000);
 }
-
-
 function startMiningSession() {
     if (!data.startTime) return;
 
@@ -168,17 +164,15 @@ function handleSell() {
     if (amount >= 1) {
         data.coins += amount * 2;
         data.fish = 0;
-        
         // Nếu bạn muốn sau khi bán cá thì dừng đào luôn để an toàn:
         // stopMining(); 
-        
         // Hoặc ít nhất phải cập nhật mốc thời gian về hiện tại
         
 if (data.startTime) {
     data.startTime = Date.now(); 
+     data.startTime = null
     saveData(); // Đảm bảo mốc mới được lưu ngay lập tức
 }
-
         saveData();
         updateUI();
     }
