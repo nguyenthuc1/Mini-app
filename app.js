@@ -21,6 +21,7 @@ function loadData() {
 let data = loadData();
 const MINING_DURATION = 3 * 60 * 60 * 1000; // 3 tiếng
 const MAX_UPGRADES = 10;
+const UPGRADE_COSTS = [1000, 2500, 7500, 10000, 15000, 18000, 22000, 30000, 40000, 50000];
 
 // DOM Elements
 const fishDisplay = document.getElementById('fish-count');
@@ -45,7 +46,7 @@ function updateUI() {
     speedDisplay.innerText = `${data.miningSpeed.toFixed(1)} cá/s`;
     
     const btnUpgrade = document.getElementById('btn-upgrade');
-    const cost = 50 * (data.upgradeCount + 1);
+    const cost = UPGRADE_COSTS[data.upgradeCount] || 0;
     if (data.upgradeCount >= MAX_UPGRADES) {
         btnUpgrade.innerText = "MAX LEVEL (10/10)";
         btnUpgrade.classList.replace('bg-purple-600', 'bg-slate-600');
@@ -133,7 +134,7 @@ function handleSell() {
 }
 
 function handleUpgrade() {
-    const cost = 500 * (data.upgradeCount + 1);
+   const currentCost = UPGRADE_COSTS[data.upgradeCount];
     if (data.coins >= cost && data.upgradeCount < MAX_UPGRADES) {
         data.coins -= cost;
         data.upgradeCount++;
