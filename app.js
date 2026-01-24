@@ -68,22 +68,31 @@ function checkOfflineMining() {
     
     const now = Date.now();
     const start = parseInt(data.startTime);
-    const elapsed = now - start;
+    let elapsed = now - start;
 
-    if (elapsed >= MINING_DURATION) {
-        // Quá 3 tiếng: Cộng tối đa và dừng
-        const fishEarned = Math.floor((MINING_DURATION / 1000) * data.miningSpeed);
+    if (elapsed <= 0) return;
+
+    // 1. Giới hạn thời gian trôi qua tối đa là 3 tiếng
+    let actualElapsed = Math.min(elapsed, MINING_DURATION);
+    
+    // 2. Tính số cá dựa trên thời gian thực tế đã trôi qua
+    const fishEarned = Math.floor((actualElapsed / 1000) * data.miningSpeed);
+
+    if (fishEarned >= 1) {
         data.fish += fishEarned;
-        tg.showAlert(`🚢 Hết thời gian đào!\nBạn nhận được ${fishEarned.toLocaleString()} 🐟`);
-        stopMining(); // Hàm này sẽ set startTime = null
+        tg.showAlert(`🚢 Bạn nhận được ${fishEarned.toLocaleString()} 🐟 khi vắng mặt.`);
+        
+        // --- CHỐNG CỘNG LẶP ---
+        // Sau khi cộng cá, ta cập nhật startTime tiến lên một khoảng bằng actualElapsed
+        // Việc này giúp "chốt" lại đoạn cá đã nhận, reset lần sau sẽ không tính đoạn này nữa.
+        data.startTime = start + actualElapsed; 
+    }
+
+    // 3. Kiểm tra xem phiên đào đã kết thúc chưa
+    if (elapsed >= MINING_DURATION) {
+        stopMining(); // Hết 3 tiếng thì dừng và xóa startTime
     } else {
-        // Vẫn trong 3 tiếng: Cộng bù cá
-        const fishEarned = Math.floor((elapsed / 1000) * data.miningSpeed);
-        if (fishEarned >= 1) {
-            data.fish += fishEarned;
-            tg.showAlert(`🚢 Bạn nhận được ${fishEarned.toLocaleString()} 🐟 khi vắng mặt.`);
-        }
-        // QUAN TRỌNG: KHÔNG cập nhật data.startTime = now ở đây
+        // Vẫn trong 3 tiếng, chạy session để đồng hồ chạy tiếp từ mốc startTime mới
         startMiningSession(); 
     }
     
