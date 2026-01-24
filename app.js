@@ -105,11 +105,25 @@ function startAds() {
     }, 3000);
 }
 
-function startMiningSession(msLeft) {
-    let secondsLeft = Math.floor(msLeft / 1000);
-    btnMine.disabled = true;
-    btnMine.innerText = "ĐANG ĐÀO...";
-    btnMine.classList.replace('bg-blue-600', 'bg-green-600');
+function startMiningSession() {
+    if (!data.startTime) return;
+
+    const now = Date.now();
+    const start = parseInt(data.startTime);
+    const elapsed = now - start;
+    let secondsLeft = Math.floor((MINING_DURATION - elapsed) / 1000);
+
+    if (secondsLeft <= 0) {
+        stopMining();
+        return;
+    }
+
+    // UI Updates
+    if (btnMine) {
+        btnMine.disabled = true;
+        btnMine.innerText = "ĐANG ĐÀO...";
+        btnMine.classList.replace('bg-blue-600', 'bg-green-600');
+    }
     timerDisplay?.classList.remove('hidden');
     shipIcon?.classList.add('mining');
 
@@ -119,18 +133,24 @@ function startMiningSession(msLeft) {
     // Vòng lặp cộng cá
     mInterval = setInterval(() => {
         data.fish += data.miningSpeed;
-        fishDisplay.innerText = Math.floor(data.fish);
-        // Lưu dữ liệu mỗi 10 giây để tránh mất cá khi reset đột ngột
+        if (fishDisplay) fishDisplay.innerText = Math.floor(data.fish);
         if (Math.floor(data.fish) % 10 === 0) saveData();
     }, 1000);
 
-    // Vòng lặp đồng hồ
+    // Vòng lặp đồng hồ (Tính toán chuẩn xác giây còn lại)
     tInterval = setInterval(() => {
-        secondsLeft--;
-        updateTimerUI(secondsLeft);
-        if (secondsLeft <= 0) stopMining();
+        const currentNow = Date.now();
+        const currentElapsed = currentNow - start;
+        const currentSecondsLeft = Math.floor((MINING_DURATION - currentElapsed) / 1000);
+
+        if (currentSecondsLeft <= 0) {
+            stopMining();
+        } else {
+            updateTimerUI(currentSecondsLeft);
+        }
     }, 1000);
 }
+
 
 function stopMining() {
     clearInterval(mInterval);
