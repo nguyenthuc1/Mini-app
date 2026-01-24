@@ -62,37 +62,30 @@ function updateUI() {
 
 // 5. XỬ LÝ ĐÀO CÁ & OFFLINE (Sửa lỗi hồi sinh cá)
 
-  function checkOfflineMining() {
+  
+function checkOfflineMining() {
     if (!data.startTime) return;
     
     const now = Date.now();
     const start = parseInt(data.startTime);
-    let elapsed = now - start;
+    const elapsed = now - start;
 
-    if (elapsed <= 0) return;
-
-    // Giới hạn thời gian trôi qua tối đa 3 tiếng
-    let actualElapsed = Math.min(elapsed, MINING_DURATION);
-    
-    // Tính số cá nhận được
-    const fishEarned = Math.floor((actualElapsed / 1000) * data.miningSpeed);
-
-    if (fishEarned >= 1) {
-        data.fish += fishEarned;
-        
-        // --- HIỂN THỊ THÔNG BÁO ---
-        // Sử dụng giao diện mặc định của Telegram để thông báo
-        tg.showAlert(`🚢 Chào mừng trở lại!\nBạn đã nhận được ${fishEarned.toLocaleString()} 🐟 khi vắng mặt.`);
-    }
-
-    // Cập nhật lại logic mốc thời gian
     if (elapsed >= MINING_DURATION) {
-        data.startTime = null; 
+        // Nếu đã quá 3 tiếng: Cộng tối đa 3 tiếng và dừng
+        const fishEarned = Math.floor((MINING_DURATION / 1000) * data.miningSpeed);
+        data.fish += fishEarned;
+        tg.showAlert(`🚢 Hết thời gian đào!\nBạn nhận được ${fishEarned.toLocaleString()} 🐟`);
         stopMining();
     } else {
-        data.startTime = now; 
-        const remainingTime = MINING_DURATION - elapsed;
-        startMiningSession(remainingTime);
+        // Nếu vẫn trong 3 tiếng: Cộng bù cá offline
+        const fishEarned = Math.floor((elapsed / 1000) * data.miningSpeed);
+        if (fishEarned >= 1) {
+            data.fish += fishEarned;
+            tg.showAlert(`🚢 Bạn nhận được ${fishEarned.toLocaleString()} 🐟 khi vắng mặt.`);
+        }
+        // Tiếp tục đào nhưng KHÔNG reset startTime
+        // Chỉ cần chạy lại session để bắt đầu lại vòng lặp setInterval
+        startMiningSession(); 
     }
     
     saveData();
