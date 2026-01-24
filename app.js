@@ -65,42 +65,6 @@ function updateUI() {
 
 // 5. XỬ LÝ ĐÀO CÁ & OFFLINE (Sửa lỗi hồi sinh cá)
 
-  function checkOfflineMining() {
-    if (!data.startTime) return;
-    
-    const now = Date.now();
-    const start = parseInt(data.startTime);
-    let elapsed = now - start;
-
-    if (elapsed <= 0) return;
-
-    // 1. Giới hạn thời gian trôi qua tối đa là 3 tiếng
-    let actualElapsed = Math.min(elapsed, MINING_DURATION);
-    
-    // 2. Tính số cá dựa trên thời gian thực tế đã trôi qua
-    // Sử dụng Math.floor để lấy số nguyên, tránh nhảy số lẻ
-    const fishEarned = Math.floor((actualElapsed / 1000) * data.miningSpeed);
-
-    if (fishEarned >= 1) {
-        data.fish += fishEarned;
-        tg.showAlert(`🚢 Bạn nhận được ${fishEarned.toLocaleString()} 🐟 khi vắng mặt.`);
-        
-        // --- GIẢI PHÁP TRIỆT ĐỂ ---
-        // Chúng ta cập nhật startTime để bù đắp phần thời gian đã cộng cá
-        // Điều này giữ cho đồng hồ chạy tiếp CHÍNH XÁC từ giây bạn reset
-        data.startTime = Date.now() - (actualElapsed - (fishEarned * 1000 / data.miningSpeed));
-    }
-
-    if (elapsed >= MINING_DURATION) {
-        stopMining(); 
-    } else {
-        startMiningSession(); 
-    }
-    
-    saveData();
-    updateUI();
-}
-
 function checkOfflineMining() {
     if (!data.startTime) return;
     
