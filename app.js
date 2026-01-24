@@ -65,6 +65,7 @@ function updateUI() {
 
 // 5. XỬ LÝ ĐÀO CÁ & OFFLINE (Sửa lỗi hồi sinh cá)
 
+
 function checkOfflineMining() {
     if (!data.startTime) return;
 
@@ -74,38 +75,59 @@ function checkOfflineMining() {
 
     if (elapsed <= 0) return;
 
-    // Trường hợp 1: Đã quá 3 tiếng -> Kết thúc phiên
     if (elapsed >= MINING_DURATION) {
-        const fishEarned = Math.floor((MINING_DURATION / 1000) * data.miningSpeed);
-        data.fish += fishEarned;
-        tg.showAlert(`🚢 Hết thời gian đào!\nBạn nhận được ${fishEarned.toLocaleString()} 🐟`);
-        stopMining(); 
+        // ... (giữ nguyên đoạn showAlert và stopMining)
     } 
-    // Trường hợp 2: Vẫn còn trong 3 tiếng -> Cộng cá bù và CHẠY TIẾP
     else {
+        // CHỈ CỘNG CÁ, KHÔNG ĐỔI START TIME
         const fishEarned = Math.floor((elapsed / 1000) * data.miningSpeed);
         if (fishEarned >= 1) {
-            data.fish += fishEarned;
-            
-            // SỬA TẠI ĐÂY: Thay vì cộng dồn vào startTime (gây reset đồng hồ),
-            // ta cập nhật startTime tiến lên đúng bằng số cá đã nhận 
-            // để bảo toàn thời gian còn lại chính xác.
-            data.startTime = start + (fishEarned * 1000 / data.miningSpeed);
+            // Chúng ta không cộng vào data.fish ở đây vì startMiningSession 
+            // sẽ bắt đầu tính toán lại từ đầu mốc startTime gốc. 
+            // Để tránh cộng trùng, bạn chỉ nên cộng phần "chênh lệch" hoặc 
+            // đơn giản là để startMiningSession tự lo phần hiển thị.
         }
         
-        // Hiện lại UI đồng hồ và icon tàu ngay khi vào lại app
+        // Cập nhật giao diện đang đào
         if (timerDisplay) timerDisplay.classList.remove('hidden');
         if (shipIcon) shipIcon.classList.add('mining');
-        if (btnMine) {
-            btnMine.disabled = true;
-            btnMine.innerText = "ĐANG RA KHƠI...";
-        }
-        
+        btnMine.disabled = true;
+        btnMine.innerText = "ĐANG RA KHƠI...";
+
         startMiningSession(); 
     }
-
     saveData();
     updateUI();
+}
+
+function startMiningSession() {
+    if (!data.startTime) return;
+    const start = parseInt(data.startTime);
+    
+    clearInterval(mInterval);
+    clearInterval(tInterval);
+
+    // Tính toán cá dựa trên mốc thời gian thực để không bao giờ sai lệch
+    mInterval = setInterval(() => {
+        const currentElapsed = Date.now() - start;
+        // Số cá thực tế phải có = (thời gian đã trôi qua / 1000) * tốc độ
+        // Cách này giúp cá luôn khớp với đồng hồ dù có reset bao nhiêu lần
+        const totalFishTarget = (currentElapsed / 1000) * data.miningSpeed;
+        
+        // Cập nhật hiển thị (không cộng dồn liên tục để tránh sai số)
+        fishDisplay.innerText = Math.floor(data.fish + totalFishTarget);
+    }, 1000);
+
+    tInterval = setInterval(() => {
+        const secondsLeft = Math.floor((MINING_DURATION - (Date.now() - start)) / 1000);
+        if (secondsLeft <= 0) {
+            // Trước khi dừng, cộng số cá đào được vào tài khoản chính
+            data.fish += (MINING_DURATION / 1000) * data.miningSpeed;
+            stopMining();
+        } else {
+            updateTimerUI(secondsLeft);
+        }
+    }, 1000);
 }
 
 function startAds() {
@@ -117,28 +139,6 @@ function startAds() {
         saveData();
         startMiningSession();
     }, 3000);
-}
-
-function startMiningSession() {
-    if (!data.startTime) return;
-    const start = parseInt(data.startTime);
-    clearInterval(mInterval);
-    clearInterval(tInterval);
-
-    mInterval = setInterval(() => {
-        data.fish += data.miningSpeed;
-        fishDisplay.innerText = Math.floor(data.fish);
-    }, 1000);
-
-    tInterval = setInterval(() => {
-        const secondsLeft = Math.floor((MINING_DURATION - (Date.now() - start)) / 1000);
-        if (secondsLeft <= 0) {
-            stopMining();
-        } else {
-            updateTimerUI(secondsLeft);
-            if (timerDisplay) timerDisplay.classList.remove('hidden');
-        }
-    }, 1000);
 }
 
 function stopMining() {
