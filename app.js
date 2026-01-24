@@ -1,188 +1,155 @@
-// Khởi tạo Telegram WebApp
 const tg = window.Telegram.WebApp;
 tg.ready();
+tg.expand();
 
-// Lấy User ID từ Telegram để tránh trùng lặp dữ liệu
-const userId = tg.initDataUnsafe?.user?.id || 'guest';
-const storageKey = `mining_data_${userId}`;
+// ĐỊNH DANH USER (Dùng ID Telegram để không trùng data)
+const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
+const STORAGE_KEY = `fish_mining_data_${userId}`;
 
 // --- KHỞI TẠO DỮ LIỆU ---
-function loadUserData() {
-    const savedData = JSON.parse(localStorage.getItem(storageKey)) || {};
+function loadData() {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
     return {
-        fish: parseFloat(savedData.fish) || 0,
-        coins: parseInt(savedData.coins) || 0,
-        miningSpeed: parseFloat(savedData.miningSpeed) || 0.5,
-        startTime: savedData.startTime || null,
-        upgradeCount: parseInt(savedData.upgradeCount) || 0 // Thêm biến đếm số lần nâng cấp
+        fish: parseFloat(saved.fish) || 0,
+        coins: parseInt(saved.coins) || 0,
+        miningSpeed: parseFloat(saved.miningSpeed) || 0.5,
+        upgradeCount: parseInt(saved.upgradeCount) || 0,
+        startTime: saved.startTime || null
     };
 }
 
-let userData = loadUserData();
-let fish = userData.fish;
-let coins = userData.coins;
-let miningSpeed = userData.miningSpeed;
-let startTime = userData.startTime;
-let upgradeCount = userData.upgradeCount;
+let data = loadData();
+const MINING_DURATION = 3 * 60 * 60 * 1000; // 3 tiếng
+const MAX_UPGRADES = 10;
 
-// Các phần tử giao diện
+// DOM Elements
 const fishDisplay = document.getElementById('fish-count');
 const coinDisplay = document.getElementById('coin-balance');
 const speedDisplay = document.getElementById('mining-speed');
 const btnMine = document.getElementById('btn-mine');
 const timerDisplay = document.getElementById('timer-display');
-
-const MINING_DURATION = 3 * 60 * 60 * 1000; // 3 tiếng
-const MAX_UPGRADES = 10; // Giới hạn 10 lần nâng cấp
+const shipIcon = document.getElementById('ship-icon');
 
 window.onload = () => {
     updateUI();
     checkOfflineMining();
 };
 
-// 1. LƯU DỮ LIỆU
 function saveData() {
-    const dataToSave = {
-        fish: fish,
-        coins: coins,
-        miningSpeed: miningSpeed,
-        startTime: startTime,
-        upgradeCount: upgradeCount
-    };
-    localStorage.setItem(storageKey, JSON.stringify(dataToSave));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-// 2. TÍNH TOÁN GIÁ NÂNG CẤP (Công thức: 50 * (lần_nâng + 1))
-function getUpgradeCost() {
-    return 50 * (upgradeCount + 1);
-}
-
-// 3. LOGIC NÂNG CẤP (UPGRADE)
-function handleUpgrade() {
-    if (upgradeCount >= MAX_UPGRADES) {
-        alert("Bạn đã đạt cấp độ tối đa (10/10)!");
-        return;
-    }
-
-    const currentCost = getUpgradeCost();
-
-    if (coins >= currentCost) {
-        coins -= currentCost;
-        upgradeCount++; // Tăng số lần đã nâng
-        miningSpeed += 0.5; // Tăng tốc độ đào
-        
-        saveData();
-        updateUI();
-        
-        alert(`Nâng cấp thành công lần ${upgradeCount}/10!\nGiá lần tới: ${getUpgradeCost()} 💰`);
-    } else {
-        alert(`Bạn cần ${currentCost} xu để nâng cấp!`);
-    }
-}
-
-// 4. CẬP NHẬT GIAO DIỆN
 function updateUI() {
-    fishDisplay.innerText = Math.floor(fish);
-    coinDisplay.innerText = coins;
-    speedDisplay.innerText = `${miningSpeed.toFixed(1)} cá/s`;
+    fishDisplay.innerText = Math.floor(data.fish);
+    coinDisplay.innerText = data.coins;
+    speedDisplay.innerText = `${data.miningSpeed.toFixed(1)} cá/s`;
     
-    // Cập nhật text trên nút Upgrade (nếu bạn muốn hiển thị giá trên nút)
-    const btnUpgrade = document.querySelector('button[onclick="handleUpgrade()"]');
-    if (upgradeCount >= MAX_UPGRADES) {
-        btnUpgrade.innerHTML = "MAX LEVEL";
-        btnUpgrade.classList.replace('bg-purple-600', 'bg-gray-600');
+    const btnUpgrade = document.getElementById('btn-upgrade');
+    const cost = 50 * (data.upgradeCount + 1);
+    if (data.upgradeCount >= MAX_UPGRADES) {
+        btnUpgrade.innerText = "MAX LEVEL (10/10)";
+        btnUpgrade.classList.replace('bg-purple-600', 'bg-slate-600');
+        btnUpgrade.disabled = true;
     } else {
-        btnUpgrade.innerHTML = `UPGRADE (${getUpgradeCost()} 💰)`;
+        btnUpgrade.innerText = `NÂNG CẤP (${cost} 💰)`;
     }
 }
 
-// 5. CÁC LOGIC ĐÀO CÁ & OFFLINE (Giữ nguyên từ bản trước)
+// --- LOGIC ĐÀO CÁ ---
 function checkOfflineMining() {
-    if (!startTime) return;
-    const now = Date.now();
-    const elapsed = now - parseInt(startTime);
-
+    if (!data.startTime) return;
+    const elapsed = Date.now() - parseInt(data.startTime);
     if (elapsed < MINING_DURATION) {
-        fish += (elapsed / 1000) * miningSpeed;
+        data.fish += (elapsed / 1000) * data.miningSpeed;
         startMiningSession(MINING_DURATION - elapsed);
     } else {
-        fish += (MINING_DURATION / 1000) * miningSpeed;
-        stopMiningSession();
+        data.fish += (MINING_DURATION / 1000) * data.miningSpeed;
+        stopMining();
     }
-    saveData();
     updateUI();
 }
 
 function startAds() {
-    if (startTime) return;
+    if (data.startTime) return;
     btnMine.disabled = true;
-    btnMine.innerHTML = `ĐANG XEM...`;
+    btnMine.innerHTML = `<span class="loading-spinner"></span> ĐANG XEM...`;
+    
     setTimeout(() => {
-        startTime = Date.now();
+        data.startTime = Date.now();
         saveData();
         startMiningSession(MINING_DURATION);
     }, 3000);
 }
 
-let timerInterval, miningInterval;
-function startMiningSession(durationLeft) {
-    let timeLeft = Math.floor(durationLeft / 1000);
+let mInterval, tInterval;
+function startMiningSession(msLeft) {
+    let secondsLeft = Math.floor(msLeft / 1000);
     btnMine.disabled = true;
-    btnMine.innerHTML = "ĐANG ĐÀO...";
-    btnMine.classList.add('bg-green-700');
+    btnMine.innerText = "ĐANG ĐÀO...";
+    btnMine.classList.replace('bg-blue-600', 'bg-green-600');
     timerDisplay.classList.remove('hidden');
+    shipIcon.classList.add('mining');
 
-    clearInterval(miningInterval);
-    clearInterval(timerInterval);
+    clearInterval(mInterval);
+    clearInterval(tInterval);
 
-    miningInterval = setInterval(() => {
-        fish += miningSpeed;
-        fishDisplay.innerText = Math.floor(fish);
-        if (Math.floor(fish) % 5 === 0) saveData();
+    mInterval = setInterval(() => {
+        data.fish += data.miningSpeed;
+        fishDisplay.innerText = Math.floor(data.fish);
+        if(Math.floor(data.fish) % 10 === 0) saveData();
     }, 1000);
 
-    timerInterval = setInterval(() => {
-        timeLeft--;
-        updateTimerUI(timeLeft);
-        if (timeLeft <= 0) stopMiningSession();
+    tInterval = setInterval(() => {
+        secondsLeft--;
+        let h = Math.floor(secondsLeft/3600).toString().padStart(2,'0');
+        let m = Math.floor((secondsLeft%3600)/60).toString().padStart(2,'0');
+        let s = (secondsLeft%60).toString().padStart(2,'0');
+        timerDisplay.innerText = `${h}:${m}:${s}`;
+        if(secondsLeft <= 0) stopMining();
     }, 1000);
 }
 
-function stopMiningSession() {
-    clearInterval(miningInterval);
-    clearInterval(timerInterval);
-    startTime = null;
+function stopMining() {
+    clearInterval(mInterval);
+    clearInterval(tInterval);
+    data.startTime = null;
     btnMine.disabled = false;
-    btnMine.innerHTML = "RA KHƠI";
-    btnMine.classList.remove('bg-green-700');
+    btnMine.innerText = "RA KHƠI";
+    btnMine.classList.replace('bg-green-600', 'bg-blue-600');
     timerDisplay.classList.add('hidden');
+    shipIcon.classList.remove('mining');
     saveData();
 }
 
-function updateTimerUI(seconds) {
-    let hrs = Math.floor(seconds / 3600);
-    let mins = Math.floor((seconds % 3600) / 60);
-    let secs = seconds % 60;
-    timerDisplay.innerText = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
-
+// --- ACTIONS ---
 function handleSell() {
-    if (fish >= 1) {
-        coins += Math.floor(fish) * 2;
-        fish = 0;
+    const amount = Math.floor(data.fish);
+    if (amount >= 1) {
+        data.coins += amount * 2;
+        data.fish = 0;
         saveData();
         updateUI();
     }
 }
 
-function switchTab(tabName) {
-    const tabs = document.querySelectorAll('.tab-content');
-    tabs.forEach(tab => tab.classList.add('hidden'));
-    document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => {
-        item.classList.remove('text-blue-400');
-        item.classList.add('text-gray-500');
+function handleUpgrade() {
+    const cost = 50 * (data.upgradeCount + 1);
+    if (data.coins >= cost && data.upgradeCount < MAX_UPGRADES) {
+        data.coins -= cost;
+        data.upgradeCount++;
+        data.miningSpeed += 0.5;
+        saveData();
+        updateUI();
+    } else if (data.upgradeCount < MAX_UPGRADES) {
+        alert(`Bạn cần ${cost} xu!`);
+    }
+}
+
+function switchTab(name) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+    document.getElementById(`tab-${name}`).classList.remove('hidden');
+    document.querySelectorAll('.nav-item').forEach(n => {
+        n.classList.replace('text-blue-400', 'text-gray-500');
     });
-    document.getElementById(`nav-${tabName}`).classList.add('text-blue-400');
+    document.getElementById(`nav-${name}`).classList.replace('text-gray-500', 'text-blue-400');
 }
