@@ -251,3 +251,7 @@ window.onload = () => {
     updateUI();
     checkOfflineMining();
 };
+btnMine.addEventListener('click', startAds); 
+btnUpgrade.addEventListener('click', handleUpgrade);
+// Tìm nút bán cá trong HTML và gán:
+document.getElementById('btn-sell').addEventListener('click', handleSell);
