@@ -67,26 +67,34 @@ function updateUI() {
 
 function checkOfflineMining() {
     if (!data.startTime) return;
+
     const now = Date.now();
     const start = parseInt(data.startTime);
-    let elapsed = now - start;
+    const elapsed = now - start;
+
     if (elapsed <= 0) return;
 
-    let actualElapsed = Math.min(elapsed, MINING_DURATION);
-    const fishEarned = Math.floor((actualElapsed / 1000) * data.miningSpeed);
-
-    if (fishEarned >= 1) {
-        data.fish += fishEarned;
-        tg.showAlert(`🚢 Bạn nhận được ${fishEarned.toLocaleString()} 🐟 khi vắng mặt.`);
-        // Quan trọng: Cập nhật lại startTime để "chốt" số cá đã nhận
-        data.startTime = start + (fishEarned * 1000 / data.miningSpeed);
-    }
-
+    // 1. Nếu đã quá 3 tiếng
     if (elapsed >= MINING_DURATION) {
-        stopMining(); 
-    } else {
+        const fishEarned = Math.floor((MINING_DURATION / 1000) * data.miningSpeed);
+        data.fish += fishEarned;
+        tg.showAlert(`🚢 Hết thời gian đào!\nBạn nhận được ${fishEarned.toLocaleString()} 🐟`);
+        stopMining(); // Hàm này sẽ set data.startTime = null
+    } 
+    // 2. Nếu vẫn đang trong 3 tiếng
+    else {
+        const fishEarned = Math.floor((elapsed / 1000) * data.miningSpeed);
+        if (fishEarned >= 1) {
+            data.fish += fishEarned;
+            tg.showAlert(`🚢 Chào mừng trở lại!\nBạn nhận được ${fishEarned.toLocaleString()} 🐟`);
+            
+            // QUAN TRỌNG: Thay vì đẩy startTime, ta trừ trực tiếp elapsed vào logic đồng hồ 
+            // Hoặc đơn giản là cập nhật startTime tiến lên để đồng hồ chạy tiếp từ mốc đó
+            data.startTime = start + (fishEarned * 1000 / data.miningSpeed);
+        }
         startMiningSession(); 
     }
+
     saveData();
     updateUI();
 }
@@ -151,15 +159,14 @@ function handleSell() {
     if (amount >= 1) {
         data.coins += amount * 2;
         data.fish = 0;
-        // Nếu bạn muốn sau khi bán cá thì dừng đào luôn để an toàn:
-        // stopMining(); 
-        // Hoặc ít nhất phải cập nhật mốc thời gian về hiện tại
         
-if (data.startTime) {
-    data.startTime = Date.now(); 
-     data.startTime = null
-    saveData(); // Đảm bảo mốc mới được lưu ngay lập tức
-}
+        // Nếu đang trong phiên đào, ta cập nhật startTime về hiện tại 
+        // để người dùng bắt đầu tích lũy cá mới từ mốc 0, đồng hồ vẫn chạy tiếp
+        if (data.startTime) {
+            data.startTime = Date.now() - (Date.now() - parseInt(data.startTime)); 
+            // Giữ nguyên đồng hồ nhưng reset mốc tính cá
+        }
+        
         saveData();
         updateUI();
     }
