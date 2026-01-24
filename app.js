@@ -74,32 +74,29 @@ function checkOfflineMining() {
 
     if (elapsed <= 0) return;
 
-    // 1. Giới hạn thời gian trôi qua tối đa là 3 tiếng
+    // Chỉ tính toán trong giới hạn 3 tiếng (MINING_DURATION)
     let actualElapsed = Math.min(elapsed, MINING_DURATION);
-    
-    // 2. Tính số cá dựa trên thời gian thực tế đã trôi qua
-    // Sử dụng Math.floor để lấy số nguyên, tránh nhảy số lẻ
     const fishEarned = Math.floor((actualElapsed / 1000) * data.miningSpeed);
 
     if (fishEarned >= 1) {
         data.fish += fishEarned;
         tg.showAlert(`🚢 Bạn nhận được ${fishEarned.toLocaleString()} 🐟 khi vắng mặt.`);
         
-        // --- GIẢI PHÁP TRIỆT ĐỂ ---
-        // Chúng ta cập nhật startTime để bù đắp phần thời gian đã cộng cá
-        // Điều này giữ cho đồng hồ chạy tiếp CHÍNH XÁC từ giây bạn reset
-        data.startTime = start + (fishEarned * 1000 / data.miningSpeed);
+        // SỬA TẠI ĐÂY: Không dịch chuyển startTime bừa bãi
+        // Nếu đã quá 3 tiếng thì dừng hẳn, nếu chưa thì để startMiningSession tính tiếp
     }
 
     if (elapsed >= MINING_DURATION) {
         stopMining(); 
     } else {
+        // Gọi hàm này để đồng hồ chạy tiếp từ mốc start gốc
         startMiningSession(); 
     }
     
     saveData();
     updateUI();
 }
+
 
     // 3. Kiểm tra xem phiên đào đã kết thúc chưa
     if (elapsed >= MINING_DURATION) {
@@ -131,15 +128,16 @@ function startMiningSession() {
     clearInterval(tInterval);
 
     // Vòng lặp cộng cá mỗi giây
-  tInterval = setInterval(() => {
+ 
+tInterval = setInterval(() => {
     const currentNow = Date.now();
-    const currentElapsed = currentNow - start; // start là mốc cố định từ lúc bấm nút
-    const currentSecondsLeft = Math.floor((MINING_DURATION - currentElapsed) / 1000);
+    const currentElapsed = currentNow - start; // Lấy mốc start cố định từ lúc bấm nút
+    const secondsLeft = Math.floor((MINING_DURATION - currentElapsed) / 1000);
 
-    if (currentSecondsLeft <= 0) {
+    if (secondsLeft <= 0) {
         stopMining();
     } else {
-        updateTimerUI(currentSecondsLeft);
+        updateTimerUI(secondsLeft); // Cập nhật hiển thị đồng hồ
     }
 }, 1000);
 
