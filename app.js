@@ -61,35 +61,41 @@ function updateUI() {
 }
 
 // 5. XỬ LÝ ĐÀO CÁ & OFFLINE (Sửa lỗi hồi sinh cá)
-function checkOfflineMining() {
+
+  function checkOfflineMining() {
     if (!data.startTime) return;
     
     const now = Date.now();
     const start = parseInt(data.startTime);
-    let elapsed = now - start; // Thời gian trôi qua (miligiây)
+    let elapsed = now - start;
 
     if (elapsed <= 0) return;
 
-    // Giới hạn thời gian trôi qua tối đa là 3 tiếng
-    if (elapsed > MINING_DURATION) {
-        elapsed = MINING_DURATION;
+    // Giới hạn thời gian trôi qua tối đa 3 tiếng
+    let actualElapsed = Math.min(elapsed, MINING_DURATION);
+    
+    // Tính số cá nhận được
+    const fishEarned = Math.floor((actualElapsed / 1000) * data.miningSpeed);
+
+    if (fishEarned >= 1) {
+        data.fish += fishEarned;
+        
+        // --- HIỂN THỊ THÔNG BÁO ---
+        // Sử dụng giao diện mặc định của Telegram để thông báo
+        tg.showAlert(`🚢 Chào mừng trở lại!\nBạn đã nhận được ${fishEarned.toLocaleString()} 🐟 khi vắng mặt.`);
     }
 
-    // Tính số cá dựa trên thời gian thực tế trôi qua
-    const fishEarned = (elapsed / 1000) * data.miningSpeed;
-    data.fish += fishEarned;
-
-    // CẬP NHẬT LẠI STARTTIME: 
-    // Sau khi đã cộng bù cá, ta coi như mốc bắt đầu mới là 'bây giờ'
-    // Nếu vẫn chưa hết 3 tiếng thì đào tiếp, nếu quá rồi thì dừng.
-    if ((now - start) >= MINING_DURATION) {
-        stopMining(); 
+    // Cập nhật lại logic mốc thời gian
+    if (elapsed >= MINING_DURATION) {
+        data.startTime = null; 
+        stopMining();
     } else {
-        data.startTime = now; // Cập nhật mốc để không bị tính trùng khi reset lần tới
-        saveData();
-        startMiningSession(MINING_DURATION - (now - start));
+        data.startTime = now; 
+        const remainingTime = MINING_DURATION - elapsed;
+        startMiningSession(remainingTime);
     }
     
+    saveData();
     updateUI();
 }
 
