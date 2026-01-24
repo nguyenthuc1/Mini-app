@@ -134,7 +134,7 @@ function handleSell() {
 }
 
 function handleUpgrade() {
-   const currentCost = UPGRADE_COSTS[data.upgradeCount];
+    const cost = UPGRADE_COSTS[data.upgradeCount]; // Đổi currentCost thành cost cho đồng bộ
     if (data.coins >= cost && data.upgradeCount < MAX_UPGRADES) {
         data.coins -= cost;
         data.upgradeCount++;
@@ -142,9 +142,10 @@ function handleUpgrade() {
         saveData();
         updateUI();
     } else if (data.upgradeCount < MAX_UPGRADES) {
-        alert(`Bạn cần ${cost} xu!`);
+        alert(`Bạn cần ${cost.toLocaleString()} xu!`);
     }
 }
+
 
 function switchTab(name) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
