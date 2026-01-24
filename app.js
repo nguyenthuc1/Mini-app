@@ -61,17 +61,20 @@ function checkOfflineMining() {
     if (!data.startTime) return;
     
     const now = Date.now();
-    const elapsed = now - parseInt(data.startTime);
+    const startTime = parseInt(data.startTime);
+    let elapsed = now - startTime;
 
-    if (elapsed < MINING_DURATION) {
-        // Vẫn trong 3 tiếng: Cộng bù cá dựa trên thời gian vắng mặt
+    // LỖI Ở ĐÂY: Nếu elapsed quá lớn, nó sẽ cộng vô hạn cá
+    // SỬA LẠI:
+    if (elapsed > MINING_DURATION) {
+        elapsed = MINING_DURATION; // Chỉ cho phép tối đa 3 tiếng
         data.fish += (elapsed / 1000) * data.miningSpeed;
-        startMiningSession(MINING_DURATION - elapsed);
+        stopMining(); // Dừng đào vì đã quá 3 tiếng
     } else {
-        // Đã quá 3 tiếng: Chỉ cộng tối đa 3 tiếng cá
-        data.fish += (MINING_DURATION / 1000) * data.miningSpeed;
-        stopMining();
+        data.fish += (elapsed / 1000) * data.miningSpeed;
+        startMiningSession(MINING_DURATION - elapsed); // Tiếp tục đào thời gian còn lại
     }
+    
     saveData();
     updateUI();
 }
