@@ -65,7 +65,42 @@ function updateUI() {
 
 // 5. XỬ LÝ ĐÀO CÁ & OFFLINE (Sửa lỗi hồi sinh cá)
 
-  
+  function checkOfflineMining() {
+    if (!data.startTime) return;
+    
+    const now = Date.now();
+    const start = parseInt(data.startTime);
+    let elapsed = now - start;
+
+    if (elapsed <= 0) return;
+
+    // 1. Giới hạn thời gian trôi qua tối đa là 3 tiếng
+    let actualElapsed = Math.min(elapsed, MINING_DURATION);
+    
+    // 2. Tính số cá dựa trên thời gian thực tế đã trôi qua
+    // Sử dụng Math.floor để lấy số nguyên, tránh nhảy số lẻ
+    const fishEarned = Math.floor((actualElapsed / 1000) * data.miningSpeed);
+
+    if (fishEarned >= 1) {
+        data.fish += fishEarned;
+        tg.showAlert(`🚢 Bạn nhận được ${fishEarned.toLocaleString()} 🐟 khi vắng mặt.`);
+        
+        // --- GIẢI PHÁP TRIỆT ĐỂ ---
+        // Chúng ta cập nhật startTime để bù đắp phần thời gian đã cộng cá
+        // Điều này giữ cho đồng hồ chạy tiếp CHÍNH XÁC từ giây bạn reset
+        data.startTime = start + (fishEarned * 1000 / data.miningSpeed);
+    }
+
+    if (elapsed >= MINING_DURATION) {
+        stopMining(); 
+    } else {
+        startMiningSession(); 
+    }
+    
+    saveData();
+    updateUI();
+}
+
 function checkOfflineMining() {
     if (!data.startTime) return;
     
@@ -79,29 +114,34 @@ function checkOfflineMining() {
     let actualElapsed = Math.min(elapsed, MINING_DURATION);
     
     // 2. Tính số cá dựa trên thời gian thực tế đã trôi qua
+    // Sử dụng Math.floor để lấy số nguyên, tránh nhảy số lẻ
     const fishEarned = Math.floor((actualElapsed / 1000) * data.miningSpeed);
 
     if (fishEarned >= 1) {
         data.fish += fishEarned;
         tg.showAlert(`🚢 Bạn nhận được ${fishEarned.toLocaleString()} 🐟 khi vắng mặt.`);
         
-        // --- CHỐNG CỘNG LẶP ---
-        // Sau khi cộng cá, ta cập nhật startTime tiến lên một khoảng bằng actualElapsed
-        // Việc này giúp "chốt" lại đoạn cá đã nhận, reset lần sau sẽ không tính đoạn này nữa.
-        data.startTime = start + actualElapsed; 
+        // --- GIẢI PHÁP TRIỆT ĐỂ ---
+        // Chúng ta cập nhật startTime để bù đắp phần thời gian đã cộng cá
+        // Điều này giữ cho đồng hồ chạy tiếp CHÍNH XÁC từ giây bạn reset
+        data.startTime = start + (fishEarned * 1000 / data.miningSpeed);
     }
 
-    // 3. Kiểm tra xem phiên đào đã kết thúc chưa
     if (elapsed >= MINING_DURATION) {
-        stopMining(); // Hết 3 tiếng thì dừng và xóa startTime
+        stopMining(); 
     } else {
-        // Vẫn trong 3 tiếng, chạy session để đồng hồ chạy tiếp từ mốc startTime mới
         startMiningSession(); 
     }
     
     saveData();
     updateUI();
 }
+
+    // 3. Kiểm tra xem phiên đào đã kết thúc chưa
+    if (elapsed >= MINING_DURATION) {
+        stopMining(); // Hết 3 tiếng thì dừng và xóa startTime
+    } else {
+        // Vẫn trong 3 tiếng, chạy session để đồng hồ chạy tiếp từ mốc start
 
 
 function startAds() {
@@ -117,49 +157,33 @@ function startAds() {
 }
 
 
-
 function startMiningSession() {
     if (!data.startTime) return;
 
-    const now = Date.now();
+    // Lấy mốc thời gian đã lưu
     const start = parseInt(data.startTime);
-    const elapsed = now - start;
-    let secondsLeft = Math.floor((MINING_DURATION - elapsed) / 1000);
-
-    if (secondsLeft <= 0) {
-        stopMining();
-        return;
-    }
-
-    // UI Updates
-    if (btnMine) {
-        btnMine.disabled = true;
-        btnMine.innerText = "ĐANG ĐÀO...";
-        btnMine.classList.replace('bg-blue-600', 'bg-green-600');
-    }
-    timerDisplay?.classList.remove('hidden');
-    shipIcon?.classList.add('mining');
 
     clearInterval(mInterval);
     clearInterval(tInterval);
 
-    // Vòng lặp cộng cá
+    // Vòng lặp cộng cá mỗi giây
     mInterval = setInterval(() => {
         data.fish += data.miningSpeed;
         if (fishDisplay) fishDisplay.innerText = Math.floor(data.fish);
+        // Lưu mỗi khi cá tăng lên 10 đơn vị để tối ưu hiệu suất
         if (Math.floor(data.fish) % 10 === 0) saveData();
     }, 1000);
 
-    // Vòng lặp đồng hồ (Tính toán chuẩn xác giây còn lại)
+    // Vòng lặp đồng hồ - TÍNH TOÁN DỰA TRÊN THỜI GIAN THỰC
     tInterval = setInterval(() => {
         const currentNow = Date.now();
         const currentElapsed = currentNow - start;
-        const currentSecondsLeft = Math.floor((MINING_DURATION - currentElapsed) / 1000);
+        const secondsLeft = Math.floor((MINING_DURATION - currentElapsed) / 1000);
 
-        if (currentSecondsLeft <= 0) {
+        if (secondsLeft <= 0) {
             stopMining();
         } else {
-            updateTimerUI(currentSecondsLeft);
+            updateTimerUI(secondsLeft);
         }
     }, 1000);
 }
