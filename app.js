@@ -67,75 +67,62 @@ function updateUI() {
 
 function checkOfflineMining() {
     if (!data.startTime) return;
-    
     const now = Date.now();
     const start = parseInt(data.startTime);
     let elapsed = now - start;
-
     if (elapsed <= 0) return;
 
-    // Chỉ tính toán trong giới hạn 3 tiếng (MINING_DURATION)
     let actualElapsed = Math.min(elapsed, MINING_DURATION);
     const fishEarned = Math.floor((actualElapsed / 1000) * data.miningSpeed);
 
     if (fishEarned >= 1) {
         data.fish += fishEarned;
         tg.showAlert(`🚢 Bạn nhận được ${fishEarned.toLocaleString()} 🐟 khi vắng mặt.`);
-        
-        // SỬA TẠI ĐÂY: Không dịch chuyển startTime bừa bãi
-        // Nếu đã quá 3 tiếng thì dừng hẳn, nếu chưa thì để startMiningSession tính tiếp
+        // Quan trọng: Cập nhật lại startTime để "chốt" số cá đã nhận
+        data.startTime = start + (fishEarned * 1000 / data.miningSpeed);
     }
 
     if (elapsed >= MINING_DURATION) {
         stopMining(); 
     } else {
-        // Gọi hàm này để đồng hồ chạy tiếp từ mốc start gốc
         startMiningSession(); 
     }
-    
     saveData();
     updateUI();
 }
-    // 3. Kiểm tra xem phiên đào đã kết thúc chưa
-    if (elapsed >= MINING_DURATION) {
-        stopMining(); // Hết 3 tiếng thì dừng và xóa startTime
-    } else {
-        // Vẫn trong 3 tiếng, chạy session để đồng hồ chạy tiếp từ mốc start
-
 
 function startAds() {
     if (data.startTime) return;
     btnMine.disabled = true;
-    btnMine.innerHTML = `<span class="loading-spinner"></span> ĐANG XEM...`;
-    
+    btnMine.innerHTML = `ĐANG XEM...`;
     setTimeout(() => {
-        data.startTime = Date.now(); // Lưu mốc bắt đầu
+        data.startTime = Date.now();
         saveData();
-        startMiningSession(); // Bắt đầu đào
+        startMiningSession();
     }, 3000);
 }
+
 function startMiningSession() {
     if (!data.startTime) return;
-
-    // Lấy mốc thời gian đã lưu
     const start = parseInt(data.startTime);
-
     clearInterval(mInterval);
     clearInterval(tInterval);
 
-    // Vòng lặp cộng cá mỗi giây
- 
-tInterval = setInterval(() => {
-    const currentNow = Date.now();
-    const currentElapsed = currentNow - start; // Lấy mốc start cố định từ lúc bấm nút
-    const secondsLeft = Math.floor((MINING_DURATION - currentElapsed) / 1000);
+    mInterval = setInterval(() => {
+        data.fish += data.miningSpeed;
+        fishDisplay.innerText = Math.floor(data.fish);
+    }, 1000);
 
-    if (secondsLeft <= 0) {
-        stopMining();
-    } else {
-        updateTimerUI(secondsLeft); // Cập nhật hiển thị đồng hồ
-    }
-}, 1000);
+    tInterval = setInterval(() => {
+        const secondsLeft = Math.floor((MINING_DURATION - (Date.now() - start)) / 1000);
+        if (secondsLeft <= 0) {
+            stopMining();
+        } else {
+            updateTimerUI(secondsLeft);
+            if (timerDisplay) timerDisplay.classList.remove('hidden');
+        }
+    }, 1000);
+}
 
 function stopMining() {
     clearInterval(mInterval);
