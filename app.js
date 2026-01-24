@@ -66,29 +66,30 @@ function checkOfflineMining() {
     
     const now = Date.now();
     const start = parseInt(data.startTime);
-    let elapsed = now - start;
+    let elapsed = now - start; // Thời gian trôi qua (miligiây)
 
-    // 1. Nếu thời gian máy tính bị sai (nhỏ hơn 0), bỏ qua không cộng
-    if (elapsed < 0) {
-        data.startTime = now; // Reset lại mốc thời gian về hiện tại
-        saveData();
-        return;
-    }
+    if (elapsed <= 0) return;
 
-    // 2. Giới hạn tối đa 3 tiếng (MINING_DURATION)
+    // Giới hạn thời gian trôi qua tối đa là 3 tiếng
     if (elapsed > MINING_DURATION) {
         elapsed = MINING_DURATION;
-        const fishEarned = (elapsed / 1000) * data.miningSpeed;
-        data.fish += fishEarned;
-        stopMining(); // Hết thời gian thì dừng hẳn
+    }
+
+    // Tính số cá dựa trên thời gian thực tế trôi qua
+    const fishEarned = (elapsed / 1000) * data.miningSpeed;
+    data.fish += fishEarned;
+
+    // CẬP NHẬT LẠI STARTTIME: 
+    // Sau khi đã cộng bù cá, ta coi như mốc bắt đầu mới là 'bây giờ'
+    // Nếu vẫn chưa hết 3 tiếng thì đào tiếp, nếu quá rồi thì dừng.
+    if ((now - start) >= MINING_DURATION) {
+        stopMining(); 
     } else {
-        // 3. Cộng bù cá cho thời gian offline và đào tiếp phần còn lại
-        const fishEarned = (elapsed / 1000) * data.miningSpeed;
-        data.fish += fishEarned;
-        startMiningSession(MINING_DURATION - elapsed);
+        data.startTime = now; // Cập nhật mốc để không bị tính trùng khi reset lần tới
+        saveData();
+        startMiningSession(MINING_DURATION - (now - start));
     }
     
-    saveData();
     updateUI();
 }
 
@@ -153,12 +154,19 @@ function updateTimerUI(seconds) {
 }
 
 // 6. TÍNH NĂNG BÁN & NÂNG CẤP
+
 function handleSell() {
     const amount = Math.floor(data.fish);
     if (amount >= 1) {
         data.coins += amount * 2;
         data.fish = 0;
-        // Bán xong lưu ngay lập tức để không bị lỗi reset hiện lại cá
+        
+        // Nếu bạn muốn sau khi bán cá thì dừng đào luôn để an toàn:
+        // stopMining(); 
+        
+        // Hoặc ít nhất phải cập nhật mốc thời gian về hiện tại
+        if (data.startTime) data.startTime = Date.now();
+
         saveData();
         updateUI();
     }
