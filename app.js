@@ -88,7 +88,7 @@ function updateUI() {
         // --- GIẢI PHÁP TRIỆT ĐỂ ---
         // Chúng ta cập nhật startTime để bù đắp phần thời gian đã cộng cá
         // Điều này giữ cho đồng hồ chạy tiếp CHÍNH XÁC từ giây bạn reset
-        data.startTime = start + (fishEarned * 1000 / data.miningSpeed);
+        data.startTime = Date.now() - (actualElapsed - (fishEarned * 1000 / data.miningSpeed));
     }
 
     if (elapsed >= MINING_DURATION) {
@@ -167,27 +167,17 @@ function startMiningSession() {
     clearInterval(tInterval);
 
     // Vòng lặp cộng cá mỗi giây
-    mInterval = setInterval(() => {
-        data.fish += data.miningSpeed;
-        if (fishDisplay) fishDisplay.innerText = Math.floor(data.fish);
-        // Lưu mỗi khi cá tăng lên 10 đơn vị để tối ưu hiệu suất
-        if (Math.floor(data.fish) % 10 === 0) saveData();
-    }, 1000);
+  tInterval = setInterval(() => {
+    const currentNow = Date.now();
+    const currentElapsed = currentNow - start; // start là mốc cố định từ lúc bấm nút
+    const currentSecondsLeft = Math.floor((MINING_DURATION - currentElapsed) / 1000);
 
-    // Vòng lặp đồng hồ - TÍNH TOÁN DỰA TRÊN THỜI GIAN THỰC
-    tInterval = setInterval(() => {
-        const currentNow = Date.now();
-        const currentElapsed = currentNow - start;
-        const secondsLeft = Math.floor((MINING_DURATION - currentElapsed) / 1000);
-
-        if (secondsLeft <= 0) {
-            stopMining();
-        } else {
-            updateTimerUI(secondsLeft);
-        }
-    }, 1000);
-}
-
+    if (currentSecondsLeft <= 0) {
+        stopMining();
+    } else {
+        updateTimerUI(currentSecondsLeft);
+    }
+}, 1000);
 
 function stopMining() {
     clearInterval(mInterval);
@@ -221,7 +211,11 @@ function handleSell() {
         // stopMining(); 
         
         // Hoặc ít nhất phải cập nhật mốc thời gian về hiện tại
-        if (data.startTime) data.startTime = Date.now();
+        
+if (data.startTime) {
+    data.startTime = Date.now(); 
+    saveData(); // Đảm bảo mốc mới được lưu ngay lập tức
+}
 
         saveData();
         updateUI();
