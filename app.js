@@ -162,22 +162,30 @@ function updateTimerUI(seconds) {
 }
 
 // 6. TÍNH NĂNG BÁN & NÂNG CẤP
-
 function handleSell() {
-    const amount = Math.floor(data.fish);
-    if (amount >= 1) {
-        data.coins += amount * 2;
-        data.fish = 0;
+    // Tính tổng cá: cá đã lưu + cá đang đào được trong phiên hiện tại
+    let currentMiningFish = 0;
+    if (data.startTime) {
+        const elapsed = (Date.now() - parseInt(data.startTime)) / 1000;
+        currentMiningFish = elapsed * data.miningSpeed;
+    }
+
+    const totalFish = Math.floor(data.fish + currentMiningFish);
+
+    if (totalFish >= 1) {
+        data.coins += totalFish * 2; // Cộng tiền (1 cá = 2 xu)
+        data.fish = 0;               // Reset cá về 0
         
-        // Nếu đang trong phiên đào, ta cập nhật startTime về hiện tại 
-        // để người dùng bắt đầu tích lũy cá mới từ mốc 0, đồng hồ vẫn chạy tiếp
+        // Nếu đang đào, reset mốc thời gian về hiện tại để đào lại từ 0 cá
         if (data.startTime) {
-            data.startTime = Date.now() - (Date.now() - parseInt(data.startTime)); 
-            // Giữ nguyên đồng hồ nhưng reset mốc tính cá
+            data.startTime = Date.now(); 
         }
-        
+
         saveData();
         updateUI();
+        tg.showAlert(`💰 Bạn đã bán cá và nhận được ${(totalFish * 2).toLocaleString()} xu!`);
+    } else {
+        tg.showAlert("❌ Bạn không có đủ cá để bán!");
     }
 }
 
