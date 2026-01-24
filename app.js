@@ -128,16 +128,18 @@ function handleSell() {
     }
 }
 
-function handleUpgrade() {
-    const cost = UPGRADE_COSTS[data.upgradeCount]; // Đổi currentCost thành cost cho đồng bộ
-    if (data.coins >= cost && data.upgradeCount < MAX_UPGRADES) {
-        data.coins -= cost;
-        data.upgradeCount++;
-        data.miningSpeed += 0.5;
+
+function handleSell() {
+    const amount = Math.floor(data.fish);
+    if (amount >= 1) {
+        data.coins += amount * 2;
+        data.fish = 0;
+        
+        // QUAN TRỌNG: Nếu muốn bán xong là mất mốc thời gian cũ để không bị cộng bù
+        // data.startTime = null; 
+        
         saveData();
         updateUI();
-    } else if (data.upgradeCount < MAX_UPGRADES) {
-        alert(`Bạn cần ${cost.toLocaleString()} xu!`);
     }
 }
 
