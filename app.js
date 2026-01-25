@@ -1,8 +1,6 @@
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
-const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
-const STORAGE_KEY = `fish_mining_data_${userId}`; 
 
 // 1. ĐỊNH DANH USER
 const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
