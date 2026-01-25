@@ -135,6 +135,26 @@ function startMiningSession() {
         shipIcon?.classList.add('mining');
     }, 1000);
 }
+function startAds() {
+    if (data.startTime) return; // Nếu đang đào thì không cho bấm lại
+
+    btnMine.disabled = true;
+    btnMine.innerHTML = `ĐANG XEM...`;
+
+    // Giả lập xem quảng cáo 3 giây
+    setTimeout(() => {
+        data.startTime = Date.now();
+        
+        // Hiện đồng hồ ngay lập tức
+        if (timerDisplay) timerDisplay.classList.remove('hidden');
+        
+        btnMine.innerText = "ĐANG RA KHƠI...";
+        shipIcon?.classList.add('mining');
+
+        saveData();
+        startMiningSession(); // Bắt đầu tính cá và chạy đồng hồ
+    }, 3000);
+}
 
 function stopMining() {
     // 1. Chốt số cá đào được sau 3 tiếng vào kho
