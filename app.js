@@ -183,8 +183,9 @@ function handleSell() {
 
         saveData(); // Lưu theo userId [cite: 2026-01-24]
         updateUI();
-        
-        tg.showAlert(`💰 Đã bán cá!\nNhận được ${earnings.toLocaleString()} xu.\nKho cá đã được cập nhật.`);
+
+tg.showAlert(`💰 Bán thành công!\nNhận được: ${earnings.toLocaleString()} xu\nTương đương: ${earnings.toLocaleString()} VNĐ`);
+
     } else {
         const fishNeeded = Math.ceil(1 / RATIO);
         tg.showAlert(`❌ Bạn cần ít nhất ${fishNeeded} cá để đổi được 1 xu!`);
