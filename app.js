@@ -148,11 +148,17 @@ function stopMining() {
 
 function updateTimerUI(seconds) {
     if (!timerDisplay) return;
+    
+    // Luôn hiện đồng hồ khi đang chạy
+    timerDisplay.classList.remove('hidden');
+
     let h = Math.floor(seconds / 3600).toString().padStart(2, '0');
     let m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
     let s = (seconds % 60).toString().padStart(2, '0');
+    
     timerDisplay.innerText = `${h}:${m}:${s}`;
 }
+
 // 6. TÍNH NĂNG BÁN & NÂNG CẤP
 
  function handleSell() {
