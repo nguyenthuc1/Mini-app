@@ -292,20 +292,20 @@ function resetDataForDev() {
 }
 
 // Khởi chạy
+
 window.onload = () => {
     updateUI();
-    
-    // Nếu đang đào, khôi phục trạng thái nút bấm ngay lập tức
+
     if (data.startTime) {
         btnMine.disabled = true;
         btnMine.innerText = "ĐANG RA KHƠI...";
         shipIcon?.classList.add('mining');
+        // Thêm dòng này để hiện lại đồng hồ khi reset tab
+        timerDisplay?.classList.remove('hidden'); 
     }
-    
+
     checkOfflineMining();
 };
-
-
 
 // Thêm vào cuối file app.js
 if (btnMine) btnMine.onclick = startAds;
