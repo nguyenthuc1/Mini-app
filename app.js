@@ -82,62 +82,53 @@ function checkOfflineMining() {
     const start = parseInt(data.startTime);
     const elapsed = now - start;
 
-    if (elapsed <= 0) return;
-
-    // Nếu đã quá 3 tiếng khi đang offline
+    // Nếu đã quá 3 tiếng khi đang tắt app
     if (elapsed >= MINING_DURATION) {
         stopMining(); 
     } 
-    // Nếu vẫn đang trong thời gian đào, gọi hàm chạy tiếp
+    // Nếu vẫn đang trong thời gian đào, kích hoạt lại bộ đếm
     else {
+        startMiningSession(); 
+        
+        // Cập nhật trạng thái nút bấm
         if (btnMine) {
             btnMine.disabled = true;
             btnMine.innerText = "ĐANG RA KHƠI...";
         }
-        startMiningSession(); 
     }
-    updateUI();
 }
 
 function startMiningSession() {
     if (!data.startTime) return;
     const start = parseInt(data.startTime);
 
-    clearInterval(mInterval);
-    clearInterval(tInterval);
+    clearInterval(tInterval); // Xóa bộ đếm cũ nếu có
 
     tInterval = setInterval(() => {
         const now = Date.now();
         const elapsed = now - start;
-        const secondsElapsed = elapsed / 1000;
 
-        // 1. Kiểm tra hết giờ
+        // 1. Kiểm tra nếu đã hết 3 tiếng
         if (elapsed >= MINING_DURATION) {
             stopMining();
             return;
         }
 
-        // 2. Cập nhật đồng hồ
+        // 2. Cập nhật đồng hồ đếm ngược
         const secondsLeft = Math.floor((MINING_DURATION - elapsed) / 1000);
         updateTimerUI(secondsLeft);
+        if (timerDisplay) timerDisplay.classList.remove('hidden');
 
-        // 3. Cập nhật số cá (SỬA LỖI TÊN BIẾN TẠI ĐÂY)
+        // 3. Cập nhật số cá hiển thị theo thời gian thực
+        const secondsElapsed = elapsed / 1000;
         const currentFish = data.fish + (secondsElapsed * data.miningSpeed);
-        // Đảm bảo dùng đúng tên biến currentFish và làm tròn xuống
-        fishDisplay.innerText = Math.floor(Math.max(0, currentFish));
         
-    }, 1000);
-}
+        // Cập nhật trực tiếp lên màn hình mỗi giây
+        fishDisplay.innerText = Math.floor(Math.max(0, currentFish));
 
-function startAds() {
-    if (data.startTime) return;
-    btnMine.disabled = true;
-    btnMine.innerHTML = `ĐANG XEM...`;
-    setTimeout(() => {
-        data.startTime = Date.now();
-        saveData();
-        startMiningSession();
-    }, 3000);
+        // 4. Đảm bảo icon tàu vẫn quay
+        shipIcon?.classList.add('mining');
+    }, 1000); // Chạy mỗi giây
 }
 
 function stopMining() {
