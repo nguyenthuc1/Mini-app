@@ -31,17 +31,24 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-[#1e293b] p-4 rounded-2xl flex flex-col items-center border border-slate-700">
-                        <p class="text-[10px] text-gray-400 uppercase font-bold">Kho Cá</p>
-                        <div class="flex items-center gap-2 my-2">
-                            <span class="text-2xl font-black text-blue-300" id="fish-count">0</span>
-                            <span class="text-xl">🐟</span>
-                        </div>
-                        <button id="btn-sell" onclick="handleSell()" class="w-full bg-orange-500 hover:bg-orange-600 text-[10px] py-2 rounded-lg font-black shadow-md active:scale-95 transition-all">
-  BÁN (SELL)
-</button>
+    <div class="bg-[#1e293b] p-4 rounded-2xl flex flex-col items-center border border-slate-700">
+        <p class="text-[10px] text-gray-400 uppercase font-bold">Kho Cá</p>
+        
+        <div class="flex items-center gap-2 my-2">
+            <span class="text-2xl font-black text-blue-300" id="fish-count">0</span>
+            <span class="text-xl">🐟</span>
+        </div>
 
-                    </div>
+        <div class="text-[9px] text-gray-500 mb-2 text-center">
+            <div>Dư: <span id="excess-fish" class="text-yellow-500">0</span> cá</div>
+            <div class="text-green-400 font-bold">Nhận: +<span id="estimated-coins">0</span> xu</div>
+        </div>
+
+        <button id="btn-sell" onclick="handleSell()" 
+            class="w-full bg-orange-500 hover:bg-orange-600 text-[10px] py-2 rounded-lg font-black shadow-md active:scale-95 transition-all">
+            BÁN (SELL)
+        </button>
+    </div>
 
                     <div class="bg-[#1e293b] p-4 rounded-2xl flex flex-col items-center border border-slate-700">
                         <p class="text-[10px] text-gray-400 uppercase font-bold">Số dư xu</p>
