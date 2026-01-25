@@ -72,7 +72,6 @@ function updateUI() {
 
 // 5. XỬ LÝ ĐÀO CÁ & OFFLINE (Sửa lỗi hồi sinh cá)
 
-
 function checkOfflineMining() {
     if (!data.startTime) return;
 
@@ -82,58 +81,52 @@ function checkOfflineMining() {
 
     if (elapsed <= 0) return;
 
+    // Nếu đã quá 3 tiếng khi đang offline
     if (elapsed >= MINING_DURATION) {
-        // ... (giữ nguyên đoạn showAlert và stopMining)
+        stopMining(); 
     } 
+    // Nếu vẫn đang trong thời gian đào, gọi hàm chạy tiếp
     else {
-        // CHỈ CỘNG CÁ, KHÔNG ĐỔI START TIME
-        const fishEarned = Math.floor((elapsed / 1000) * data.miningSpeed);
-        if (fishEarned >= 1) {
-            // Chúng ta không cộng vào data.fish ở đây vì startMiningSession 
-            // sẽ bắt đầu tính toán lại từ đầu mốc startTime gốc. 
-            // Để tránh cộng trùng, bạn chỉ nên cộng phần "chênh lệch" hoặc 
-            // đơn giản là để startMiningSession tự lo phần hiển thị.
+        if (btnMine) {
+            btnMine.disabled = true;
+            btnMine.innerText = "ĐANG RA KHƠI...";
         }
-        
-        // Cập nhật giao diện đang đào
-        if (timerDisplay) timerDisplay.classList.remove('hidden');
-        if (shipIcon) shipIcon.classList.add('mining');
-        btnMine.disabled = true;
-        btnMine.innerText = "ĐANG RA KHƠI...";
-
         startMiningSession(); 
     }
-    saveData();
     updateUI();
 }
 
 function startMiningSession() {
     if (!data.startTime) return;
     const start = parseInt(data.startTime);
-    
+
     clearInterval(mInterval);
     clearInterval(tInterval);
 
-    mInterval = setInterval(() => {
-        const now = Date.now();
-        const elapsed = (now - start) / 1000;
-        
-        // Tính toán số cá hiện tại (đã bao gồm phần trừ âm khi bán)
-        const currentDisplayFish = data.fish + (elapsed * data.miningSpeed);
-        
-        // Luôn dùng Math.max(0, ...) để không bao giờ hiện số âm
-        fishDisplay.innerText = Math.floor(Math.max(0, currentDisplayFish)); 
-    }, 1000);
-
+    // Vòng lặp cập nhật số cá và đồng hồ mỗi giây
     tInterval = setInterval(() => {
-        const secondsLeft = Math.floor((MINING_DURATION - (Date.now() - start)) / 1000);
-        if (secondsLeft <= 0) {
-            // Khi hết 3 tiếng, chốt số cá thực tế vào data.fish
-            data.fish += (MINING_DURATION / 1000) * data.miningSpeed;
+        const now = Date.now();
+        const elapsed = now - start;
+        const secondsElapsed = elapsed / 1000;
+
+        // 1. Kiểm tra nếu đã hết 3 tiếng
+        if (elapsed >= MINING_DURATION) {
             stopMining();
-        } else {
-            updateTimerUI(secondsLeft);
+            return;
         }
+
+        // 2. Cập nhật đồng hồ
+        const secondsLeft = Math.floor((MINING_DURATION - elapsed) / 1000);
+        updateTimerUI(secondsLeft);
+        if (timerDisplay) timerDisplay.classList.remove('hidden');
+
+        // 3. Cập nhật số cá hiển thị
+        // Số cá = Số dư gốc (có thể âm nếu vừa bán) + (Số giây đã trôi qua * Tốc độ)
+        const currentFish = data.fish + (secondsElapsed * data.miningSpeed);
+        fishDisplay.innerText = Math.floor(Math.max(0, currentDisplayFish));
+        
+        // Cập nhật icon tàu đang chạy
+        shipIcon?.classList.add('mining');
     }, 1000);
 }
 
