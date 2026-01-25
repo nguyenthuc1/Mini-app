@@ -6,10 +6,11 @@ tg.expand();
 const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
 const STORAGE_KEY = `fish_mining_data_${userId}`;
 
-// 2. CẤU HÌNH BẢNG GIÁ & HẰNG SỐ (15 cấp độ như đã thảo luận)
-const UPGRADE_COSTS = [500, 1000, 2000, 4000, 7000, 12000, 18000, 25000, 35000, 50000, 70000, 100000, 140000, 190000, 250000]; 
-const MAX_UPGRADES = UPGRADE_COSTS.length; 
-const MINING_DURATION = 3 * 60 * 60 * 1000; 
+// 2. CẤU HÌNH
+const UPGRADE_COSTS = [500, 1000, 2000, 4000, 7000, 12000, 18000, 25000, 35000, 50000, 70000, 100000, 140000, 190000, 250000];
+const MAX_UPGRADES = UPGRADE_COSTS.length;
+const MINING_DURATION = 3 * 60 * 60 * 1000;
+const RATIO = 0.00463; // Tỷ giá đổi xu
 
 // 3. KHỞI TẠO DỮ LIỆU
 function loadData() {
@@ -55,45 +56,43 @@ function updateUI() {
     const totalFish = Math.floor(Math.max(0, displayFish));
     fishDisplay.innerText = totalFish.toLocaleString();
 
-    const RATIO = 0.00463;
+    // Tính xu và cá lẻ
     const coinsCanGet = Math.floor(totalFish * RATIO);
-    const fishUsedForCoins = coinsCanGet / RATIO;
-    const excessFish = totalFish - fishUsedForCoins;
+    const fishUsed = coinsCanGet / RATIO;
+    const excess = totalFish - fishUsed;
 
-    if (excessFishDisplay) excessFishDisplay.innerText = Math.floor(excessFish).toLocaleString();
+    if (excessFishDisplay) excessFishDisplay.innerText = Math.floor(excess).toLocaleString();
     if (estimatedCoinsDisplay) estimatedCoinsDisplay.innerText = coinsCanGet.toLocaleString();
 
     coinDisplay.innerText = data.coins.toLocaleString();
     speedDisplay.innerText = `${data.miningSpeed.toFixed(1)} cá/s`;
 
+    // Cập nhật nút nâng cấp
     if (data.upgradeCount >= MAX_UPGRADES) {
         btnUpgrade.innerText = "MAX LEVEL";
         btnUpgrade.disabled = true;
-        btnUpgrade.classList.add('opacity-50', 'cursor-not-allowed');
+        btnUpgrade.classList.add('opacity-50');
     } else {
         const cost = UPGRADE_COSTS[data.upgradeCount];
-        btnUpgrade.innerText = `NÂNG CẤP (${cost ? cost.toLocaleString() : '---'} 💰)`;
+        btnUpgrade.innerText = `NÂNG CẤP (${cost.toLocaleString()} 💰)`;
         btnUpgrade.disabled = false;
         btnUpgrade.classList.remove('opacity-50');
     }
 }
 
-// 5. XỬ LÝ ĐÀO CÁ
+// 5. XỬ LÝ ĐÀO
 function checkOfflineMining() {
     if (!data.startTime) return;
     const now = Date.now();
-    const start = parseInt(data.startTime);
-    const elapsed = now - start;
+    const elapsed = now - parseInt(data.startTime);
 
     if (elapsed >= MINING_DURATION) {
-        stopMining(); 
+        stopMining();
     } else {
-        if (timerDisplay) timerDisplay.classList.remove('hidden');
-        if (btnMine) {
-            btnMine.disabled = true;
-            btnMine.innerText = "ĐANG RA KHƠI...";
-        }
-        startMiningSession(); 
+        timerDisplay?.classList.remove('hidden');
+        btnMine.disabled = true;
+        btnMine.innerText = "ĐANG RA KHƠI...";
+        startMiningSession();
     }
     updateUI();
 }
@@ -109,8 +108,7 @@ function startMiningSession() {
             stopMining();
             return;
         }
-        const secondsLeft = Math.floor((MINING_DURATION - elapsed) / 1000);
-        updateTimerUI(secondsLeft); 
+        updateTimerUI(Math.floor((MINING_DURATION - elapsed) / 1000));
         updateUI();
     }, 1000);
 }
@@ -118,12 +116,11 @@ function startMiningSession() {
 function startAds() {
     if (data.startTime) return;
     btnMine.disabled = true;
-    btnMine.innerHTML = `ĐANG XEM...`;
+    btnMine.innerHTML = "ĐANG XEM...";
     setTimeout(() => {
         data.startTime = Date.now();
-        if (timerDisplay) timerDisplay.classList.remove('hidden');
+        timerDisplay?.classList.remove('hidden');
         btnMine.innerText = "ĐANG RA KHƠI...";
-        shipIcon?.classList.add('mining');
         saveData();
         startMiningSession();
     }, 3000);
@@ -133,11 +130,10 @@ function stopMining() {
     const totalFishFromSession = (MINING_DURATION / 1000) * data.miningSpeed;
     data.fish += totalFishFromSession;
     clearInterval(tInterval);
-    data.startTime = null; 
+    data.startTime = null;
     btnMine.disabled = false;
     btnMine.innerText = "RA KHƠI";
     timerDisplay?.classList.add('hidden');
-    shipIcon?.classList.remove('mining');
     saveData();
     updateUI();
 }
@@ -150,24 +146,20 @@ function updateTimerUI(seconds) {
     timerDisplay.innerText = `${h}:${m}:${s}`;
 }
 
-// 6. TÍNH NĂNG BÁN & NÂNG CẤP
+// 6. BÁN & NÂNG CẤP
 function handleSell() {
-    let currentMiningFish = 0;
+    let currentMining = 0;
     if (data.startTime) {
-        const now = Date.now();
-        const start = parseInt(data.startTime);
-        const effectiveElapsed = Math.min(now - start, MINING_DURATION);
-        currentMiningFish = (effectiveElapsed / 1000) * data.miningSpeed;
+        const elapsed = Math.min(Date.now() - parseInt(data.startTime), MINING_DURATION);
+        currentMining = (elapsed / 1000) * data.miningSpeed;
     }
-    const totalFishAvailable = data.fish + currentMiningFish;
-    const RATIO = 0.00463;
-    const earnings = Math.floor(totalFishAvailable * RATIO);
+    const total = data.fish + currentMining;
+    const earnings = Math.floor(total * RATIO);
 
     if (earnings >= 1) {
-        const fishUsed = earnings / RATIO;
         data.coins += earnings;
-        data.fish = totalFishAvailable - fishUsed;
-        saveData(); // Lưu theo userId [cite: 2026-01-24]
+        data.fish = total - (earnings / RATIO);
+        saveData();
         updateUI();
         tg.showAlert(`💰 Nhận được ${earnings.toLocaleString()} xu.`);
     } else {
@@ -180,11 +172,11 @@ function handleUpgrade() {
     if (data.coins >= cost && data.upgradeCount < MAX_UPGRADES) {
         if (data.startTime) {
             const elapsed = (Date.now() - parseInt(data.startTime)) / 1000;
-            data.fish -= (elapsed * 0.32); 
+            data.fish -= (elapsed * 0.32);
         }
         data.coins -= cost;
         data.upgradeCount++;
-        data.miningSpeed += 0.32; 
+        data.miningSpeed += 0.32;
         saveData();
         updateUI();
         tg.showAlert("🚀 Nâng cấp thành công!");
@@ -193,7 +185,6 @@ function handleUpgrade() {
     }
 }
 
-// 7. TIỆN ÍCH
 function switchTab(name) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
     document.getElementById(`tab-${name}`)?.classList.remove('hidden');
@@ -202,7 +193,7 @@ function switchTab(name) {
 }
 
 function resetDataForDev() {
-    tg.showConfirm("Xóa sạch dữ liệu chơi lại từ đầu?", (confirmed) => {
+    tg.showConfirm("Xóa dữ liệu?", (confirmed) => {
         if (confirmed) {
             localStorage.removeItem(STORAGE_KEY);
             location.reload();
@@ -210,18 +201,11 @@ function resetDataForDev() {
     });
 }
 
-// KHỞI CHẠY (Sửa lỗi gán sự kiện tại đây)
+// 7. KHỞI CHẠY
 window.onload = () => {
     updateUI();
-    if (data.startTime) {
-        btnMine.disabled = true;
-        btnMine.innerText = "ĐANG RA KHƠI...";
-        shipIcon?.classList.add('mining');
-        timerDisplay?.classList.remove('hidden'); 
-    }
     checkOfflineMining();
 
-    // Gán sự kiện cho nút
     if (btnMine) btnMine.onclick = startAds;
     if (btnUpgrade) btnUpgrade.onclick = handleUpgrade;
     if (btnSell) btnSell.onclick = handleSell;
