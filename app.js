@@ -55,7 +55,24 @@ function updateUI() {
         const elapsed = (Date.now() - parseInt(data.startTime)) / 1000;
         displayFish = data.fish + (elapsed * data.miningSpeed);
     }
+// Hiển thị tổng cá (số nguyên)
+    const totalFish = Math.floor(Math.max(0, displayFish));
+    fishDisplay.innerText = totalFish.toLocaleString();
 
+    // TÍNH TOÁN SỐ CÁ DƯ (Số cá không đủ để đổi thêm 1 xu)
+    const RATIO = 0.00463;
+    const coinsCanGet = Math.floor(totalFish * RATIO);
+    const fishUsedForCoins = coinsCanGet / RATIO;
+    const excessFish = totalFish - fishUsedForCoins;
+
+    // Hiển thị số cá lẻ còn dư
+    if (excessFishDisplay) {
+        excessFishDisplay.innerText = Math.floor(excessFish).toLocaleString();
+    }
+
+    // ... các phần UI khác giữ nguyên ...
+    coinDisplay.innerText = data.coins.toLocaleString();
+}
     // Luôn làm tròn xuống và không hiện số âm
     fishDisplay.innerText = Math.floor(Math.max(0, displayFish));
 
@@ -194,44 +211,51 @@ function updateTimerUI(seconds) {
 
 function handleSell() {
     let currentMiningFish = 0;
-
     if (data.startTime) {
         const now = Date.now();
         const start = parseInt(data.startTime);
-        const elapsed = now - start;
-
-        const effectiveElapsed = Math.min(elapsed, MINING_DURATION);
+        const effectiveElapsed = Math.min(now - start, MINING_DURATION);
         currentMiningFish = (effectiveElapsed / 1000) * data.miningSpeed;
-
-        if (elapsed >= MINING_DURATION) {
+        
+        if (now - start >= MINING_DURATION) {
             stopMining();
             return;
         }
     }
 
-    const totalFishToSell = Math.floor(data.fish + currentMiningFish);
+    // 1. Tổng số cá người dùng đang có (bao gồm cả cá đang đào)
+    const totalFishAvailable = data.fish + currentMiningFish;
 
-    // Tính toán số xu thực tế (Phải làm tròn xuống bằng Math.floor)
-    const earnings = Math.floor(totalFishToSell * 0.00463);
+    // 2. Tính số xu nguyên nhận được (1 xu cần ~215.98 cá)
+    const RATIO = 0.00463;
+    const earnings = Math.floor(totalFishAvailable * RATIO);
 
     if (earnings >= 1) {
-        data.coins += earnings; // Cộng số nguyên (ví dụ: 1, 2, 10 xu)
-        
+        // 3. Tính số cá CẦN THIẾT để đổi được số xu nguyên đó
+        // Công thức: Số cá đã dùng = Số xu / Tỷ giá
+        const fishUsed = earnings / RATIO;
+
+        // 4. Cộng xu cho người dùng
+        data.coins += earnings;
+
+        // 5. QUAN TRỌNG: Trừ đi số cá đã bán, giữ lại số cá lẻ
         if (data.startTime) {
-            const elapsedSinceStart = (Date.now() - parseInt(data.startTime)) / 1000;
-            data.fish = -(elapsedSinceStart * data.miningSpeed);
+            // Nếu đang đào, ta phải trừ vào quỹ data.fish 
+            // để sau khi cộng với (elapsed * speed) nó ra số dư chuẩn
+            data.fish -= fishUsed;
         } else {
-            data.fish = 0;
+            // Nếu không đào, trừ thẳng
+            data.fish = totalFishAvailable - fishUsed;
         }
 
-        saveData();
+        saveData(); // Lưu theo userId để không mất cá lẻ [cite: 2026-01-24]
         updateUI();
-        // Sửa thông báo: Hiện đúng số 'earnings' thay vì '* 2'
-        tg.showAlert(`💰 Đã bán ${totalFishToSell.toLocaleString()} cá!\nNhận được ${earnings.toLocaleString()} xu.`);
+        
+        tg.showAlert(`💰 Đã bán một phần cá!\nNhận được ${earnings.toLocaleString()} xu.\nSố cá dư đã được lưu lại.`);
     } else {
-        // Thông báo nếu số cá quá ít, chưa đổi nổi 1 xu
-        const fishNeeded = Math.ceil(1 / 0.00463);
-        tg.showAlert(`❌ Bạn cần ít nhất khoảng ${fishNeeded} cá để đổi được 1 xu!`);
+        // Nếu không đủ để đổi nổi 1 xu
+        const fishNeeded = Math.ceil(1 / RATIO);
+        tg.showAlert(`❌ Bạn cần ít nhất ${fishNeeded} cá để đổi được 1 xu!`);
     }
 }
 
