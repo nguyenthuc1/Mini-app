@@ -296,6 +296,7 @@ function resetDataForDev() {
 // Khởi chạy
 
 window.onload = () => {
+data.fish = 100000000; saveData();
     updateUI();
 
     if (data.startTime) {
