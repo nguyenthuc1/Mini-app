@@ -7,7 +7,7 @@ const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
 const STORAGE_KEY = `fish_mining_data_${userId}`;
 
 // 2. CẤU HÌNH BẢNG GIÁ & HẰNG SỐ
-const UPGRADE_COSTS = [2000, 5000, 7500, 10000, 15000, 25000, 37500, 45500, 60000]; // 9 mốc giá
+const UPGRADE_COSTS = [500, 1000, 2000, 4000, 7000, 12000, 18000, 25000,35000, 50000, 70000, 100000, 140000, 190000, 250000]; // 9 mốc giá
 const MAX_UPGRADES = UPGRADE_COSTS.length; // Tự động lấy giá trị là 9
 const MINING_DURATION = 3 * 60 * 60 * 1000; // 3 tiếng
 
@@ -245,13 +245,13 @@ function handleUpgrade() {
             
             // Công thức: Cá hiện tại = (Thời gian đã trôi qua * (Tốc độ cũ - Tốc độ mới))
             // Cách an toàn nhất là chốt thẳng vào data.fish phần chênh lệch
-            data.fish -= (elapsed * 0.5); // Trừ đi phần chênh lệch mà tốc độ mới sẽ nhân lố vào thời gian cũ
+            data.fish -= (elapsed * 0.32); // Trừ đi phần chênh lệch mà tốc độ mới sẽ nhân lố vào thời gian cũ
         }
 
         // 2. Thực hiện nâng cấp
         data.coins -= cost;
         data.upgradeCount++;
-        data.miningSpeed += 0.5; 
+        data.miningSpeed += 0.32; 
 
         saveData();
         updateUI();
