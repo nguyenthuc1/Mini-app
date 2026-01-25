@@ -49,23 +49,23 @@ const STORAGE_KEY = `fish_mining_data_${userId}`; //
 
 function updateUI() {
     let displayFish = data.fish;
-    
-    // Nếu đang trong phiên đào, tính toán số cá thực tế ngay lập tức
+
+    // Chỉ tính toán cộng thêm nếu đang trong phiên đào
     if (data.startTime) {
         const elapsed = (Date.now() - parseInt(data.startTime)) / 1000;
         displayFish = data.fish + (elapsed * data.miningSpeed);
     }
 
-    // Cập nhật số cá lên màn hình
+    // Luôn làm tròn xuống và không hiện số âm
     fishDisplay.innerText = Math.floor(Math.max(0, displayFish));
-    
-    // Cập nhật các thông tin khác
+
+    // Cập nhật xu và tốc độ
     coinDisplay.innerText = data.coins.toLocaleString();
     speedDisplay.innerText = `${data.miningSpeed.toFixed(1)} cá/s`;
 
+    // Cập nhật trạng thái nút nâng cấp
     if (data.upgradeCount >= MAX_UPGRADES) {
-        btnUpgrade.innerText = "MAX LEVEL (10/10)";
-        btnUpgrade.classList.add('bg-slate-600');
+        btnUpgrade.innerText = "MAX LEVEL";
         btnUpgrade.disabled = true;
     } else {
         const cost = UPGRADE_COSTS[data.upgradeCount];
@@ -102,33 +102,25 @@ function startMiningSession() {
     if (!data.startTime) return;
     const start = parseInt(data.startTime);
 
-    clearInterval(tInterval); // Xóa bộ đếm cũ nếu có
+    clearInterval(tInterval);
 
     tInterval = setInterval(() => {
         const now = Date.now();
         const elapsed = now - start;
 
-        // 1. Kiểm tra nếu đã hết 3 tiếng
         if (elapsed >= MINING_DURATION) {
             stopMining();
             return;
         }
 
-        // 2. Cập nhật đồng hồ đếm ngược
         const secondsLeft = Math.floor((MINING_DURATION - elapsed) / 1000);
         updateTimerUI(secondsLeft);
-        if (timerDisplay) timerDisplay.classList.remove('hidden');
 
-        // 3. Cập nhật số cá hiển thị theo thời gian thực
-        const secondsElapsed = elapsed / 1000;
-        const currentFish = data.fish + (secondsElapsed * data.miningSpeed);
-        
-        // Cập nhật trực tiếp lên màn hình mỗi giây
+        // Tính cá: Lấy data.fish (đã chốt lúc nâng cấp/bán) + (thời gian mới * tốc độ mới)
+        const currentFish = data.fish + ((elapsed / 1000) * data.miningSpeed);
         fishDisplay.innerText = Math.floor(Math.max(0, currentFish));
 
-        // 4. Đảm bảo icon tàu vẫn quay
-        shipIcon?.classList.add('mining');
-    }, 1000); // Chạy mỗi giây
+    }, 1000);
 }
 
 function stopMining() {
@@ -203,23 +195,34 @@ function updateTimerUI(seconds) {
         tg.showAlert("❌ Bạn không có cá để bán!");
     }
 }
-function handleUpgrade() {
+
+ function handleUpgrade() {
     const cost = UPGRADE_COSTS[data.upgradeCount];
     
     if (data.coins >= cost && data.upgradeCount < MAX_UPGRADES) {
+        // 1. CHỐT SỐ CÁ HIỆN TẠI TRƯỚC KHI NÂNG CẤP
+        if (data.startTime) {
+            const elapsed = (Date.now() - parseInt(data.startTime)) / 1000;
+            // Lưu lại số cá đã đào được với tốc độ CŨ
+            data.fish += (elapsed * data.miningSpeed);
+            // Reset lại mốc thời gian để tốc độ MỚI bắt đầu tính từ bây giờ
+            data.startTime = Date.now();
+        }
+
+        // 2. THỰC HIỆN NÂNG CẤP
         data.coins -= cost;
         data.upgradeCount++;
-        data.miningSpeed += 0.5; // Tăng tốc độ đào thêm 0.5 mỗi cấp
+        data.miningSpeed += 0.5; 
         
-        saveData(); // Lưu vào localStorage
-        updateUI(); // Cập nhật lại số dư xu và giá nâng cấp mới trên màn hình
+        saveData();
+        updateUI();
         
-        tg.showAlert("🚀 Nâng cấp thành công!");
-        
-        // Nếu đang trong phiên đào, chạy lại session để nhận tốc độ mới ngay
+        // 3. Khởi động lại session với tốc độ mới
         if (data.startTime) {
             startMiningSession();
         }
+        
+        tg.showAlert("🚀 Nâng cấp thành công!");
     } else {
         tg.showAlert("❌ Không đủ xu hoặc đã đạt cấp tối đa!");
     }
