@@ -48,21 +48,24 @@ const STORAGE_KEY = `fish_mining_data_${userId}`; //
 }
 
 function updateUI() {
-    let currentDisplayFish = data.fish;
+    let displayFish = data.fish;
+    
+    // Nếu đang trong phiên đào, tính toán số cá thực tế ngay lập tức
     if (data.startTime) {
         const elapsed = (Date.now() - parseInt(data.startTime)) / 1000;
-        currentDisplayFish = data.fish + (elapsed * data.miningSpeed);
+        displayFish = data.fish + (elapsed * data.miningSpeed);
     }
+
+    // Cập nhật số cá lên màn hình
+    fishDisplay.innerText = Math.floor(Math.max(0, displayFish));
     
-    // Luôn hiển thị số cá >= 0 và làm tròn xuống
-    fishDisplay.innerText = Math.floor(Math.max(0, currentDisplayFish));
-    
+    // Cập nhật các thông tin khác
     coinDisplay.innerText = data.coins.toLocaleString();
     speedDisplay.innerText = `${data.miningSpeed.toFixed(1)} cá/s`;
 
-    // Phần logic nút Nâng cấp (Nhớ thêm hàm handleUpgrade nếu chưa có)
     if (data.upgradeCount >= MAX_UPGRADES) {
         btnUpgrade.innerText = "MAX LEVEL (10/10)";
+        btnUpgrade.classList.add('bg-slate-600');
         btnUpgrade.disabled = true;
     } else {
         const cost = UPGRADE_COSTS[data.upgradeCount];
