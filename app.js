@@ -331,7 +331,7 @@ window.onload = () => {
     }
 
     checkOfflineMining();
-};
+
 
 // Thêm vào cuối file app.js
 if (btnMine) btnMine.onclick = startAds;
@@ -340,4 +340,5 @@ if (btnUpgrade) btnUpgrade.onclick = handleUpgrade;
 // Sửa lại dòng gán cho nút Sell bằng ID đã thêm ở Bước 1
 const btnSell = document.getElementById('btn-sell');
 if (btnSell) btnSell.onclick = handleSell;
+};
 
