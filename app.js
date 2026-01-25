@@ -7,7 +7,6 @@ const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
 const STORAGE_KEY = `fish_mining_data_${userId}`;
 
 // 2. CẤU HÌNH BẢNG GIÁ & HẰNG SỐ
-// 2. CẤU HÌNH BẢNG GIÁ & HẰNG SỐ
 const UPGRADE_COSTS = [2000, 5000, 7500, 10000, 15000, 25000, 37500, 45500, 60000]; // 9 mốc giá
 const MAX_UPGRADES = UPGRADE_COSTS.length; // Tự động lấy giá trị là 9
 const MINING_DURATION = 3 * 60 * 60 * 1000; // 3 tiếng
@@ -215,7 +214,7 @@ function updateTimerUI(seconds) {
     const totalFishToSell = Math.floor(data.fish + currentMiningFish);
 
     if (totalFishToSell >= 1) {
-        data.coins += totalFishToSell * 2;
+        data.coins += totalFishToSell * 0.00463;
         
         // Reset cá về 0
         if (data.startTime) {
