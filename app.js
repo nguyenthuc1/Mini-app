@@ -72,12 +72,6 @@ function updateUI() {
         shipLevelDisplay.innerText = (data.upgradeCount + 1);
     }
 
-    // Tăng kích thước tàu theo level (Tùy chọn - làm tàu to dần)
-    if (shipIcon) {
-        const scale = 1 + (data.upgradeCount * 0.05); // Mỗi level to thêm 5%
-        shipIcon.style.transform = `scale(${scale})`;
-    }
-}
     // Cập nhật nút nâng cấp
     if (data.upgradeCount >= MAX_UPGRADES) {
         btnUpgrade.innerText = "MAX LEVEL";
