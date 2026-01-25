@@ -192,7 +192,7 @@ function updateTimerUI(seconds) {
 
 // 6. TÍNH NĂNG BÁN & NÂNG CẤP
 
- function handleSell() {
+function handleSell() {
     let currentMiningFish = 0;
 
     if (data.startTime) {
@@ -200,25 +200,31 @@ function updateTimerUI(seconds) {
         const start = parseInt(data.startTime);
         const elapsed = now - start;
 
-        // Nếu thời gian trôi qua vượt quá 3 tiếng, chỉ tính đúng 3 tiếng
         const effectiveElapsed = Math.min(elapsed, MINING_DURATION);
         currentMiningFish = (effectiveElapsed / 1000) * data.miningSpeed;
 
-        // Nếu đã quá 3 tiếng, tiện tay dừng đào luôn
         if (elapsed >= MINING_DURATION) {
             stopMining();
-            return; // Sau khi stopMining, nó đã tự cộng cá và updateUI nên thoát luôn
+            return;
         }
     }
 
     const totalFishToSell = Math.floor(data.fish + currentMiningFish);
 
     if (totalFishToSell >= 1) {
-        data.coins += totalFishToSell * 0.00463;
+        // 1. SỬA LỖI: Sử dụng Math.floor để biến 0.005 thành số nguyên (0 hoặc 1, 2...)
+        // Tỷ giá 0.00463 yêu cầu khoảng 216 cá mới được 1 xu
+        const earnings = Math.floor(totalFishToSell * 0.00463);
         
-        // Reset cá về 0
+        if (earnings < 1) {
+            tg.showAlert("❌ Số cá hiện tại chưa đủ để đổi ra 1 xu (Cần thêm cá)!");
+            return;
+        }
+
+        data.coins += earnings;
+        
+        // Reset cá về 0 nhưng giữ nguyên tiến trình đồng hồ
         if (data.startTime) {
-            // "Nợ" lại số giây đã trôi qua để đồng hồ vẫn chạy chuẩn mà cá về 0
             const elapsedSinceStart = (Date.now() - parseInt(data.startTime)) / 1000;
             data.fish = -(elapsedSinceStart * data.miningSpeed);
         } else {
@@ -227,7 +233,9 @@ function updateTimerUI(seconds) {
 
         saveData();
         updateUI();
-        tg.showAlert(`💰 Đã bán! Nhận được ${(totalFishToSell * 2).toLocaleString()} xu.`);
+
+        // 2. SỬA LỖI: Hiển thị đúng số tiền thực tế nhận được (earnings) thay vì * 2
+        tg.showAlert(`💰 Đã bán ${totalFishToSell.toLocaleString()} cá!\nNhận được ${earnings.toLocaleString()} xu.`);
     } else {
         tg.showAlert("❌ Bạn không có cá để bán!");
     }
