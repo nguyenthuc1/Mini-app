@@ -82,44 +82,57 @@ function checkOfflineMining() {
     const start = parseInt(data.startTime);
     const elapsed = now - start;
 
-    // Nếu đã quá 3 tiếng khi đang tắt app
+    // 1. CHỨC NĂNG CŨ: Nếu đã quá 3 tiếng khi đang offline
     if (elapsed >= MINING_DURATION) {
         stopMining(); 
     } 
-    // Nếu vẫn đang trong thời gian đào, kích hoạt lại bộ đếm
+    // 2. CHỨC NĂNG CŨ: Nếu vẫn đang trong thời gian đào
     else {
-        startMiningSession(); 
+        // Hiện lại đồng hồ (vì mặc định HTML là hidden)
+        if (timerDisplay) timerDisplay.classList.remove('hidden');
         
-        // Cập nhật trạng thái nút bấm
+        // Khôi phục trạng thái nút bấm
         if (btnMine) {
             btnMine.disabled = true;
             btnMine.innerText = "ĐANG RA KHƠI...";
         }
+        
+        // Chạy lại bộ đếm thời gian thực
+        startMiningSession(); 
     }
+    // Cập nhật giao diện tổng thể (xu, tốc độ)
+    updateUI();
 }
 
 function startMiningSession() {
     if (!data.startTime) return;
     const start = parseInt(data.startTime);
 
-    clearInterval(tInterval);
+    clearInterval(tInterval); // Xóa bộ đếm cũ tránh chạy chồng luồng
 
     tInterval = setInterval(() => {
         const now = Date.now();
         const elapsed = now - start;
 
+        // 1. CHỨC NĂNG CŨ: Kiểm tra hết 3 tiếng
         if (elapsed >= MINING_DURATION) {
             stopMining();
             return;
         }
 
+        // 2. CHỨC NĂNG CŨ: Cập nhật đồng hồ (và hiện màn hình đồng hồ)
         const secondsLeft = Math.floor((MINING_DURATION - elapsed) / 1000);
-        updateTimerUI(secondsLeft);
+        updateTimerUI(secondsLeft); 
 
-        // Tính cá: Lấy data.fish (đã chốt lúc nâng cấp/bán) + (thời gian mới * tốc độ mới)
-        const currentFish = data.fish + ((elapsed / 1000) * data.miningSpeed);
+        // 3. CHỨC NĂNG CŨ: Tính cá theo thời gian thực (Xử lý cả số âm khi bán)
+        const secondsElapsed = elapsed / 1000;
+        const currentFish = data.fish + (secondsElapsed * data.miningSpeed);
+        
+        // Hiển thị số cá (Làm tròn xuống và không hiện số âm)
         fishDisplay.innerText = Math.floor(Math.max(0, currentFish));
 
+        // 4. Hiệu ứng tàu đang chạy
+        shipIcon?.classList.add('mining');
     }, 1000);
 }
 
