@@ -7,8 +7,8 @@ const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
 const STORAGE_KEY = `fish_mining_data_${userId}`;
 
 // 2. CẤU HÌNH BẢNG GIÁ & HẰNG SỐ
-const UPGRADE_COSTS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-const MAX_UPGRADES = 10;
+const UPGRADE_COSTS = [2000, 5000, 7500, 10000, 15000, 25000, 37500, 45500, 60000,];
+const MAX_UPGRADES = 9;
 const MINING_DURATION = 3 * 60 * 60 * 1000; // 3 tiếng
 
 // 3. KHỞI TẠO DỮ LIỆU
