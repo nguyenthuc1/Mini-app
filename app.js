@@ -147,23 +147,47 @@ function updateTimerUI(seconds) {
 }
 
 // 6. BÁN & NÂNG CẤP
+
 function handleSell() {
-    let currentMining = 0;
+    let currentMiningFish = 0;
+    let now = Date.now();
+    
+    // 1. Tính số cá đang đào được tại thời điểm bấm nút
     if (data.startTime) {
-        const elapsed = Math.min(Date.now() - parseInt(data.startTime), MINING_DURATION);
-        currentMining = (elapsed / 1000) * data.miningSpeed;
+        const start = parseInt(data.startTime);
+        const elapsed = Math.min(now - start, MINING_DURATION);
+        currentMiningFish = (elapsed / 1000) * data.miningSpeed;
     }
-    const total = data.fish + currentMining;
-    const earnings = Math.floor(total * RATIO);
+
+    // 2. Tổng số cá thực tế đang có
+    const totalFishAvailable = data.fish + currentMiningFish;
+    const RATIO = 0.00463;
+    const earnings = Math.floor(totalFishAvailable * RATIO);
 
     if (earnings >= 1) {
+        // 3. Tính số cá tương ứng với số xu nguyên đã bán
+        const fishUsed = earnings / RATIO;
+
+        // 4. CẬP NHẬT DỮ LIỆU (Sửa lỗi trừ cá ở đây)
         data.coins += earnings;
-        data.fish = total - (earnings / RATIO);
-        saveData();
+        
+        if (data.startTime) {
+            // Nếu đang đào: Cập nhật lại mốc bắt đầu là BÂY GIỜ
+            // Và số cá gốc (data.fish) sẽ là số dư sau khi trừ
+            data.fish = totalFishAvailable - fishUsed;
+            data.startTime = now; 
+        } else {
+            // Nếu không đào: Trừ thẳng vào kho
+            data.fish = totalFishAvailable - fishUsed;
+        }
+
+        saveData(); // Lưu theo userId [cite: 2026-01-24]
         updateUI();
-        tg.showAlert(`💰 Nhận được ${earnings.toLocaleString()} xu.`);
+        
+        tg.showAlert(`💰 Đã bán cá!\nNhận được ${earnings.toLocaleString()} xu.\nKho cá đã được cập nhật.`);
     } else {
-        tg.showAlert(`❌ Cần ít nhất ${Math.ceil(1/RATIO)} cá!`);
+        const fishNeeded = Math.ceil(1 / RATIO);
+        tg.showAlert(`❌ Bạn cần ít nhất ${fishNeeded} cá để đổi được 1 xu!`);
     }
 }
 
