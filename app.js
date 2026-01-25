@@ -205,13 +205,21 @@ function updateTimerUI(seconds) {
 }
 function handleUpgrade() {
     const cost = UPGRADE_COSTS[data.upgradeCount];
+    
     if (data.coins >= cost && data.upgradeCount < MAX_UPGRADES) {
         data.coins -= cost;
         data.upgradeCount++;
-        data.miningSpeed += 0.5;
-        saveData();
-        updateUI();
+        data.miningSpeed += 0.5; // Tăng tốc độ đào thêm 0.5 mỗi cấp
+        
+        saveData(); // Lưu vào localStorage
+        updateUI(); // Cập nhật lại số dư xu và giá nâng cấp mới trên màn hình
+        
         tg.showAlert("🚀 Nâng cấp thành công!");
+        
+        // Nếu đang trong phiên đào, chạy lại session để nhận tốc độ mới ngay
+        if (data.startTime) {
+            startMiningSession();
+        }
     } else {
         tg.showAlert("❌ Không đủ xu hoặc đã đạt cấp tối đa!");
     }
