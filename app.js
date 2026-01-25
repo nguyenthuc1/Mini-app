@@ -39,6 +39,9 @@ const btnSell = document.getElementById('btn-sell');
 const excessFishDisplay = document.getElementById('excess-fish');
 const estimatedCoinsDisplay = document.getElementById('estimated-coins');
 const shipLevelDisplay = document.getElementById('ship-level');
+const walletCoinDisplay = document.getElementById('wallet-coin-balance');
+const withdrawInput = document.getElementById('withdraw-amount');
+const vndReceive = document.getElementById('vnd-receive');
 
 // 4. CÁC HÀM CỐT LÕI
 function saveData() {
@@ -89,7 +92,41 @@ function updateUI() {
         btnUpgrade.disabled = false;
         btnUpgrade.classList.remove('opacity-50');
     }
-} 
+ if (walletCoinDisplay) {
+        walletCoinDisplay.innerText = data.coins.toLocaleString();
+    }
+}
+
+// Hàm tính toán tiền VNĐ thực tế
+function calcVnd() {
+    const amount = parseInt(withdrawInput.value) || 0;
+    // Tỷ lệ 1 xu = 1 VNĐ
+    vndReceive.innerText = amount.toLocaleString() + " VNĐ";
+}
+
+// Hàm xử lý rút tiền
+function handleWithdraw() {
+    const amount = parseInt(withdrawInput.value) || 0;
+    if (amount < 20000) {
+        tg.showAlert("❌ Số tiền rút tối thiểu là 20.000 Xu!");
+        return;
+    }
+    if (amount > data.coins) {
+        tg.showAlert("❌ Số dư xu không đủ!");
+        return;
+    }
+    
+    tg.showConfirm(`Bạn chắc chắn muốn rút ${amount.toLocaleString()} VNĐ?`, (confirmed) => {
+        if (confirmed) {
+            data.coins -= amount;
+            saveData(); // Lưu theo userId [cite: 2026-01-24]
+            updateUI();
+            withdrawInput.value = "";
+            vndReceive.innerText = "0 VNĐ";
+            tg.showAlert("✅ Gửi yêu cầu thành công! Tiền sẽ về ví sau khi Admin duyệt.");
+        }
+    });
+}
 
 
 // 5. XỬ LÝ ĐÀO
