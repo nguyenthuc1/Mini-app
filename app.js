@@ -162,19 +162,6 @@ function updateTimerUI(seconds) {
     timerDisplay.innerText = `${h}:${m}:${s}`;
 }
 // 6. TÍNH NĂNG BÁN & NÂNG CẤP
-function handleUpgrade() {
-    const cost = UPGRADE_COSTS[data.upgradeCount];
-    if (data.coins >= cost && data.upgradeCount < MAX_UPGRADES) {
-        data.coins -= cost;
-        data.upgradeCount++;
-        data.miningSpeed += 0.5;
-        saveData();
-        updateUI();
-        tg.showAlert("🚀 Nâng cấp thành công!");
-    } else {
-        tg.showAlert("❌ Không đủ xu hoặc đã đạt cấp tối đa!");
-    }
-}
 
  function handleSell() {
     let currentMiningFish = 0;
@@ -214,6 +201,19 @@ function handleUpgrade() {
         tg.showAlert(`💰 Đã bán! Nhận được ${(totalFishToSell * 2).toLocaleString()} xu.`);
     } else {
         tg.showAlert("❌ Bạn không có cá để bán!");
+    }
+}
+function handleUpgrade() {
+    const cost = UPGRADE_COSTS[data.upgradeCount];
+    if (data.coins >= cost && data.upgradeCount < MAX_UPGRADES) {
+        data.coins -= cost;
+        data.upgradeCount++;
+        data.miningSpeed += 0.5;
+        saveData();
+        updateUI();
+        tg.showAlert("🚀 Nâng cấp thành công!");
+    } else {
+        tg.showAlert("❌ Không đủ xu hoặc đã đạt cấp tối đa!");
     }
 }
 
