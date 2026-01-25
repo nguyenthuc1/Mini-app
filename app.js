@@ -46,7 +46,6 @@ function saveData() {
     if (isNaN(data.coins)) data.coins = 0;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
-
 function updateUI() {
     let displayFish = data.fish;
     if (data.startTime) {
@@ -55,24 +54,30 @@ function updateUI() {
     }
 
     const totalFish = Math.floor(Math.max(0, displayFish));
-    fishDisplay.innerText = totalFish.toLocaleString();
+    
+    // 1. Hiển thị tổng cá
+    if (fishDisplay) fishDisplay.innerText = totalFish.toLocaleString();
 
-    // Tính xu và cá lẻ
+    // 2. Tính toán Xu dự kiến và Cá dư (Cách B) [cite: 2026-01-24]
+    const RATIO = 0.00463;
     const coinsCanGet = Math.floor(totalFish * RATIO);
     const fishUsed = coinsCanGet / RATIO;
     const excess = totalFish - fishUsed;
 
+    // 3. Hiển thị thông số phụ (Cá dư & Xu nhận được)
     if (excessFishDisplay) excessFishDisplay.innerText = Math.floor(excess).toLocaleString();
     if (estimatedCoinsDisplay) estimatedCoinsDisplay.innerText = coinsCanGet.toLocaleString();
 
-    coinDisplay.innerText = data.coins.toLocaleString();
-    speedDisplay.innerText = `${data.miningSpeed.toFixed(1)} cá/s`;
-   // Cập nhật số Level (UpgradeCount + 1)
+    // 4. Hiển thị Level tàu
     if (shipLevelDisplay) {
         shipLevelDisplay.innerText = (data.upgradeCount + 1);
     }
 
-    // Cập nhật nút nâng cấp
+    // 5. Các thông số cơ bản khác
+    if (coinDisplay) coinDisplay.innerText = data.coins.toLocaleString();
+    if (speedDisplay) speedDisplay.innerText = `${data.miningSpeed.toFixed(1)} cá/s`;
+
+    // 6. Cập nhật trạng thái nút Nâng cấp
     if (data.upgradeCount >= MAX_UPGRADES) {
         btnUpgrade.innerText = "MAX LEVEL";
         btnUpgrade.disabled = true;
