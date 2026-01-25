@@ -38,6 +38,7 @@ const btnUpgrade = document.getElementById('btn-upgrade');
 const btnSell = document.getElementById('btn-sell');
 const excessFishDisplay = document.getElementById('excess-fish');
 const estimatedCoinsDisplay = document.getElementById('estimated-coins');
+const shipLevelDisplay = document.getElementById('ship-level');
 
 // 4. CÁC HÀM CỐT LÕI
 function saveData() {
@@ -66,7 +67,17 @@ function updateUI() {
 
     coinDisplay.innerText = data.coins.toLocaleString();
     speedDisplay.innerText = `${data.miningSpeed.toFixed(1)} cá/s`;
+   // Cập nhật số Level (UpgradeCount + 1)
+    if (shipLevelDisplay) {
+        shipLevelDisplay.innerText = (data.upgradeCount + 1);
+    }
 
+    // Tăng kích thước tàu theo level (Tùy chọn - làm tàu to dần)
+    if (shipIcon) {
+        const scale = 1 + (data.upgradeCount * 0.05); // Mỗi level to thêm 5%
+        shipIcon.style.transform = `scale(${scale})`;
+    }
+}
     // Cập nhật nút nâng cấp
     if (data.upgradeCount >= MAX_UPGRADES) {
         btnUpgrade.innerText = "MAX LEVEL";
