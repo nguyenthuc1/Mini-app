@@ -1,6 +1,8 @@
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
+const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
+const STORAGE_KEY = `fish_mining_data_${userId}`; 
 
 // 1. ĐỊNH DANH USER
 const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
@@ -46,6 +48,7 @@ function saveData() {
     if (isNaN(data.coins)) data.coins = 0;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
+ 
 function updateUI() {
     let displayFish = data.fish;
     if (data.startTime) {
@@ -55,20 +58,20 @@ function updateUI() {
 
     const totalFish = Math.floor(Math.max(0, displayFish));
     
-    // 1. Hiển thị tổng cá
+    // 1. Hiển thị Kho Cá
     if (fishDisplay) fishDisplay.innerText = totalFish.toLocaleString();
 
-    // 2. Tính toán Xu dự kiến và Cá dư (Cách B) [cite: 2026-01-24]
+    // 2. Tính toán Xu dự kiến và Cá dư (Cách B)
     const RATIO = 0.00463;
     const coinsCanGet = Math.floor(totalFish * RATIO);
     const fishUsed = coinsCanGet / RATIO;
     const excess = totalFish - fishUsed;
 
-    // 3. Hiển thị thông số phụ (Cá dư & Xu nhận được)
+    // 3. Hiển thị thông số phụ
     if (excessFishDisplay) excessFishDisplay.innerText = Math.floor(excess).toLocaleString();
     if (estimatedCoinsDisplay) estimatedCoinsDisplay.innerText = coinsCanGet.toLocaleString();
 
-    // 4. Hiển thị Level tàu
+    // 4. Hiển thị Level tàu (Đã có ID ship-level trong index.html)
     if (shipLevelDisplay) {
         shipLevelDisplay.innerText = (data.upgradeCount + 1);
     }
@@ -84,11 +87,12 @@ function updateUI() {
         btnUpgrade.classList.add('opacity-50');
     } else {
         const cost = UPGRADE_COSTS[data.upgradeCount];
-        btnUpgrade.innerText = `NÂNG CẤP (${cost.toLocaleString()} 💰)`;
+        btnUpgrade.innerText = `NÂNG CẤP (${cost ? cost.toLocaleString() : '---'} 💰)`;
         btnUpgrade.disabled = false;
         btnUpgrade.classList.remove('opacity-50');
     }
-}
+} 
+
 
 // 5. XỬ LÝ ĐÀO
 function checkOfflineMining() {
