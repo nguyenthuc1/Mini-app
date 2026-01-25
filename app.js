@@ -211,19 +211,12 @@ function handleSell() {
 
     const totalFishToSell = Math.floor(data.fish + currentMiningFish);
 
-    if (totalFishToSell >= 1) {
-        // 1. SỬA LỖI: Sử dụng Math.floor để biến 0.005 thành số nguyên (0 hoặc 1, 2...)
-        // Tỷ giá 0.00463 yêu cầu khoảng 216 cá mới được 1 xu
-        const earnings = Math.floor(totalFishToSell * 0.00463);
-        
-        if (earnings < 1) {
-            tg.showAlert("❌ Số cá hiện tại chưa đủ để đổi ra 1 xu (Cần thêm cá)!");
-            return;
-        }
+    // Tính toán số xu thực tế (Phải làm tròn xuống bằng Math.floor)
+    const earnings = Math.floor(totalFishToSell * 0.00463);
 
-        data.coins += earnings;
+    if (earnings >= 1) {
+        data.coins += earnings; // Cộng số nguyên (ví dụ: 1, 2, 10 xu)
         
-        // Reset cá về 0 nhưng giữ nguyên tiến trình đồng hồ
         if (data.startTime) {
             const elapsedSinceStart = (Date.now() - parseInt(data.startTime)) / 1000;
             data.fish = -(elapsedSinceStart * data.miningSpeed);
@@ -233,11 +226,12 @@ function handleSell() {
 
         saveData();
         updateUI();
-
-        // 2. SỬA LỖI: Hiển thị đúng số tiền thực tế nhận được (earnings) thay vì * 2
+        // Sửa thông báo: Hiện đúng số 'earnings' thay vì '* 2'
         tg.showAlert(`💰 Đã bán ${totalFishToSell.toLocaleString()} cá!\nNhận được ${earnings.toLocaleString()} xu.`);
     } else {
-        tg.showAlert("❌ Bạn không có cá để bán!");
+        // Thông báo nếu số cá quá ít, chưa đổi nổi 1 xu
+        const fishNeeded = Math.ceil(1 / 0.00463);
+        tg.showAlert(`❌ Bạn cần ít nhất khoảng ${fishNeeded} cá để đổi được 1 xu!`);
     }
 }
 
