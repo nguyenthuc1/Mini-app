@@ -7,8 +7,9 @@ const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
 const STORAGE_KEY = `fish_mining_data_${userId}`;
 
 // 2. CẤU HÌNH BẢNG GIÁ & HẰNG SỐ
-const UPGRADE_COSTS = [2000, 5000, 7500, 10000, 15000, 25000, 37500, 45500, 60000,];
-const MAX_UPGRADES = 9;
+// 2. CẤU HÌNH BẢNG GIÁ & HẰNG SỐ
+const UPGRADE_COSTS = [2000, 5000, 7500, 10000, 15000, 25000, 37500, 45500, 60000]; // 9 mốc giá
+const MAX_UPGRADES = UPGRADE_COSTS.length; // Tự động lấy giá trị là 9
 const MINING_DURATION = 3 * 60 * 60 * 1000; // 3 tiếng
 
 // 3. KHỞI TẠO DỮ LIỆU
@@ -63,13 +64,18 @@ function updateUI() {
     coinDisplay.innerText = data.coins.toLocaleString();
     speedDisplay.innerText = `${data.miningSpeed.toFixed(1)} cá/s`;
 
-    // Cập nhật trạng thái nút nâng cấp
+    
+     // Kiểm tra nếu đã đạt cấp tối đa
     if (data.upgradeCount >= MAX_UPGRADES) {
         btnUpgrade.innerText = "MAX LEVEL";
         btnUpgrade.disabled = true;
+        btnUpgrade.classList.add('opacity-50', 'cursor-not-allowed');
     } else {
         const cost = UPGRADE_COSTS[data.upgradeCount];
-        btnUpgrade.innerText = `NÂNG CẤP (${cost.toLocaleString()} 💰)`;
+        // Thêm kiểm tra cost để tránh lỗi hiển thị undefined
+        btnUpgrade.innerText = `NÂNG CẤP (${cost ? cost.toLocaleString() : '---'} 💰)`;
+        btnUpgrade.disabled = false;
+        btnUpgrade.classList.remove('opacity-50');
     }
 }
 
