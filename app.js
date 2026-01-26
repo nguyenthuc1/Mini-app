@@ -170,27 +170,34 @@ function updateTimerUI(seconds) {
 }
 
 function handleSell() {
-    let displayFish = data.fish;
+    let currentTotalFish = data.fish;
+    
+    // Nếu đang đào, tính toán số cá đã đào được cho đến giây phút này
     if (data.startTime) {
         const elapsed = (Date.now() - parseInt(data.startTime)) / 1000;
-        displayFish += (elapsed * data.miningSpeed);
+        const minedSoFar = elapsed * data.miningSpeed;
+        currentTotalFish += minedSoFar;
+        
+        // Quan trọng: Cập nhật lại startTime về bây giờ để "chốt" số cá đã đào vào kho
+        // và tiếp tục đào từ mốc này, không làm reset timer 3 tiếng
+        data.startTime = Date.now();
     }
 
-    const earnings = Math.floor(displayFish * GLOBAL_RATIO);
+    const earnings = Math.floor(currentTotalFish * GLOBAL_RATIO);
+    
     if (earnings >= 1) {
         const fishUsed = earnings / GLOBAL_RATIO;
         data.coins += earnings;
-        data.fish = displayFish - fishUsed;
-        if (data.startTime) data.startTime = Date.now(); // Reset mốc đào
-        
+        // Số cá còn dư sau khi bán
+        data.fish = currentTotalFish - fishUsed;
+
         saveData();
         updateUI();
-        tg.showAlert(`💰 Nhận được ${earnings.toLocaleString()} xu!`);
+        tg.showAlert(`💰 Bán thành công! Nhận được ${earnings.toLocaleString()} xu.`);
     } else {
         tg.showAlert("❌ Bạn chưa có đủ cá để đổi ít nhất 1 xu!");
     }
 }
-
 function handleUpgrade() {
     const cost = UPGRADE_COSTS[data.upgradeCount];
     if (data.coins >= cost) {
@@ -206,6 +213,7 @@ function handleUpgrade() {
 }
 
 // 7. RÚT TIỀN
+
 function handleWithdraw() {
     const accName = document.getElementById('account-name')?.value.trim();
     const bankName = document.getElementById('bank-name')?.value.trim();
@@ -221,23 +229,44 @@ function handleWithdraw() {
         return;
     }
 
-    tg.showConfirm("Xác nhận gửi lệnh rút?", (ok) => {
+    tg.showConfirm(`Xác nhận rút ${amount.toLocaleString()} VNĐ?`, (ok) => {
         if (ok) {
+            // 1. Trừ tiền và lưu lịch sử
             data.coins -= amount;
-            data.history.unshift({
+            const newTransaction = {
                 amount: amount,
                 bank: bankName,
                 time: new Date().toLocaleString('vi-VN'),
                 status: 'Đang xử lý'
-            });
+            };
+            data.history.unshift(newTransaction);
             saveData();
             updateUI();
             updateHistoryUI();
-            tg.showAlert("✅ Đã gửi lệnh rút tới Admin!");
+
+            // 2. Gửi thông báo về Bot Telegram cho Admin
+            const botToken = '8380349652:AAECxqrFHRWGsOSIj-Cb7kgG3tOaC9lir48';
+            const adminId = '6068989876';
+            const message = `🔔 LỆNH RÚT TIỀN MỚI
+👤 User: ${tg.initDataUnsafe?.user?.first_name || 'Guest'} (ID: ${userId})
+💰 Số tiền: ${amount.toLocaleString()} VNĐ
+🏦 Ngân hàng: ${bankName}
+💳 STK: ${bankAcc}
+👤 Chủ TK: ${accName.toUpperCase()}`;
+
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${adminId}&text=${encodeURIComponent(message)}`)
+                .then(() => {
+                    tg.showAlert("✅ Gửi yêu cầu thành công! Admin sẽ xử lý trong 24h.");
+                    if (withdrawInput) withdrawInput.value = "";
+                    if (vndReceive) vndReceive.innerText = "0 VNĐ";
+                })
+                .catch((err) => {
+                    console.error("Lỗi gửi bot:", err);
+                    tg.showAlert("⚠️ Lệnh rút đã ghi nhận nhưng lỗi gửi thông báo tới Admin.");
+                });
         }
     });
 }
-
 function calcVnd() {
     const amount = parseInt(withdrawInput.value) || 0;
     if (vndReceive) vndReceive.innerText = amount.toLocaleString() + " VNĐ";
