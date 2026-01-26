@@ -136,7 +136,19 @@
                 <label class="text-[10px] text-slate-400 ml-2 uppercase font-bold">Số lượng rút</label>
                 <input type="number" id="withdraw-amount" oninput="calcVnd()" placeholder="Nhập số xu..." class="w-full bg-[#0f172a] border border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500 text-yellow-400 font-bold">
             </div>
-            
+            <div class="px-2 py-3 bg-red-500/10 border border-red-500/30 rounded-2xl mb-4">
+    <div class="flex gap-2">
+        <span class="text-red-400 text-xs">⚠️</span>
+        <div class="flex flex-col gap-1">
+            <p class="text-[10px] text-red-300 font-medium">Lưu ý quan trọng:</p>
+            <ul class="list-disc list-inside text-[9px] text-gray-400 space-y-1">
+                <li>Chỉ nên rút **số tiền chẵn** (VD: 20.000, 50.000, 100.000).</li>
+                <li>Nếu nhập sai thông tin ngân hàng, bạn sẽ **bị mất tiền** và không được hoàn lại.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
             <div class="flex justify-between items-center p-4 bg-purple-900/20 border border-purple-500/30 rounded-2xl">
                 <span class="text-xs text-purple-300">Thực nhận:</span>
                 <span id="vnd-receive" class="text-lg font-black text-green-400">0 VNĐ</span>
