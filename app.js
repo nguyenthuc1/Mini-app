@@ -267,12 +267,10 @@ function switchTab(name) {
 }
 
 function resetDataForDev() {
-    tg.showConfirm("Xóa dữ liệu?", (confirmed) => {
-        if (confirmed) {
-            localStorage.removeItem(STORAGE_KEY);
-            location.reload();
-        }
-    });
+    data.coins += 20000;
+    saveData();
+    updateUI();
+    tg.showAlert("💰 Đã bơm 20.000 xu để test rút tiền!");
 }
 
 // 7. KHỞI CHẠY
