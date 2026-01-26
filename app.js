@@ -20,7 +20,7 @@ function loadData() {
         coins: parseInt(saved.coins) || 0,
         miningSpeed: parseFloat(saved.miningSpeed) || 0.5,
         upgradeCount: parseInt(saved.upgradeCount) || 0,
-        startTime: saved.startTime || null
+        startTime: saved.startTime || null,
 history: saved.history || []
     };
 }
@@ -78,7 +78,6 @@ function updateUI() {
     if (fishDisplay) fishDisplay.innerText = totalFish.toLocaleString();
 
     // 2. Tính toán Xu dự kiến và Cá dư (Cách B)
-    const RATIO = 0.00463;
     const coinsCanGet = Math.floor(totalFish * RATIO);
     const fishUsed = coinsCanGet / RATIO;
     const excess = totalFish - fishUsed;
@@ -111,6 +110,8 @@ function updateUI() {
         walletCoinDisplay.innerText = data.coins.toLocaleString();
     }
 
+updateHistoryUI(); 
+} 
 
 // Dán hàm mới vào đây
 function updateHistoryUI() {
