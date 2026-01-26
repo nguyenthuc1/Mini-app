@@ -205,26 +205,64 @@ function handleUpgrade() {
 
 // --- 6. RÚT TIỀN ---
 
-function handleWithdraw() {
-    const amount = parseInt(document.getElementById('withdraw-amount').value) || 0;
-    if (amount < 20000 || amount > data.coins) {
-        tg.showAlert("❌ Số tiền không hợp lệ hoặc không đủ dư!");
+async function handleWithdraw() {
+    const bankName = document.getElementById('bank-name')?.value.trim();
+    const bankAcc = document.getElementById('bank-account')?.value.trim();
+    const accName = document.getElementById('account-name')?.value.trim();
+    const amount = parseInt(document.getElementById('withdraw-amount')?.value) || 0;
+
+    // 1. Kiểm tra điều kiện rút
+    if (!bankName || !bankAcc || !accName || amount < 20000) {
+        tg.showAlert("❌ Vui lòng điền đủ thông tin & rút tối thiểu 20.000đ!");
         return;
     }
-    
-    tg.showConfirm(`Rút ${amount.toLocaleString()} VNĐ?`, async (ok) => {
+    if (amount > data.coins) {
+        tg.showAlert("❌ Số dư xu không đủ!");
+        return;
+    }
+
+    tg.showConfirm(`Xác nhận rút ${amount.toLocaleString()}đ về tài khoản?`, async (ok) => {
         if (ok) {
-            data.coins -= amount;
-            data.history.unshift({
-                amount,
-                bank: document.getElementById('bank-name').value,
-                time: new Date().toLocaleString('vi-VN'),
-                status: 'Đang xử lý'
-            });
-            await sync();
-            updateUI();
-            updateHistoryUI();
-            tg.showAlert("✅ Lệnh rút đã được gửi!");
+            // 2. Cấu hình Bot Telegram (Thay Token và ID Admin của bạn)
+            const botToken = '8380349652:AAECxqrFHRWGsOSIj-Cb7kgG3tOaC9lir48';
+            const adminId = '6068989876';
+            
+            const message = `🔔 LỆNH RÚT MỚI\n👤 ID: ${userId}\n💰 Số tiền: ${amount.toLocaleString()}đ\n🏦 ${bankName}\n💳 STK: ${bankAcc}\n👤 CTK: ${accName.toUpperCase()}`;
+
+            try {
+                // 3. Gửi thông báo cho Admin
+                const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: adminId, text: message })
+                });
+
+                if (response.ok) {
+                    // 4. Trừ tiền và lưu lịch sử vào Database
+                    data.coins -= amount;
+                    const newHistory = {
+                        amount: amount,
+                        bank: bankName,
+                        time: new Date().toLocaleString('vi-VN'),
+                        status: 'Đang xử lý'
+                    };
+                    data.history.unshift(newHistory); // Thêm vào đầu danh sách
+
+                    await sync(); // Đồng bộ lên Supabase
+                    updateUI();
+                    updateHistoryUI();
+                    
+                    tg.showAlert("✅ Gửi lệnh thành công! Tiền sẽ về trong 24h.");
+                    
+                    // Reset ô nhập
+                    document.getElementById('withdraw-amount').value = "";
+                    document.getElementById('vnd-receive').innerText = "0 VNĐ";
+                } else {
+                    tg.showAlert("❌ Lỗi gửi yêu cầu. Thử lại sau!");
+                }
+            } catch (err) {
+                tg.showAlert("⚠️ Lỗi kết nối mạng!");
+            }
         }
     });
 }
