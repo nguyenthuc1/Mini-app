@@ -171,16 +171,13 @@ function updateTimerUI(seconds) {
 
 function handleSell() {
     let currentTotalFish = data.fish;
+    let minedSoFar = 0;
     
-    // Nếu đang đào, tính toán số cá đã đào được cho đến giây phút này
+    // 1. Tính toán số cá đã đào được cho đến thời điểm bấm nút
     if (data.startTime) {
         const elapsed = (Date.now() - parseInt(data.startTime)) / 1000;
-        const minedSoFar = elapsed * data.miningSpeed;
+        minedSoFar = elapsed * data.miningSpeed;
         currentTotalFish += minedSoFar;
-        
-        // Quan trọng: Cập nhật lại startTime về bây giờ để "chốt" số cá đã đào vào kho
-        // và tiếp tục đào từ mốc này, không làm reset timer 3 tiếng
-        data.startTime = Date.now();
     }
 
     const earnings = Math.floor(currentTotalFish * GLOBAL_RATIO);
@@ -188,8 +185,25 @@ function handleSell() {
     if (earnings >= 1) {
         const fishUsed = earnings / GLOBAL_RATIO;
         data.coins += earnings;
-        // Số cá còn dư sau khi bán
+
+        // 2. LOGIC QUAN TRỌNG:
+        // Thay vì reset startTime, chúng ta trừ trực tiếp số cá đã dùng vào data.fish
+        // Số cá còn lại trong kho = (Cá cũ + Cá đã đào) - Cá đã bán
         data.fish = currentTotalFish - fishUsed;
+
+        // 3. Nếu đang đào, ta phải cập nhật lại startTime về NOW
+        // NHƯNG phải trừ đi thời gian đã trôi qua để Timer không bị reset
+        if (data.startTime) {
+            // Giữ nguyên mốc bắt đầu cũ, không làm gì cả hoặc
+            // chỉ cập nhật lại data.fish để "chốt" phần cá đã đào
+            const now = Date.now();
+            const timePassed = now - parseInt(data.startTime);
+            
+            // Cách này giữ nguyên thanh Progress đang chạy:
+            // Chúng ta không đổi startTime, mà chỉ đưa số cá đã đào về 0 bằng cách
+            // lưu số dư vào data.fish
+            data.fish = (currentTotalFish - fishUsed) - (minedSoFar);
+        }
 
         saveData();
         updateUI();
@@ -198,6 +212,7 @@ function handleSell() {
         tg.showAlert("❌ Bạn chưa có đủ cá để đổi ít nhất 1 xu!");
     }
 }
+
 function handleUpgrade() {
     const cost = UPGRADE_COSTS[data.upgradeCount];
     if (data.coins >= cost) {
