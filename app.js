@@ -249,23 +249,31 @@ function switchTab(name) {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.replace('text-blue-400', 'text-gray-500'));
     document.getElementById(`nav-${name}`)?.classList.replace('text-gray-500', 'text-blue-400');
 }
-
-function resetDataForDev() {
-    data.coins += 20000;
-    saveData();
-    updateUI();
-}
-
 // 8. KHỞI CHẠY
 window.onload = () => {
+    // Cập nhật giao diện lần đầu
     updateUI();
     checkOfflineMining();
-    updateHistoryUI();
-
-    if (btnMine) btnMine.onclick = wrapAction(startAds);
-    if (btnSell) btnSell.onclick = wrapAction(handleSell);
-    if (btnUpgrade) btnUpgrade.onclick = wrapAction(handleUpgrade);
     
-    const btnWithdraw = document.getElementById('btn-withdraw'); 
-    if (btnWithdraw) btnWithdraw.onclick = wrapAction(handleWithdraw);
+    // Gán sự kiện cho các nút ở Home
+    if (document.getElementById('btn-mine')) 
+        document.getElementById('btn-mine').onclick = wrapAction(startAds);
+        
+    if (document.getElementById('btn-sell')) 
+        document.getElementById('btn-sell').onclick = wrapAction(handleSell);
+        
+    if (document.getElementById('btn-upgrade')) 
+        document.getElementById('btn-upgrade').onclick = wrapAction(handleUpgrade);
+
+    // Gán sự kiện cho nút Rút Tiền ở Wallet
+    const btnWithdraw = document.getElementById('btn-withdraw');
+    if (btnWithdraw) {
+        btnWithdraw.onclick = wrapAction(handleWithdraw);
+    }
+
+    // Gán sự kiện tính tiền VNĐ khi nhập số xu
+    const inputAmount = document.getElementById('withdraw-amount');
+    if (inputAmount) {
+        inputAmount.oninput = calcVnd;
+    }
 };
