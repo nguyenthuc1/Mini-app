@@ -45,11 +45,14 @@ const vndReceive = document.getElementById('vnd-receive');
 
 // 4. CÁC HÀM CỐT LÕI
 function saveData() {
-    if (isNaN(data.fish)) data.fish = 0;
-    if (isNaN(data.coins)) data.coins = 0;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    try {
+        const dataToSave = JSON.stringify(data);
+        localStorage.setItem(STORAGE_KEY, dataToSave);
+    } catch (e) {
+        console.error("Lỗi lưu dữ liệu do spam:", e);
+    }
 }
- 
+
 function updateUI() {
     let displayFish = data.fish;
     if (data.startTime) {
