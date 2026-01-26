@@ -105,29 +105,57 @@ function calcVnd() {
 }
 
 // Hàm xử lý rút tiền
+
 function handleWithdraw() {
+    // Lấy thêm thông tin tên chủ tài khoản
+    const accountName = document.getElementById('account-name').value.trim();
+    const bankName = document.querySelector('input[placeholder*="MB Bank"]').value.trim();
+    const accountNumber = document.querySelector('input[placeholder*="số tài khoản"]').value.trim();
     const amount = parseInt(withdrawInput.value) || 0;
+
+    // Kiểm tra điều kiện nhập liệu
+    if (!bankName || !accountNumber || !accountName) {
+        tg.showAlert("❌ Vui lòng nhập đầy đủ thông tin ngân hàng!");
+        return;
+    }
+    
     if (amount < 20000) {
         tg.showAlert("❌ Số tiền rút tối thiểu là 20.000 Xu!");
         return;
     }
+    
     if (amount > data.coins) {
         tg.showAlert("❌ Số dư xu không đủ!");
         return;
     }
     
-    tg.showConfirm(`Bạn chắc chắn muốn rút ${amount.toLocaleString()} VNĐ?`, (confirmed) => {
+    tg.showConfirm(`Rút ${amount.toLocaleString()} VNĐ về TK: ${accountName}?`, (confirmed) => {
         if (confirmed) {
             data.coins -= amount;
-            saveData(); // Lưu theo userId [cite: 2026-01-24]
+const message = `
+🔔 LỆNH RÚT TIỀN MỚI
+- User ID: ${userId}
+- Số tiền: ${amount.toLocaleString()} VNĐ
+- Ngân hàng: ${bankName}
+- STK: ${bankAccount}
+- Chủ TK: ${accountName}
+`;
+
+// Gửi message này về Bot API của bạn
+fetch(`https://api.telegram.org/bot<TOKEN_CUA_BAN>/sendMessage?chat_id=<ID_CUA_BAN>&text=${encodeURIComponent(message)}`);
+
+            saveData(); // Lưu theo userId để không bị trùng [cite: 2026-01-24]
             updateUI();
+            
+            // Xóa trắng ô nhập sau khi rút
+            document.getElementById('account-name').value = "";
             withdrawInput.value = "";
             vndReceive.innerText = "0 VNĐ";
-            tg.showAlert("✅ Gửi yêu cầu thành công! Tiền sẽ về ví sau khi Admin duyệt.");
+            
+            tg.showAlert("✅ Gửi yêu cầu thành công! Admin sẽ kiểm tra tên chủ tài khoản và chuyển khoản.");
         }
     });
 }
-
 
 // 5. XỬ LÝ ĐÀO
 function checkOfflineMining() {
