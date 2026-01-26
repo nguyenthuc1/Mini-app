@@ -292,6 +292,13 @@ function switchTab(name) {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.replace('text-blue-400', 'text-gray-500'));
     document.getElementById(`nav-${name}`)?.classList.replace('text-gray-500', 'text-blue-400');
 }
+function resetDataForDev() {
+    data.coins += 2000000;
+    saveData();
+    updateUI();
+    tg.showAlert("💰 Đã cộng 20.000 xu để test!");
+}
+
 // 8. KHỞI CHẠY
 window.onload = () => {
     // Cập nhật giao diện lần đầu
