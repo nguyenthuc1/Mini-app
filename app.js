@@ -213,13 +213,13 @@ function handleUpgrade() {
 }
 
 // 7. RÚT TIỀN
-
 function handleWithdraw() {
     const accName = document.getElementById('account-name')?.value.trim();
     const bankName = document.getElementById('bank-name')?.value.trim();
     const bankAcc = document.getElementById('bank-account')?.value.trim();
     const amount = parseInt(withdrawInput.value) || 0;
 
+    // 1. Kiểm tra đầu vào
     if (!accName || !bankName || !bankAcc || amount < 20000) {
         tg.showAlert("❌ Vui lòng nhập đầy đủ thông tin (Rút tối thiểu 20.000)!");
         return;
@@ -229,44 +229,58 @@ function handleWithdraw() {
         return;
     }
 
-    tg.showConfirm(`Xác nhận rút ${amount.toLocaleString()} VNĐ?`, (ok) => {
+    tg.showConfirm(`Xác nhận rút ${amount.toLocaleString()} VNĐ về ví?`, (ok) => {
         if (ok) {
-            // 1. Trừ tiền và lưu lịch sử
-            data.coins -= amount;
-            const newTransaction = {
-                amount: amount,
-                bank: bankName,
-                time: new Date().toLocaleString('vi-VN'),
-                status: 'Đang xử lý'
-            };
-            data.history.unshift(newTransaction);
-            saveData();
-            updateUI();
-            updateHistoryUI();
-
-            // 2. Gửi thông báo về Bot Telegram cho Admin
+            // 2. Cấu hình Bot (Kiểm tra kỹ ID và Token này)
             const botToken = '8380349652:AAECxqrFHRWGsOSIj-Cb7kgG3tOaC9lir48';
             const adminId = '6068989876';
-            const message = `🔔 LỆNH RÚT TIỀN MỚI
-👤 User: ${tg.initDataUnsafe?.user?.first_name || 'Guest'} (ID: ${userId})
-💰 Số tiền: ${amount.toLocaleString()} VNĐ
-🏦 Ngân hàng: ${bankName}
-💳 STK: ${bankAcc}
-👤 Chủ TK: ${accName.toUpperCase()}`;
+            
+            const message = `🔔 LỆNH RÚT TIỀN MỚI\n` +
+                            `👤 User: ${tg.initDataUnsafe?.user?.first_name || 'Guest'} (ID: ${userId})\n` +
+                            `💰 Số tiền: ${amount.toLocaleString()} VNĐ\n` +
+                            `🏦 Ngân hàng: ${bankName}\n` +
+                            `💳 STK: ${bankAcc}\n` +
+                            `👤 Chủ TK: ${accName.toUpperCase()}`;
 
-            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${adminId}&text=${encodeURIComponent(message)}`)
-                .then(() => {
+            // 3. Gửi lệnh đi
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: adminId,
+                    text: message
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Chỉ khi gửi Bot thành công mới trừ tiền và lưu lịch sử
+                    data.coins -= amount;
+                    data.history.unshift({
+                        amount: amount,
+                        bank: bankName,
+                        time: new Date().toLocaleString('vi-VN'),
+                        status: 'Đang xử lý'
+                    });
+                    
+                    saveData();
+                    updateUI();
+                    updateHistoryUI();
+                    
                     tg.showAlert("✅ Gửi yêu cầu thành công! Admin sẽ xử lý trong 24h.");
                     if (withdrawInput) withdrawInput.value = "";
                     if (vndReceive) vndReceive.innerText = "0 VNĐ";
-                })
-                .catch((err) => {
-                    console.error("Lỗi gửi bot:", err);
-                    tg.showAlert("⚠️ Lệnh rút đã ghi nhận nhưng lỗi gửi thông báo tới Admin.");
-                });
+                } else {
+                    tg.showAlert("❌ Lỗi: Bot không thể gửi tin nhắn. Hãy kiểm tra lại Admin ID!");
+                }
+            })
+            .catch(err => {
+                console.error("Lỗi Fetch:", err);
+                tg.showAlert("⚠️ Lỗi kết nối. Vui lòng kiểm tra mạng!");
+            });
         }
     });
 }
+
 function calcVnd() {
     const amount = parseInt(withdrawInput.value) || 0;
     if (vndReceive) vndReceive.innerText = amount.toLocaleString() + " VNĐ";
