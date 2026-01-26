@@ -121,14 +121,18 @@ function calcVnd() {
 // Hàm xử lý rút tiền
 
 function handleWithdraw() {
-    // Lấy thêm thông tin tên chủ tài khoản
-    const accountName = document.getElementById('account-name').value.trim();
-    const bankName = document.querySelector('input[placeholder*="MB Bank"]').value.trim();
-    const accountNumber = document.querySelector('input[placeholder*="số tài khoản"]').value.trim();
+    // 1. Lấy thông tin từ các ô Input
+    const accountNameInput = document.getElementById('account-name');
+    const bankNameInput = document.querySelector('input[placeholder*="MB Bank"]');
+    const bankAccountInput = document.querySelector('input[placeholder*="số tài khoản"]');
+    
+    const accountName = accountNameInput?.value.trim() || "";
+    const bankName = bankNameInput?.value.trim() || "";
+    const bankAccount = bankAccountInput?.value.trim() || "";
     const amount = parseInt(withdrawInput.value) || 0;
 
-    // Kiểm tra điều kiện nhập liệu
-    if (!bankName || !accountNumber || !accountName) {
+    // 2. Kiểm tra điều kiện nhập liệu
+    if (!bankName || !bankAccount || !accountName) {
         tg.showAlert("❌ Vui lòng nhập đầy đủ thông tin ngân hàng!");
         return;
     }
@@ -143,32 +147,37 @@ function handleWithdraw() {
         return;
     }
     
-    tg.showConfirm(`Rút ${amount.toLocaleString()} VNĐ về TK: ${accountName}?`, (confirmed) => {
+    // 3. Xác nhận và gửi lệnh
+    tg.showConfirm(`Rút ${amount.toLocaleString()} VNĐ về TK: ${accountName.toUpperCase()}?`, (confirmed) => {
         if (confirmed) {
-             data.coins -= amount;
-const bankName = document.querySelector('input[placeholder*="MB Bank"]').value;
-const bankAccount = document.querySelector('input[placeholder*="số tài khoản"]').value;
-const accountName = document.getElementById('account-name').value; // Ô bạn vừa thêm
+            data.coins -= amount;
+            saveData(); // Lưu theo userId [cite: 2026-01-24]
+            updateUI();
 
-const message = `🔔 LỆNH RÚT TIỀN MỚI
+            const message = `🔔 LỆNH RÚT TIỀN MỚI
 👤 User: ${tg.initDataUnsafe?.user?.first_name || 'Guest'} (ID: ${userId})
 💰 Số tiền: ${amount.toLocaleString()} VNĐ
 🏦 Ngân hàng: ${bankName}
 💳 STK: ${bankAccount}
 👤 Chủ TK: ${accountName.toUpperCase()}`;
 
-const botToken = '8380349652:AAECxqrFHRWGsOSIj-Cb7kgG3tOaC9lir48';
-const adminId = '6068989876';
+            const botToken = '8380349652:AAECxqrFHRWGsOSIj-Cb7kgG3tOaC9lir48';
+            const adminId = '6068989876';
 
-fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${adminId}&text=${encodeURIComponent(message)}`)
-    .then(() => {
-        tg.showAlert("✅ Gửi yêu cầu thành công! Admin sẽ xử lý trong 24h.");
-    })
-    .catch((err) => {
-        console.error("Lỗi gửi tin nhắn:", err);
-        tg.showAlert("❌ Có lỗi xảy ra khi gửi yêu cầu!");
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${adminId}&text=${encodeURIComponent(message)}`)
+                .then(() => {
+                    tg.showAlert("✅ Gửi yêu cầu thành công! Admin sẽ xử lý trong 24h.");
+                    // Reset form
+                    withdrawInput.value = "";
+                    if (vndReceive) vndReceive.innerText = "0 VNĐ";
+                })
+                .catch((err) => {
+                    console.error("Lỗi gửi tin nhắn:", err);
+                    tg.showAlert("❌ Lỗi mạng, hãy thử lại!");
+                });
+        }
     });
-}
+} // <--- Thêm dấu đóng ngoặc này bị thiếu trong code của bạn
 
 // 5. XỬ LÝ ĐÀO
 function checkOfflineMining() {
