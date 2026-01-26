@@ -46,6 +46,7 @@ let tInterval;
         
         // CẬP NHẬT GIAO DIỆN SAU KHI ĐÃ CÓ DATA
         updateUI();
+updateHistoryUI();
         checkOfflineMining();
         updateHistoryUI();
         
