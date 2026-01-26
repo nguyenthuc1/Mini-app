@@ -110,6 +110,40 @@ function updateUI() {
  if (walletCoinDisplay) {
         walletCoinDisplay.innerText = data.coins.toLocaleString();
     }
+
+
+// Dán hàm mới vào đây
+function updateHistoryUI() {
+    const historyContainer = document.querySelector('#tab-wallet .mt-8 .bg-[#1e293b]\\/40');
+    if (!historyContainer) return;
+
+    if (!data.history || data.history.length === 0) {
+        historyContainer.innerHTML = `
+            <div class="text-3xl mb-2 opacity-20">📂</div>
+            <p class="text-[11px] text-slate-500 italic">Chưa có giao dịch nào được thực hiện</p>
+        `;
+        return;
+    }
+
+    let html = '<div class="space-y-3 w-full">';
+    data.history.forEach(item => {
+        html += `
+            <div class="flex justify-between items-center p-3 bg-[#0f172a] rounded-2xl border border-slate-700">
+                <div class="text-left">
+                    <p class="text-[10px] font-bold text-white">Rút -${item.amount.toLocaleString()} 💰</p>
+                    <p class="text-[8px] text-gray-500">${item.time}</p>
+                </div>
+                <div class="text-right">
+                    <span class="px-2 py-1 rounded-full text-[8px] font-bold ${item.status === 'Thành công' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}">
+                        ${item.status}
+                    </span>
+                    <p class="text-[8px] text-gray-400 mt-1">${item.bank}</p>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    historyContainer.innerHTML = html;
 }
 
 // Hàm tính toán tiền VNĐ thực tế
@@ -343,7 +377,7 @@ function resetDataForDev() {
 window.onload = () => {
     updateUI();
     checkOfflineMining();
-
+updateHistoryUI();
    // Gán sự kiện chống spam cho các nút chính
     if (btnMine) btnMine.onclick = wrapAction(startAds);
     if (btnSell) btnSell.onclick = wrapAction(handleSell);
