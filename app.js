@@ -18,7 +18,10 @@ let tInterval;
 
 // --- 2. HÀM ĐỒNG BỘ DỮ LIỆU ---
 
-async function loadDataFromServer() {
+        async function loadDataFromServer() {
+    // Hiển thị trạng thái đang tải (tùy chọn)
+    console.log("Đang tải dữ liệu từ Server...");
+    
     try {
         let { data: userRow, error } = await supabaseClient
             .from('users_data')
@@ -28,23 +31,37 @@ async function loadDataFromServer() {
 
         if (userRow) {
             data = {
-                fish: parseFloat(userRow.fish),
-                coins: parseInt(userRow.coins),
-                miningSpeed: parseFloat(userRow.mining_speed),
-                upgradeCount: parseInt(userRow.upgrade_count),
+                fish: parseFloat(userRow.fish) || 0,
+                coins: parseInt(userRow.coins) || 0,
+                miningSpeed: parseFloat(userRow.mining_speed) || 0.5,
+                upgradeCount: parseInt(userRow.upgrade_count) || 0,
                 startTime: userRow.start_time,
                 history: userRow.history || []
             };
+            console.log("Tải dữ liệu thành công!");
         } else {
+            // Nếu là người dùng mới hoàn toàn
             await supabaseClient.from('users_data').insert([{ user_id: userId, fish: 0, coins: 0, mining_speed: 0.5 }]);
         }
+        
+        // CẬP NHẬT GIAO DIỆN SAU KHI ĐÃ CÓ DATA
         updateUI();
         checkOfflineMining();
         updateHistoryUI();
-    } catch (e) { console.error("Lỗi tải:", e); }
+        
+    } catch (e) { 
+        console.error("Lỗi kết nối Server:", e);
+        // Nếu lỗi Server, có thể dùng tạm LocalStorage làm dự phòng (Backup)
+        const backup = JSON.parse(localStorage.getItem('backup_data'));
+        if(backup) data = backup;
+    }
 }
 
 async function sync() {
+    // 1. Lưu dự phòng vào máy để mở app là có ngay
+    localStorage.setItem('backup_data', JSON.stringify(data));
+
+    // 2. Đẩy lên Server để bảo mật
     await supabaseClient.from('users_data').upsert({
         user_id: userId,
         fish: data.fish,
@@ -229,22 +246,34 @@ function resetDataForDev() {
     updateUI();
 }
 
+
 // --- 7. KHỞI CHẠY ---
 
-window.onload = () => {
-    loadDataFromServer();
-    
-    // Gán sự kiện nút bấm
+window.onload = async () => {
+    // Bước 1: Hiện bản copy cũ từ máy (nếu có) để người dùng không thấy số 0 lúc đang tải
+    const backup = JSON.parse(localStorage.getItem('backup_data'));
+    if (backup) {
+        data = backup;
+        updateUI();
+        checkOfflineMining(); // Chạy lại timer nếu đang đào
+    }
+
+    // Bước 2: Tải dữ liệu thật từ Server Supabase
+    await loadDataFromServer();
+
+    // Bước 3: Gán sự kiện cho các nút bấm (PHẢI CÓ BƯỚC NÀY NÚT MỚI CHẠY)
     document.getElementById('btn-mine')?.addEventListener('click', startAds);
     document.getElementById('btn-sell')?.addEventListener('click', handleSell);
     document.getElementById('btn-upgrade')?.addEventListener('click', handleUpgrade);
     document.getElementById('btn-withdraw')?.addEventListener('click', handleWithdraw);
     
+    // Gán sự kiện tính tiền VNĐ
     document.getElementById('withdraw-amount')?.addEventListener('input', (e) => {
-        document.getElementById('vnd-receive').innerText = (parseInt(e.target.value) || 0).toLocaleString() + " VNĐ";
+        const val = parseInt(e.target.value) || 0;
+        document.getElementById('vnd-receive').innerText = val.toLocaleString() + " VNĐ";
     });
 };
 
-// Đưa hàm switchTab ra ngoài global để HTML gọi được
+// Đưa các hàm ra môi trường bên ngoài để HTML gọi được (Dành cho switchTab)
 window.switchTab = switchTab;
 window.resetDataForDev = resetDataForDev;
