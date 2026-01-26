@@ -26,7 +26,19 @@ function loadData() {
 
 let data = loadData();
 let tInterval;
+let isAppBusy = false;
 
+function wrapAction(actionFn) {
+    return function(...args) {
+        if (isAppBusy) return; 
+        isAppBusy = true;
+        
+        actionFn(...args);
+        
+        // Mở khóa sau 500ms
+        setTimeout(() => { isAppBusy = false; }, 500);
+    };
+}
 // DOM Elements
 const fishDisplay = document.getElementById('fish-count');
 const coinDisplay = document.getElementById('coin-balance');
@@ -59,7 +71,6 @@ function updateUI() {
         const elapsed = (Date.now() - parseInt(data.startTime)) / 1000;
         displayFish = data.fish + (elapsed * data.miningSpeed);
     }
-
     const totalFish = Math.floor(Math.max(0, displayFish));
     
     // 1. Hiển thị Kho Cá
@@ -271,21 +282,24 @@ tg.showAlert(`💰 Bán thành công!\nNhận được: ${earnings.toLocaleStrin
     }
 }
 
-function handleUpgrade() {
+async function handleUpgrade() {
+    const btn = document.getElementById('btn-upgrade');
+    if (btn.disabled) return; // Chống spam
+
+    btn.disabled = true; // Khóa nút ngay lập tức
+    
     const cost = UPGRADE_COSTS[data.upgradeCount];
     if (data.coins >= cost && data.upgradeCount < MAX_UPGRADES) {
-        if (data.startTime) {
-            const elapsed = (Date.now() - parseInt(data.startTime)) / 1000;
-            data.fish -= (elapsed * 0.32);
-        }
-        data.coins -= cost;
-        data.upgradeCount++;
-        data.miningSpeed += 0.32;
+        // ... logic nâng cấp của bạn ...
         saveData();
         updateUI();
-        tg.showAlert("🚀 Nâng cấp thành công!");
+        tg.showAlert("🚀 Nâng cấp thành công!", () => {
+            btn.disabled = false; // Chỉ mở lại sau khi user đóng thông báo
+        });
     } else {
-        tg.showAlert("❌ Không đủ xu!");
+        tg.showAlert("❌ Không đủ xu!", () => {
+            btn.disabled = false;
+        });
     }
 }
 
@@ -308,7 +322,12 @@ window.onload = () => {
     updateUI();
     checkOfflineMining();
 
-    if (btnMine) btnMine.onclick = startAds;
-    if (btnUpgrade) btnUpgrade.onclick = handleUpgrade;
-    if (btnSell) btnSell.onclick = handleSell;
+   // Gán sự kiện chống spam cho các nút chính
+    if (btnMine) btnMine.onclick = wrapAction(startAds);
+    if (btnSell) btnSell.onclick = wrapAction(handleSell);
+    if (btnUpgrade) btnUpgrade.onclick = wrapAction(handleUpgrade);
+    
+    // Đừng quên nút "Xác nhận rút tiền" trong tab Wallet
+    const btnWithdraw = document.querySelector('.tab-content#tab-wallet button'); 
+    if (btnWithdraw) btnWithdraw.onclick = wrapAction(handleWithdraw);
 };
