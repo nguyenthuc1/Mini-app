@@ -21,6 +21,7 @@ function loadData() {
         miningSpeed: parseFloat(saved.miningSpeed) || 0.5,
         upgradeCount: parseInt(saved.upgradeCount) || 0,
         startTime: saved.startTime || null
+history: saved.history || []
     };
 }
 
@@ -166,6 +167,18 @@ function handleWithdraw() {
 
             fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${adminId}&text=${encodeURIComponent(message)}`)
                 .then(() => {
+const newTransaction = {
+    id: Date.now(),
+    amount: amount,
+    bank: bankName,
+    time: new Date().toLocaleString('vi-VN'),
+    status: 'Đang xử lý' // Mặc định là đang chờ Admin duyệt
+};
+
+data.history.unshift(newTransaction); // Đưa giao dịch mới lên đầu danh sách
+saveData(); // Lưu lại theo userId [cite: 2026-01-24]
+updateHistoryUI(); // Cập nhật giao diện lịch sử
+
                     tg.showAlert("✅ Gửi yêu cầu thành công! Admin sẽ xử lý trong 24h.");
                     // Reset form
                     withdrawInput.value = "";
@@ -177,7 +190,7 @@ function handleWithdraw() {
                 });
         }
     });
-} // <--- Thêm dấu đóng ngoặc này bị thiếu trong code của bạn
+} 
 
 // 5. XỬ LÝ ĐÀO
 function checkOfflineMining() {
