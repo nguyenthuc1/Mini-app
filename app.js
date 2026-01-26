@@ -131,29 +131,28 @@ function handleWithdraw() {
     
     tg.showConfirm(`Rút ${amount.toLocaleString()} VNĐ về TK: ${accountName}?`, (confirmed) => {
         if (confirmed) {
-            data.coins -= amount;
-const message = `
-🔔 LỆNH RÚT TIỀN MỚI
-- User ID: ${userId}
-- Số tiền: ${amount.toLocaleString()} VNĐ
-- Ngân hàng: ${bankName}
-- STK: ${bankAccount}
-- Chủ TK: ${accountName}
-`;
+             data.coins -= amount;
+const bankName = document.querySelector('input[placeholder*="MB Bank"]').value;
+const bankAccount = document.querySelector('input[placeholder*="số tài khoản"]').value;
+const accountName = document.getElementById('account-name').value; // Ô bạn vừa thêm
 
-// Gửi message này về Bot API của bạn
-fetch(`https://api.telegram.org/bot<8380349652:AAECxqrFHRWGsOSIj-Cb7kgG3tOaC9lir48>/sendMessage?chat_id=<6068989876>&text=${encodeURIComponent(message)}`);
+const message = `🔔 LỆNH RÚT TIỀN MỚI
+👤 User: ${tg.initDataUnsafe?.user?.first_name || 'Guest'} (ID: ${userId})
+💰 Số tiền: ${amount.toLocaleString()} VNĐ
+🏦 Ngân hàng: ${bankName}
+💳 STK: ${bankAccount}
+👤 Chủ TK: ${accountName.toUpperCase()}`;
 
-            saveData(); // Lưu theo userId để không bị trùng [cite: 2026-01-24]
-            updateUI();
-            
-            // Xóa trắng ô nhập sau khi rút
-            document.getElementById('account-name').value = "";
-            withdrawInput.value = "";
-            vndReceive.innerText = "0 VNĐ";
-            
-            tg.showAlert("✅ Gửi yêu cầu thành công! Admin sẽ kiểm tra tên chủ tài khoản và chuyển khoản.");
-        }
+const botToken = '8380349652:AAECxqrFHRWGsOSIj-Cb7kgG3tOaC9lir48';
+const adminId = '6068989876';
+
+fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${adminId}&text=${encodeURIComponent(message)}`)
+    .then(() => {
+        tg.showAlert("✅ Gửi yêu cầu thành công! Admin sẽ xử lý trong 24h.");
+    })
+    .catch((err) => {
+        console.error("Lỗi gửi tin nhắn:", err);
+        tg.showAlert("❌ Có lỗi xảy ra khi gửi yêu cầu!");
     });
 }
 
