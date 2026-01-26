@@ -281,14 +281,6 @@ function updateHistoryUI() {
         </div>
     `).join('') || '<p class="text-[10px] italic text-gray-500">Chưa có giao dịch</p>';
 }
-
-function resetDataForDev() {
-    data.coins += 2000000;
-    sync();
-    updateUI();
-}
-
-
 // --- 7. KHỞI CHẠY ---
 
 window.onload = async () => {
