@@ -156,18 +156,13 @@ function calcVnd() {
 
 // Hàm xử lý rút tiền
 
-function handleWithdraw() {
-    // 1. Lấy thông tin từ các ô Input
-    const accountNameInput = document.getElementById('account-name');
-    const bankNameInput = document.querySelector('input[placeholder*="MB Bank"]');
-    const bankAccountInput = document.querySelector('input[placeholder*="số tài khoản"]');
-    
-    const accountName = accountNameInput?.value.trim() || "";
-    const bankName = bankNameInput?.value.trim() || "";
-    const bankAccount = bankAccountInput?.value.trim() || "";
+    function handleWithdraw() {
+    // Lấy theo ID sẽ chính xác 100%
+    const accountName = document.getElementById('account-name')?.value.trim() || "";
+    const bankName = document.getElementById('bank-name')?.value.trim() || "";
+    const bankAccount = document.getElementById('bank-account')?.value.trim() || "";
     const amount = parseInt(withdrawInput.value) || 0;
 
-    // 2. Kiểm tra điều kiện nhập liệu
     if (!bankName || !bankAccount || !accountName) {
         tg.showAlert("❌ Vui lòng nhập đầy đủ thông tin ngân hàng!");
         return;
@@ -378,13 +373,14 @@ function resetDataForDev() {
 window.onload = () => {
     updateUI();
     checkOfflineMining();
-updateHistoryUI();
-   // Gán sự kiện chống spam cho các nút chính
+    updateHistoryUI();
+
+    // Gán sự kiện chống spam cho các nút chính
     if (btnMine) btnMine.onclick = wrapAction(startAds);
     if (btnSell) btnSell.onclick = wrapAction(handleSell);
     if (btnUpgrade) btnUpgrade.onclick = wrapAction(handleUpgrade);
-    
-    // Đừng quên nút "Xác nhận rút tiền" trong tab Wallet
-    const btnWithdraw = document.querySelector('.tab-content#tab-wallet button'); 
+
+    // SỬA TẠI ĐÂY: Gọi đúng ID của nút rút tiền
+    const btnWithdraw = document.getElementById('btn-withdraw'); 
     if (btnWithdraw) btnWithdraw.onclick = wrapAction(handleWithdraw);
 };
