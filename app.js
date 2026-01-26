@@ -1,6 +1,6 @@
 // 0. CẤU HÌNH SUPABASE (Dán URL và Key của bạn vào đây)
-const SUPABASE_URL = 'DÁN_PROJECT_URL_CỦA_BẠN';
-const SUPABASE_KEY = 'DÁN_ANON_KEY_CỦA_BẠN';
+const SUPABASE_URL = 'https://icfirearfofkosodtmii.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_uwAvdH2z8vC56pwTgmXulQ_ciRf8iGf';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const tg = window.Telegram.WebApp;
