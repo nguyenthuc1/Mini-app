@@ -57,12 +57,14 @@ async function init() {
 
 async function save() {
     try {
-        // Sử dụng return để đảm bảo promise được trả về và await có hiệu lực
-        return await db.ref('users/' + userId).set(data);
+        await db.ref('users/' + userId).set(data);
+        console.log("Dữ liệu đã được đồng bộ lên Firebase.");
     } catch (error) {
-        console.error("Lỗi khi lưu dữ liệu:", error);
+        console.error("Lỗi đồng bộ:", error);
+        tg.showAlert("Không thể lưu dữ liệu, vui lòng kiểm tra kết nối!");
     }
 }
+
 
 
 function updateUI() {
@@ -121,6 +123,7 @@ function startMining() {
     save(); // Lưu mốc bắt đầu để tính toán khi người dùng offline
     checkMining();
 }
+
 async function claim() {
     const now = Date.now();
     const duration = 3 * 60 * 60 * 1000;
@@ -129,22 +132,18 @@ async function claim() {
     const effectiveTimeSeconds = Math.min(elapsed, duration) / 1000;
     const earned = effectiveTimeSeconds * data.speed;
 
-    // 1. Cập nhật dữ liệu cục bộ
+    // Cập nhật dữ liệu tạm thời trong bộ nhớ app
     data.fish += earned;
     data.startTime = null; 
 
-    // 2. Ép buộc lưu lên Firebase và CHỈ cập nhật UI khi thành công
-    tg.showConfirm(`Bạn nhận được ${Math.floor(earned)} cá. Xác nhận lưu?`, async (ok) => {
-        if(ok) {
-            await save(); // Đợi lưu xong
-            updateUI();
-            checkMining();
-            tg.showAlert("✅ Đã lưu dữ liệu thành công!");
-        }
-    });
+    // Thực hiện lưu dữ liệu lên server trước, sau đó mới cập nhật giao diện
+    tg.showProgressTree && tg.showProgressTree(true); // Hiển thị trạng thái đang xử lý nếu có
+    await save(); 
+    
+    updateUI();
+    checkMining();
+    tg.showAlert(`✅ Chúc mừng! Bạn đã nhận được ${Math.floor(earned).toLocaleString()} cá.`);
 }
-
-
 // --- 3. BÁN CÁ & NÂNG CẤP ---
 
 document.getElementById('btn-sell').onclick = async () => {
