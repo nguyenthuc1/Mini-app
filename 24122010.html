@@ -9,6 +9,14 @@
 <body style="font-family: Arial; padding: 20px; background: #f0f2f5;">
     <h2>Danh sách lệnh rút tiền</h2>
     <div id="admin-list">Đang tải...</div>
+<script>
+    
+    const adminPass = prompt("Nhập mật khẩu Admin:");
+    if (adminPass !== "Trithuc2412") { 
+        alert("Sai mật khẩu!");
+        document.body.innerHTML = "<h1>Truy cập bị từ chối</h1>";
+        window.location.href = "index.html";
+    }
 
     <script>
         // Cấu hình Firebase của bạn
