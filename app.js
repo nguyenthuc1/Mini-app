@@ -301,11 +301,16 @@ async function handleWithdraw() {
 
         try {
             // 4. Gọi Edge Function (Dùng 'result' để tránh trùng với biến 'data' toàn cục)
-            const { data: result, error } = await supabaseClient.functions.invoke('send-telegram-notification', {
-                body: { 
-                    message: message // Đảm bảo key này khớp với code trong Edge Function
-                }
-            });
+ const { data: result, error } = await supabaseClient.functions.invoke('send-telegram-notification', {
+    body: { 
+        chat_id: "6068989876",
+        text: message // Lưu ý: AI dùng key 'text', không phải 'message'
+    },
+    headers: {
+        "x-function-secret": "123456" // Phải khớp với Secret bạn vừa tạo
+    }
+});
+
 
             if (error) {
                 console.error("Lỗi Edge Function:", error);
