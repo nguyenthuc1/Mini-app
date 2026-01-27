@@ -21,3 +21,12 @@
     display: inline-block; margin-right: 5px;
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: 1px solid #2d3748;
+    background-color: #1a202c;
+    color: white;
+}
