@@ -1,12 +1,6 @@
 // --- 0. CẤU HÌNH FIREBASE ---
-// Lưu ý: Thức lấy các thông số này từ phần "Project Settings" trong Firebase Console
-const firebaseConfig = {
-    databaseURL: "https://telegram-bot-backup-11c83-default-rtdb.firebaseio.com/"
-};
-
-// Khởi tạo Firebase (Cần import thư viện Firebase trong HTML trước)
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+// URL lấy từ ảnh số 9 của bạn
+const FIREBASE_URL = "https://telegram-bot-backup-11c83-default-rtdb.firebaseio.com/";
 
 const tg = window.Telegram.WebApp;
 tg.ready();
@@ -14,22 +8,17 @@ tg.expand();
 
 // --- 1. BIẾN TOÀN CỤC ---
 const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
-const userRef = database.ref('users/' + userId);
 
-const UPGRADE_COSTS = [500, 1000, 2000, 4000, 7000, 12000, 18000, 25000, 35000, 50000, 70000, 100000, 140000, 190000, 250000];
-const MINING_DURATION = 3 * 60 * 60 * 1000;
-const GLOBAL_RATIO = 0.00463;
-
+// Khởi tạo biến data mặc định
 let data = { fish: 0, coins: 0, miningSpeed: 0.5, upgradeCount: 0, startTime: null, history: [] };
-let tInterval;
 
-// --- 2. HÀM ĐỒNG BỘ DỮ LIỆU (FIREBASE) ---
+// --- 2. HÀM ĐỒNG BỘ DỮ LIỆU (Dùng REST API để nhẹ và không cần SDK phức tạp) ---
 
 async function loadDataFromServer() {
     console.log("Đang tải dữ liệu từ Firebase...");
     try {
-        const snapshot = await userRef.once('value');
-        const userRow = snapshot.val();
+        const response = await fetch(`${FIREBASE_URL}users/${userId}.json`);
+        const userRow = await response.json();
 
         if (userRow) {
             data = {
@@ -40,39 +29,40 @@ async function loadDataFromServer() {
                 startTime: userRow.startTime,
                 history: userRow.history || []
             };
-            console.log("Tải dữ liệu thành công!");
         } else {
-            // Khởi tạo người dùng mới trên Firebase
-            await userRef.set(data);
+            // Nếu người dùng mới, khởi tạo luôn
+            await sync();
         }
-        
         updateUI();
         checkOfflineMining();
         updateHistoryUI();
-        
-    } catch (e) { 
-        console.error("Lỗi kết nối Firebase:", e);
+    } catch (e) {
+        console.error("Lỗi Firebase:", e);
         const backup = JSON.parse(localStorage.getItem('backup_data'));
-        if(backup) data = backup;
+        if (backup) data = backup;
     }
 }
 
 async function sync() {
-    // Lưu dự phòng LocalStorage
     localStorage.setItem('backup_data', JSON.stringify(data));
-
-    // Đẩy lên Firebase - Dùng update để chỉ ghi đè các trường cần thiết
-    await userRef.update({
-        fish: data.fish,
-        coins: data.coins,
-        miningSpeed: data.miningSpeed,
-        upgradeCount: data.upgradeCount,
-        startTime: data.startTime,
-        history: data.history
-    });
+    try {
+        await fetch(`${FIREBASE_URL}users/${userId}.json`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+                fish: data.fish,
+                coins: data.coins,
+                miningSpeed: data.miningSpeed,
+                upgradeCount: data.upgradeCount,
+                startTime: data.startTime,
+                history: data.history
+            })
+        });
+    } catch (e) {
+        console.error("Không thể đồng bộ lên Firebase");
+    }
 }
 
-// --- 6. RÚT TIỀN (GIẤU TOKEN QUA BACKEND) ---
+// --- 6. RÚT TIỀN (BẢO MẬT: GIẤU TOKEN) ---
 
 async function handleWithdraw() {
     const amountInput = document.getElementById('withdraw-amount');
@@ -83,53 +73,48 @@ async function handleWithdraw() {
     const bankName = bankNameInput?.value.trim() || "N/A";
     const bankAcc = bankAccInput?.value.trim() || "N/A";
 
-    if (amount < 20000) {
-        tg.showAlert("❌ Số tiền rút tối thiểu là 20.000đ!");
-        return;
-    }
-    if (amount > data.coins) {
-        tg.showAlert("❌ Số dư xu không đủ!");
+    if (amount < 20000 || amount > data.coins) {
+        tg.showAlert("Số dư không đủ hoặc số tiền quá thấp!");
         return;
     }
 
-    tg.showConfirm(`Bạn muốn rút ${amount.toLocaleString()}đ về ${bankName}?`, async (ok) => {
+    tg.showConfirm(`Xác nhận rút ${amount.toLocaleString()}đ?`, async (ok) => {
         if (!ok) return;
 
-        // BẢO MẬT: Thay vì gửi trực tiếp từ JS, ta lưu lệnh rút vào Firebase
-        // Admin sẽ có một công cụ riêng để đọc lệnh này và duyệt. 
-        // Token sẽ được giấu ở phía Server xử lý lệnh rút này.
-        const withdrawRequest = {
+        // CÁCH GIẤU TOKEN: 
+        // Thay vì fetch tới api.telegram.org (lộ token), ta lưu lệnh vào nhánh 'withdraw_requests'
+        // Admin (là bạn) sẽ vào Firebase xem hoặc dùng 1 script trung gian để báo về Bot.
+        const requestData = {
             userId: userId,
             amount: amount,
-            bankName: bankName,
-            bankAcc: bankAcc,
+            bank: bankName,
+            account: bankAcc,
             time: new Date().toLocaleString('vi-VN'),
-            status: 'Pending'
+            status: 'Chờ duyệt'
         };
 
         try {
-            // 1. Đẩy lệnh rút vào danh sách chờ trên Firebase
-            await database.ref('withdraw_requests').push(withdrawRequest);
+            // Đẩy lệnh rút lên Firebase
+            await fetch(`${FIREBASE_URL}withdraw_requests.json`, {
+                method: 'POST',
+                body: JSON.stringify(requestData)
+            });
 
-            // 2. Trừ tiền và cập nhật lịch sử người dùng
+            // Cập nhật ví người dùng
             data.coins -= amount;
             data.history.unshift({
                 amount: amount,
                 bank: bankName,
-                time: withdrawRequest.time,
+                time: requestData.time,
                 status: 'Đang xử lý'
             });
 
-            await sync(); 
+            await sync();
             updateUI();
             updateHistoryUI();
-
-            tg.showAlert("✅ Gửi lệnh rút thành công! Admin sẽ xử lý trong vòng 24h.");
-            if(amountInput) amountInput.value = "";
-
-        } catch (err) {
-            console.error("Lỗi gửi lệnh rút:", err);
-            tg.showAlert("⚠️ Lỗi kết nối, vui lòng thử lại sau!");
+            tg.showAlert("✅ Lệnh rút đã được gửi! Admin sẽ xử lý sớm.");
+        } catch (e) {
+            tg.showAlert("⚠️ Lỗi hệ thống, vui lòng thử lại.");
         }
     });
 }
