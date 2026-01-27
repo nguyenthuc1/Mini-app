@@ -213,6 +213,28 @@ function checkOfflineMining() {
 }
 
 // --- 5. LOGIC BÁN CÁ & NÂNG CẤP ---
+async function claimFishOnServer() {
+    tg.showConfirm("Bạn đã đánh bắt xong, nhận cá ngay chứ?", async (ok) => {
+        if (!ok) return;
+        
+        try {
+            // Gọi hàm xử lý trên Server
+            const { error } = await supabaseClient.rpc('claim_fish', { 
+                user_id_input: userId 
+            });
+
+            if (!error) {
+                tg.showAlert("✅ Server đã xác nhận số cá của bạn!");
+                await loadDataFromServer(); // Tải lại số cá mới từ Server
+                checkOfflineMining();       // Đưa nút bấm về trạng thái "RA KHƠI"
+            } else {
+                tg.showAlert("❌ Lỗi: " + error.message);
+            }
+        } catch (e) {
+            tg.showAlert("⚠️ Lỗi kết nối Server!");
+        }
+    });
+}
 
 function handleSell() {
     let currentTotalFish = data.fish;
