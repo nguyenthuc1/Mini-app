@@ -306,9 +306,7 @@ async function handleWithdraw() {
         chat_id: "6068989876",
         text: message // Lưu ý: AI dùng key 'text', không phải 'message'
     },
-    headers: {
-        "x-function-secret": "123456" // Phải khớp với Secret bạn vừa tạo
-    }
+ 
 });
 
 
