@@ -166,36 +166,54 @@ function startAds() {
         checkOfflineMining();
     }, 2000);
 }
-
 function checkOfflineMining() {
-    if (!data.startTime) return;
     const btnMine = document.getElementById('btn-mine');
     const timerDisplay = document.getElementById('timer-display');
-    
+
+    // Nếu không có thời gian bắt đầu (người mới), ẩn đồng hồ và hiện nút "RA KHƠI"
+    if (!data.startTime || data.startTime === null) {
+        if (timerDisplay) timerDisplay.classList.add('hidden');
+        if (btnMine) {
+            btnMine.disabled = false;
+            btnMine.innerText = "RA KHƠI";
+        }
+        return;
+    }
+
     clearInterval(tInterval);
     tInterval = setInterval(() => {
-        const elapsed = Date.now() - parseInt(data.startTime);
+        const start = parseInt(data.startTime);
+        const now = Date.now();
+        
+        // Kiểm tra tính hợp lệ của dữ liệu thời gian
+        if (isNaN(start)) {
+            clearInterval(tInterval);
+            if (timerDisplay) timerDisplay.classList.add('hidden');
+            return;
+        }
+
+        const elapsed = now - start;
         if (elapsed >= MINING_DURATION) {
-            // Hết giờ
+            // Đã đào xong
             const totalMined = (MINING_DURATION / 1000) * data.miningSpeed;
             data.fish += totalMined;
             data.startTime = null;
-            sync();
-            btnMine.disabled = false;
-            btnMine.innerText = "RA KHƠI";
-            timerDisplay?.classList.add('hidden');
+            sync(); //
+            if (btnMine) {
+                btnMine.disabled = false;
+                btnMine.innerText = "RA KHƠI";
+            }
+            if (timerDisplay) timerDisplay.classList.add('hidden');
             clearInterval(tInterval);
             updateUI();
         } else {
-            // Đang đào
-            btnMine.disabled = true;
-            btnMine.innerText = "ĐANG RA KHƠI...";
-            timerDisplay?.classList.remove('hidden');
+            // Đang trong quá trình đào
+            if (btnMine) {
+                btnMine.disabled = true;
+                btnMine.innerText = "ĐANG RA KHƠI...";
+            }
             const remain = Math.floor((MINING_DURATION - elapsed) / 1000);
-            const h = Math.floor(remain / 3600).toString().padStart(2, '0');
-            const m = Math.floor((remain % 3600) / 60).toString().padStart(2, '0');
-            const s = (remain % 60).toString().padStart(2, '0');
-            timerDisplay.innerText = `${h}:${m}:${s}`;
+            updateTimerUI(remain); // Gọi hàm hiển thị đã thêm ở Bước 1
             updateUI();
         }
     }, 1000);
