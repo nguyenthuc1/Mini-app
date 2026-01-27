@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fish Mining Game</title>
+    <title>Fish Mining Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -11,60 +11,114 @@
 </head>
 <body class="bg-[#0b0f1a] text-white font-sans select-none">
 
-    <div class="p-4 bg-[#161b2c] rounded-b-3xl shadow-lg border-b border-slate-700">
-        <div class="flex justify-between items-center mb-2">
+    <div class="p-4 bg-[#161b2c] rounded-b-3xl shadow-lg border-b border-slate-700 sticky top-0 z-50">
+        <div class="flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <span class="text-2xl">🐟</span>
                 <span id="fish-count" class="text-xl font-bold">0</span>
             </div>
             <div class="flex items-center gap-2 bg-[#0f172a] px-3 py-1 rounded-full border border-yellow-500/50">
-                <span class="text-yellow-400 font-bold" id="coin-balance">0</span>
+                <span id="coin-balance" class="text-yellow-400 font-bold">0</span>
                 <span class="text-sm text-yellow-500">💰</span>
             </div>
         </div>
-        <div class="flex justify-between text-[10px] text-gray-400 px-1">
-            <span>Tốc độ: <b id="mining-speed" class="text-blue-400">0.5</b> cá/s</span>
-            <span>Cấp tàu: <b id="ship-level" class="text-green-400">1</b></span>
-        </div>
     </div>
 
-    <main class="p-4 pb-24">
+    <main class="p-4 pb-28">
         <div id="tab-home" class="tab-content">
-            <div class="flex flex-col items-center justify-center py-10">
-                <div class="w-48 h-48 bg-blue-500/20 rounded-full flex items-center justify-center border-4 border-blue-400/30 animate-pulse">
-                    <span class="text-6xl">🚢</span>
+            <div class="flex flex-col items-center py-6">
+                <div class="relative w-40 h-40 bg-blue-500/10 rounded-full flex items-center justify-center border-2 border-blue-500/20">
+                    <span class="text-6xl animate-bounce">🚢</span>
+                    <div class="absolute -bottom-2 bg-blue-600 px-3 py-1 rounded-full text-[10px] font-bold">LV.<span id="ship-lv-display">1</span></div>
                 </div>
-                <div id="timer-display" class="mt-4 text-2xl font-mono text-blue-400 hidden">00:00:00</div>
-                <button id="btn-mine" class="mt-8 w-full py-4 bg-gradient-to-r from-blue-600 to-blue-400 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-all">RA KHƠI</button>
-                <button id="btn-sell" class="mt-3 w-full py-3 bg-[#1e293b] rounded-2xl font-semibold border border-slate-700">BÁN CÁ (Dự kiến: <span id="estimated-coins">0</span> 💰)</button>
+                
+                <div id="timer-display" class="mt-6 text-3xl font-mono text-blue-400 hidden">00:00:00</div>
+                <button id="btn-mine" class="mt-6 w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-all uppercase tracking-wider">Ra khơi</button>
+                <button id="btn-sell" class="mt-3 w-full py-3 bg-[#1e293b] rounded-2xl font-semibold border border-slate-700 text-sm">Bán cá (Dự kiến: <span id="est-coins">0</span> 💰)</button>
+
+                <div class="w-full mt-8 bg-[#161b2c] p-4 rounded-2xl border border-slate-700">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-blue-400">Nâng cấp tàu</h3>
+                        <span class="text-[10px] text-gray-400">Tăng tốc độ khai thác</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-400">Tốc độ hiện tại: <b class="text-white" id="speed-display">0.5</b> cá/s</p>
+                            <p class="text-xs text-green-400 font-medium">Kế tiếp: +0.2 cá/s</p>
+                        </div>
+                        <button id="btn-upgrade" class="px-5 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-xl font-bold text-xs shadow-md active:scale-90 transition-all">
+                            <span id="upgrade-cost">1000</span> 💰
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-tasks" class="tab-content hidden">
+            <h2 class="text-xl font-bold mb-6">Nhiệm vụ hàng ngày</h2>
+            <div class="space-y-3" id="tasks-list">
+                <div class="flex items-center justify-between bg-[#161b2c] p-4 rounded-2xl border border-slate-700">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">📢</span>
+                        <div>
+                            <p class="font-bold text-sm">Tham gia Channel</p>
+                            <p class="text-[10px] text-green-400">+500 💰</p>
+                        </div>
+                    </div>
+                    <button onclick="doTask('channel', 500)" class="px-4 py-2 bg-blue-600 rounded-lg text-xs font-bold">Thực hiện</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-friends" class="tab-content hidden text-center">
+            <div class="py-6">
+                <span class="text-6xl">👥</span>
+                <h2 class="text-xl font-bold mt-4">Mời bạn bè</h2>
+                <p class="text-gray-400 text-sm mt-2 px-6">Nhận ngay <b class="text-yellow-500">2,000 💰</b> cho mỗi người bạn tham gia qua link của bạn.</p>
+                
+                <div class="mt-8 p-4 bg-[#0f172a] rounded-2xl border border-dashed border-slate-600 relative">
+                    <p class="text-[10px] text-gray-500 mb-1">Link giới thiệu của bạn:</p>
+                    <p id="ref-link" class="text-xs text-blue-400 font-mono break-all"></p>
+                    <button id="btn-copy-ref" class="mt-3 px-6 py-2 bg-slate-700 rounded-lg text-xs font-bold active:bg-blue-600">Sao chép Link</button>
+                </div>
+                
+                <div class="mt-8 text-left">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Danh sách (0)</h3>
+                    <div class="bg-[#161b2c] p-8 rounded-2xl border border-slate-700 text-center">
+                        <p class="text-xs text-gray-500 italic">Chưa có bạn bè nào tham gia</p>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div id="tab-wallet" class="tab-content hidden">
-            <h2 class="text-lg font-bold mb-4">Ví tiền của bạn</h2>
-            <div class="bg-gradient-to-br from-indigo-900 to-slate-900 p-5 rounded-3xl border border-indigo-500/30 mb-6">
-                <p class="text-gray-400 text-sm">Số dư khả dụng</p>
-                <p class="text-3xl font-bold mt-1"><span id="wallet-coin-balance">0</span> <small class="text-sm font-normal text-gray-400">VNĐ</small></p>
+            <h2 class="text-xl font-bold mb-6">Ví tiền</h2>
+            <div class="bg-gradient-to-br from-indigo-900 to-slate-900 p-6 rounded-3xl border border-indigo-500/30 mb-6">
+                <p class="text-gray-400 text-xs">Số dư khả dụng</p>
+                <p class="text-3xl font-bold mt-1"><span id="wallet-balance">0</span> <small class="text-xs font-normal text-gray-400 uppercase">vnđ</small></p>
             </div>
-
-            <div class="space-y-3 bg-[#161b2c] p-4 rounded-2xl border border-slate-700">
-                <input type="text" id="bank-name" placeholder="Tên ngân hàng (Vd: MB, VCB...)" class="w-full bg-[#0f172a] border border-slate-600 p-3 rounded-xl outline-none focus:border-blue-500">
-                <input type="text" id="bank-account" placeholder="Số tài khoản" class="w-full bg-[#0f172a] border border-slate-600 p-3 rounded-xl outline-none focus:border-blue-500">
-                <input type="number" id="withdraw-amount" placeholder="Số tiền muốn rút" class="w-full bg-[#0f172a] border border-slate-600 p-3 rounded-xl outline-none focus:border-blue-500">
-                <button id="btn-withdraw" class="w-full py-4 bg-green-600 rounded-xl font-bold active:scale-95">XÁC NHẬN RÚT TIỀN</button>
+            <div class="space-y-4 bg-[#161b2c] p-5 rounded-2xl border border-slate-700">
+                <input type="text" id="bank-name" placeholder="Tên ngân hàng" class="w-full bg-[#0b0f1a] border border-slate-700 p-4 rounded-xl outline-none focus:border-blue-500 text-sm">
+                <input type="text" id="bank-acc" placeholder="Số tài khoản" class="w-full bg-[#0b0f1a] border border-slate-700 p-4 rounded-xl outline-none focus:border-blue-500 text-sm">
+                <input type="number" id="wd-amount" placeholder="Số tiền rút (Tối thiểu 20,000)" class="w-full bg-[#0b0f1a] border border-slate-700 p-4 rounded-xl outline-none focus:border-blue-500 text-sm">
+                <button id="btn-withdraw" class="w-full py-4 bg-green-600 rounded-xl font-bold shadow-lg active:scale-95 transition-all">GỬI LỆNH RÚT</button>
             </div>
-
-            <h3 class="mt-6 mb-3 text-sm font-semibold text-gray-400 uppercase tracking-widest">Lịch sử giao dịch</h3>
-            <div id="history-container" class="space-y-2 text-xs"></div>
+            <div id="history-list" class="mt-6 space-y-2"></div>
         </div>
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-[#161b2c] border-t border-slate-700 flex justify-around p-3 pb-6">
-        <button onclick="switchTab('home')" class="nav-item flex flex-col items-center text-blue-400" id="nav-home">
-            <span class="text-xl">🏠</span><span class="text-[10px] mt-1">Trang chủ</span>
+    <nav class="fixed bottom-0 left-0 right-0 bg-[#161b2c]/90 backdrop-blur-md border-t border-slate-700 flex justify-around p-3 pb-8 z-50">
+        <button onclick="switchTab('home')" class="nav-btn flex flex-col items-center text-blue-400" id="nav-home">
+            <span class="text-xl">🏠</span><span class="text-[9px] mt-1 font-bold">HOME</span>
         </button>
-        <button onclick="switchTab('wallet')" class="nav-item flex flex-col items-center text-gray-500" id="nav-wallet">
-            <span class="text-xl">💳</span><span class="text-[10px] mt-1">Ví tiền</span>
+        <button onclick="switchTab('tasks')" class="nav-btn flex flex-col items-center text-gray-500" id="nav-tasks">
+            <span class="text-xl">📋</span><span class="text-[9px] mt-1 font-bold">TASKS</span>
+        </button>
+        <button onclick="switchTab('friends')" class="nav-btn flex flex-col items-center text-gray-500" id="nav-friends">
+            <span class="text-xl">🤝</span><span class="text-[9px] mt-1 font-bold">FRIENDS</span>
+        </button>
+        <button onclick="switchTab('wallet')" class="nav-btn flex flex-col items-center text-gray-500" id="nav-wallet">
+            <span class="text-xl">💰</span><span class="text-[9px] mt-1 font-bold">WALLET</span>
         </button>
     </nav>
 
