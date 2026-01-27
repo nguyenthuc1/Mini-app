@@ -115,23 +115,29 @@ function startMining() {
     save(); // Lưu mốc bắt đầu để tính toán khi người dùng offline
     checkMining();
 }
-
 async function claim() {
     const now = Date.now();
-    const duration = 3 * 60 * 60 * 1000;
+    const duration = 3 * 60 * 60 * 1000; // Mốc 3 tiếng như bạn đã yêu cầu
     const elapsed = now - data.startTime;
 
-    // Tính toán số cá dựa trên thời gian thực trôi qua (tối đa 3 tiếng)
+    // Tính toán số cá dựa trên thời gian thực tế trôi qua (tối đa 3 tiếng)
     const effectiveTimeSeconds = Math.min(elapsed, duration) / 1000;
     const earned = effectiveTimeSeconds * data.speed;
 
+    // Cộng cá vào biến cục bộ
     data.fish += earned;
-    data.startTime = null; // Reset để ra khơi chuyến mới
+    data.startTime = null; 
     
-    await save();
-    updateUI();
-    checkMining();
-    tg.showAlert(`✅ Bạn nhận được ${Math.floor(earned).toLocaleString()} cá!`);
+    // LỆNH QUAN TRỌNG: Lưu ngay lập tức lên Firebase
+    try {
+        await db.ref('users/' + userId).set(data); 
+        updateUI();
+        checkMining();
+        tg.showAlert(`✅ Bạn đã nhận được ${Math.floor(earned).toLocaleString()} cá!`);
+    } catch (error) {
+        console.error("Lỗi lưu dữ liệu:", error);
+        tg.showAlert("❌ Lỗi kết nối, không thể cộng cá!");
+    }
 }
 
 // --- 3. BÁN CÁ & NÂNG CẤP ---
