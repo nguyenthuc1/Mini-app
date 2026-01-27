@@ -366,6 +366,14 @@ function updateHistoryUI() {
         </div>
     `).join('') || '<p class="text-[10px] italic text-gray-500">Chưa có giao dịch</p>';
 }
+// Chặn chuột phải và phím tắt F12
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.onkeydown = function(e) {
+    if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74))) {
+        return false;
+    }
+};
+
 // --- 7. KHỞI CHẠY ---
 
 window.onload = async () => {
