@@ -126,7 +126,7 @@ function updateUI() {
     } else {
         btnUpgrade.innerText = `NÂNG CẤP (${UPGRADE_COSTS[data.upgradeCount].toLocaleString()} 💰)`;
     }
-
+}
 // --- 4. LOGIC ĐÀO CÁ ---
 
 function startAds() {
