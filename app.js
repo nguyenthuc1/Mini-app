@@ -32,23 +32,29 @@ let data = {
 
 // --- 1. HÀM KHỞI TẠO & ĐỒNG BỘ ---
 
-
 async function init() {
-    // Đảm bảo Firebase đã sẵn sàng trước khi gọi Auth
-    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-        .then(() => {
-            return firebase.auth().signInAnonymously();
-        })
-        .then(() => {
-            console.log("Xác thực thành công!");
-            // Sau khi đăng nhập mới tải dữ liệu từ Database
-            loadDataFromDatabase();
-        })
-        .catch((error) => {
-    console.error("Lỗi xác thực:", error);
-    // Hiện mã lỗi chi tiết để bắt bệnh
-    tg.showAlert("Lỗi: " + error.code + " - " + error.message); 
-});
+    // Chỉ khởi tạo khi Firebase đã sẵn sàng
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            console.log("Đã đăng nhập với UID:", user.uid);
+            // Tải dữ liệu từ database sau khi xác thực thành công
+            db.ref('users/' + userId).once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    data = { ...data, ...snapshot.val() };
+                }
+                updateUI();
+                checkMining();
+            });
+        } else {
+            // Nếu chưa đăng nhập, thực hiện đăng nhập ẩn danh
+            firebase.auth().signInAnonymously().catch((error) => {
+                console.error("Lỗi xác thực chi tiết:", error.code);
+                tg.showAlert("Lỗi xác thực: " + error.code); 
+            });
+        }
+    });
+}
+
 async function save() {
     try {
         await db.ref('users/' + userId).set(data);
