@@ -1,0 +1,38 @@
+// Dùng cấu hình Firebase giống hệt app.js của bạn
+const db = firebase.database();
+
+function loadWithdrawals() {
+    const listDiv = document.getElementById('admin-list');
+    listDiv.innerHTML = "Đang tải...";
+
+    db.ref('users').once('value', (snapshot) => {
+        let html = '';
+        snapshot.forEach((userSnap) => {
+            const userId = userSnap.key;
+            const userData = userSnap.val();
+            
+            if (userData.history) {
+                userData.history.forEach((order, index) => {
+                    if (order.status === 'Đang xử lý') {
+                        html += `
+                        <div class="order-item" style="border: 1px solid #ccc; margin: 10px; padding: 10px;">
+                            <p><b>User ID:</b> ${userId}</p>
+                            <p><b>Số tiền:</b> ${order.amount.toLocaleString()}đ</p>
+                            <p><b>Ngân hàng:</b> ${order.bank} - ${order.owner}</p>
+                            <p><b>STK:</b> ${order.account}</p>
+                            <button onclick="approve('${userId}', ${index})">Xác nhận đã chuyển</button>
+                        </div>`;
+                    }
+                });
+            }
+        });
+        listDiv.innerHTML = html || "Không có lệnh rút nào đang chờ.";
+    });
+}
+
+// Hàm đổi trạng thái thành "Thành công" trên Firebase
+function approve(uid, index) {
+    db.ref(`users/${uid}/history/${index}`).update({ status: 'Thành công' });
+    alert("Đã duyệt!");
+    loadWithdrawals();
+}
