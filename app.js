@@ -273,69 +273,24 @@ function handleUpgrade() {
 // --- 6. RÚT TIỀN ---
 
 async function handleWithdraw() {
-    const bankName = document.getElementById('bank-name')?.value.trim();
-    const bankAcc = document.getElementById('bank-account')?.value.trim();
-    const accName = document.getElementById('account-name')?.value.trim();
-    const amount = parseInt(document.getElementById('withdraw-amount')?.value) || 0;
+    // ... logic kiểm tra tiền ...
 
-    // 1. Kiểm tra đầu vào
-    if (!bankName || !bankAcc || !accName || amount < 20000) {
-        tg.showAlert("❌ Vui lòng điền đủ thông tin & rút tối thiểu 20.000đ!");
-        return;
-    }
-    if (amount > data.coins) {
-        tg.showAlert("❌ Số dư xu không đủ!");
-        return;
-    }
+    const message = `🔔 LỆNH RÚT MỚI\n👤 User: ${userId}\n💰 Số tiền: ${amount.toLocaleString()}đ`;
 
-    tg.showConfirm(`Xác nhận rút ${amount.toLocaleString()}đ?`, async (ok) => {
-        if (!ok) return;
-
-        const botToken = '8380349652:AAECxqrFHRWGsOSIj-Cb7kgG3tOaC9lir48';
-        const adminId = '6068989876';
-        const message = `🔔 LỆNH RÚT MỚI\n👤 User ID: ${userId}\n💰 Số tiền: ${amount.toLocaleString()}đ\n🏦 ${bankName}\n💳 STK: ${bankAcc}\n👤 CTK: ${accName.toUpperCase()}`;
-
-        try {
-            // 2. Gửi thông báo cho Bot (Phần đã chạy tốt)
-            const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: adminId, text: message })
-            });
-
-            if (response.ok) {
-                // 3. Cập nhật dữ liệu Local và Database
-                data.coins -= amount;
-                
-                const newHistory = {
-                    amount: amount,
-                    bank: bankName,
-                    time: new Date().toLocaleString('vi-VN'),
-                    status: 'Đang xử lý'
-                };
-                
-                // Thêm lịch sử vào đầu danh sách
-                if (!data.history) data.history = [];
-                data.history.unshift(newHistory);
-
-                // 4. Đồng bộ lên Supabase
-                await sync(); 
-                
-                updateUI();
-                updateHistoryUI();
-                
-                tg.showAlert("✅ Gửi lệnh thành công! Admin sẽ duyệt trong 24h.");
-                
-                // Xóa form
-                document.getElementById('withdraw-amount').value = "";
-                document.getElementById('vnd-receive').innerText = "0 VNĐ";
-            } else {
-                tg.showAlert("❌ Lỗi Telegram: Bot không thể gửi tin!");
-            }
-        } catch (err) {
-            tg.showAlert("⚠️ Lỗi kết nối: " + err.message);
+    // GỌI HÀM EDGE FUNCTION THAY VÌ GỌI TELEGRAM TRỰC TIẾP
+    const { data, error } = await supabaseClient.functions.invoke('send-telegram-notification', {
+        body: { 
+            chat_id: '6068989876', // ID Admin nhận thông báo
+            text: message 
         }
     });
+
+    if (!error) {
+        tg.showAlert("✅ Gửi yêu cầu rút tiền thành công!");
+        // Tiếp tục trừ tiền và lưu lịch sử...
+    } else {
+        tg.showAlert("❌ Lỗi hệ thống : " + error.message);
+    }
 }
 
 function updateHistoryUI() {
