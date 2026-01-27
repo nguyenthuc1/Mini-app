@@ -5,9 +5,17 @@ const SUPABASE_KEY = 'sb_publishable_uwAvdH2z8vC56pwTgmXulQ_ciRf8iGf';
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
+// --- 0. CẤU HÌNH SUPABASE ---
+const SUPABASE_URL = 'https://icfirearfofkosodtmii.supabase.co'; 
+const SUPABASE_KEY = 'sb_publishable_uwAvdH2z8vC56pwTgmXulQ_ciRf8iGf';
+
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
 
 // --- 1. BIẾN TOÀN CỤC ---
-// Lấy userId trước để dùng làm "chứng minh thư" gửi lên Server
+// Lấy userId một lần duy nhất ở đầu file
+const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
 
 // Khởi tạo Supabase DUY NHẤT 1 LẦN kèm Header bảo mật
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -16,8 +24,8 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     }
 });
 
-const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
 const UPGRADE_COSTS = [500, 1000, 2000, 4000, 7000, 12000, 18000, 25000, 35000, 50000, 70000, 100000, 140000, 190000, 250000];
+
 const MINING_DURATION = 3 * 60 * 60 * 1000;
 const GLOBAL_RATIO = 0.00463;
 
@@ -403,4 +411,4 @@ window.onload = async () => {
 
 // Đưa các hàm ra môi trường bên ngoài để HTML gọi được (Dành cho switchTab)
 window.switchTab = switchTab;
-window.resetDataForDev = resetDataForDev;
+
