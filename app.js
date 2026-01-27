@@ -273,24 +273,73 @@ function handleUpgrade() {
 // --- 6. RÚT TIỀN ---
 
 async function handleWithdraw() {
-    // ... logic kiểm tra tiền ...
+    // 1. Lấy thông tin từ giao diện
+    const amountInput = document.getElementById('withdraw-amount');
+    const bankNameInput = document.getElementById('bank-name'); // Đảm bảo HTML có id này
+    const bankAccInput = document.getElementById('bank-account'); // Đảm bảo HTML có id này
+    
+    const amount = parseInt(amountInput?.value) || 0;
+    const bankName = bankNameInput?.value.trim() || "N/A";
+    const bankAcc = bankAccInput?.value.trim() || "N/A";
 
-    const message = `🔔 LỆNH RÚT MỚI\n👤 User: ${userId}\n💰 Số tiền: ${amount.toLocaleString()}đ`;
+    // 2. Kiểm tra điều kiện rút tiền
+    if (amount < 20000) {
+        tg.showAlert("❌ Số tiền rút tối thiểu là 20.000đ!");
+        return;
+    }
+    if (amount > data.coins) {
+        tg.showAlert("❌ Số dư xu không đủ để thực hiện lệnh này!");
+        return;
+    }
 
-    // GỌI HÀM EDGE FUNCTION THAY VÌ GỌI TELEGRAM TRỰC TIẾP
-    const { data, error } = await supabaseClient.functions.invoke('send-telegram-notification', {
-        body: { 
-            chat_id: '6068989876', // ID Admin nhận thông báo
-            text: message 
+    // 3. Xác nhận với người dùng
+    tg.showConfirm(`Bạn muốn rút ${amount.toLocaleString()}đ về ${bankName}?`, async (ok) => {
+        if (!ok) return;
+
+        // Nội dung tin nhắn gửi về Telegram Admin
+        const message = `🔔 <b>LỆNH RÚT MỚI</b>\n👤 User ID: <code>${userId}</code>\n💰 Số tiền: ${amount.toLocaleString()}đ\n🏦 Ngân hàng: ${bankName}\n💳 STK: ${bankAcc}`;
+
+        try {
+            // 4. Gọi Edge Function (Dùng 'result' để tránh trùng với biến 'data' toàn cục)
+            const { data: result, error } = await supabaseClient.functions.invoke('send-telegram-notification', {
+                body: { 
+                    message: message // Đảm bảo key này khớp với code trong Edge Function
+                }
+            });
+
+            if (error) {
+                console.error("Lỗi Edge Function:", error);
+                tg.showAlert("❌ Lỗi gửi yêu cầu: " + error.message);
+                return;
+            }
+
+            // 5. Xử lý sau khi gửi thành công: Cập nhật dữ liệu tại chỗ
+            data.coins -= amount; // Trừ tiền
+            
+            // Thêm vào lịch sử giao dịch
+            const newHistory = {
+                amount: amount,
+                bank: bankName,
+                time: new Date().toLocaleString('vi-VN'),
+                status: 'Đang xử lý'
+            };
+            data.history.unshift(newHistory);
+
+            // 6. Đồng bộ lên Server và cập nhật giao diện
+            await sync(); 
+            updateUI();
+            updateHistoryUI();
+            
+            tg.showAlert("✅ Gửi lệnh rút thành công! Vui lòng chờ Admin duyệt.");
+            
+            // Xóa sạch ô nhập liệu sau khi rút
+            if(amountInput) amountInput.value = "";
+
+        } catch (err) {
+            console.error("Lỗi kết nối:", err);
+            tg.showAlert("⚠️ Lỗi kết nối Server, vui lòng thử lại!");
         }
     });
-
-    if (!error) {
-        tg.showAlert("✅ Gửi yêu cầu rút tiền thành công!");
-        // Tiếp tục trừ tiền và lưu lịch sử...
-    } else {
-        tg.showAlert("❌ Lỗi hệ thống : " + error.message);
-    }
 }
 
 function updateHistoryUI() {
