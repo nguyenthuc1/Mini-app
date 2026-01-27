@@ -133,40 +133,6 @@ function updateUI() {
     } else {
         btnUpgrade.innerText = `NÂNG CẤP (${UPGRADE_COSTS[data.upgradeCount].toLocaleString()} 💰)`;
     }
-}
-function updateHistoryUI() {
-    const historyList = document.getElementById('history-list');
-    if (!historyList) return;
-
-    // Xóa danh sách cũ trước khi vẽ mới
-    historyList.innerHTML = "";
-
-    if (!data.history || data.history.length === 0) {
-        historyList.innerHTML = `<p class="text-center text-gray-400 text-sm mt-4">Chưa có lịch sử giao dịch</p>`;
-        return;
-    }
-
-    // Duyệt qua từng giao dịch trong lịch sử
-    data.history.forEach(item => {
-        const statusColor = item.status === "Thành công" ? "text-green-400" : "text-yellow-400";
-        
-        const historyItem = document.createElement('div');
-        historyItem.className = "bg-[#0f172a] p-3 rounded-lg mb-2 border border-gray-700";
-        historyItem.innerHTML = `
-            <div class="flex justify-between items-center">
-                <div>
-                    <p class="font-bold text-white">Rút tiền: -${item.amount.toLocaleString()}đ</p>
-                    <p class="text-[10px] text-gray-400">${item.time}</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-xs ${statusColor} font-bold">${item.status}</p>
-                    <p class="text-[10px] text-gray-500">${item.bank || 'Ngân hàng'}</p>
-                </div>
-            </div>
-        `;
-        historyList.appendChild(historyItem);
-    });
-}
 
 // --- 4. LOGIC ĐÀO CÁ ---
 
