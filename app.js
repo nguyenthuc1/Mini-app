@@ -1,11 +1,13 @@
-// --- 0. CẤU HÌNH FIREBASE ---
+// --- 0. CẤU HÌNH FIREBASE CỦA BẠN ---
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAc8psT5Up6aEu8VnCz1TZ4sSNTKmf8oA",
+  authDomain: "telegram-bot-backup-11c83.firebaseapp.com",
+  databaseURL: "https://telegram-bot-backup-11c83-default-rtdb.firebaseio.com",
+  projectId: "telegram-bot-backup-11c83",
+  storageBucket: "telegram-bot-backup-11c83.firebasestorage.app",
+  messagingSenderId: "363675104532",
+  appId: "1:363675104532:web:6c51d1c7318b765e897e01",
+  measurementId: "G-332FLBBX3B"
 };
 
 firebase.initializeApp(firebaseConfig);
