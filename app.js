@@ -262,7 +262,7 @@ function handleUpgrade() {
     if (data.coins >= cost) {
         data.coins -= cost;
         data.upgradeCount++;
-        data.miningSpeed += 0.5;
+        data.miningSpeed += 0.3;
         sync();
         updateUI();
         tg.showAlert("🚀 Nâng cấp thành công!");
