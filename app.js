@@ -123,27 +123,34 @@ function startMining() {
     save(); // Lưu mốc bắt đầu để tính toán khi người dùng offline
     checkMining();
 }
-
 async function claim() {
     const now = Date.now();
-    const duration = 3 * 60 * 60 * 1000;
+    const duration = 3 * 60 * 60 * 1000; 
     const elapsed = now - data.startTime;
 
+    // 1. Tính toán số cá kiếm được dựa trên thời gian thực tế
     const effectiveTimeSeconds = Math.min(elapsed, duration) / 1000;
     const earned = effectiveTimeSeconds * data.speed;
 
-    // Cập nhật dữ liệu tạm thời trong bộ nhớ app
-    data.fish += earned;
+    // 2. CỘNG DỒN: Đảm bảo lấy giá trị cũ cộng với giá trị mới
+    // Sử dụng parseFloat để tránh lỗi cộng chuỗi văn bản
+    data.fish = (parseFloat(data.fish) || 0) + earned;
+    
+    // 3. Reset mốc thời gian về null để kết thúc phiên đào
     data.startTime = null; 
 
-    // Thực hiện lưu dữ liệu lên server trước, sau đó mới cập nhật giao diện
-    tg.showProgressTree && tg.showProgressTree(true); // Hiển thị trạng thái đang xử lý nếu có
-    await save(); 
-    
-    updateUI();
-    checkMining();
-    tg.showAlert(`✅ Chúc mừng! Bạn đã nhận được ${Math.floor(earned).toLocaleString()} cá.`);
+    // 4. Lưu lên Firebase và cập nhật giao diện
+    try {
+        await save(); // Gọi hàm save đã có của bạn
+        updateUI();
+        checkMining();
+        tg.showAlert(`✅ Bạn đã nhận được ${Math.floor(earned).toLocaleString()} cá!`);
+    } catch (error) {
+        console.error("Lỗi lưu dữ liệu:", error);
+        tg.showAlert("❌ Lỗi kết nối, không thể cộng cá vào tài khoản!");
+    }
 }
+
 // --- 3. BÁN CÁ & NÂNG CẤP ---
 
 document.getElementById('btn-sell').onclick = async () => {
