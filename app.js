@@ -166,6 +166,22 @@ function startAds() {
         checkOfflineMining();
     }, 2000);
 }
+function updateTimerUI(seconds) {
+    const timerDisplay = document.getElementById('timer-display');
+    if (!timerDisplay) return;
+    
+    if (isNaN(seconds) || seconds < 0) {
+        timerDisplay.classList.add('hidden');
+        return;
+    }
+
+    timerDisplay.classList.remove('hidden');
+    const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    timerDisplay.innerText = `${h}:${m}:${s}`;
+}
+
 function checkOfflineMining() {
     const btnMine = document.getElementById('btn-mine');
     const timerDisplay = document.getElementById('timer-display');
