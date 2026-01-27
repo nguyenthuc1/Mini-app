@@ -45,11 +45,10 @@ async function init() {
             loadDataFromDatabase();
         })
         .catch((error) => {
-            console.error("Lỗi xác thực:", error);
-            tg.showAlert("Lỗi: " + error.message);
-        });
-}
-
+    console.error("Lỗi xác thực:", error);
+    // Hiện mã lỗi chi tiết để bắt bệnh
+    tg.showAlert("Lỗi: " + error.code + " - " + error.message); 
+});
 async function save() {
     try {
         await db.ref('users/' + userId).set(data);
