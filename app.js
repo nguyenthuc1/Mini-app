@@ -12,68 +12,67 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 const tg = window.Telegram.WebApp;
-tg.ready();
+tg.expand();
 
-// Lấy userId để tránh trùng lặp thông tin người dùng
-const userId = String(tg.initDataUnsafe?.user?.id || 'guest_user');
+// Đảm bảo mỗi User ID là duy nhất để không trùng dữ liệu
+const userId = String(tg.initDataUnsafe?.user?.id || '88888888'); 
 
-// Cấu hình game
-const MINING_DURATION = 3 * 60 * 60 * 1000; // 3 tiếng
-const GLOBAL_RATIO = 0.00463; // Tỷ lệ cá đổi ra xu
-const BOT_TOKEN = "TOKEN_BOT_CỦA_BẠN"; // Dùng để gửi tin nhắn Telegram
-const ADMIN_CHAT_ID = "6068989876"; // Chat ID của bạn
+let data = {
+    fish: 0,
+    coins: 0,
+    speed: 0.5,
+    shipLevel: 1,
+    startTime: null,
+    history: [],
+    completedTasks: []
+};
 
-let data = { fish: 0, coins: 0, miningSpeed: 0.5, upgradeCount: 0, startTime: null, history: [] };
-let tInterval;
+// --- 1. HÀM XỬ LÝ DỮ LIỆU ---
 
-// --- 1. HÀM ĐỒNG BỘ DỮ LIỆU VỚI FIREBASE ---
-
-async function loadData() {
+async function init() {
     try {
-        const docRef = db.collection("users_data").doc(userId);
-        const doc = await docRef.get();
-
+        const doc = await db.collection("users").doc(userId).get();
         if (doc.exists) {
-            data = doc.data();
+            data = { ...data, ...doc.data() };
         } else {
-            // Tạo mới người dùng nếu chưa có
-            await docRef.set(data);
+            // Tạo mới người dùng nếu chưa có trong Database
+            await db.collection("users").doc(userId).set(data);
         }
+        
+        // Cập nhật Link mời (Thay YourBotName bằng tên bot thật của bạn)
+        document.getElementById('ref-link').innerText = `https://t.me/YourBotName?start=${userId}`;
+        
         updateUI();
-        updateHistoryUI();
-        checkMiningStatus();
+        checkMining();
     } catch (e) {
-        console.error("Lỗi tải Firebase:", e);
+        console.error("Lỗi khởi tạo:", e);
     }
 }
 
-async function sync() {
-    try {
-        await db.collection("users_data").doc(userId).set(data, { merge: true });
-    } catch (e) {
-        console.error("Lỗi đồng bộ Firebase:", e);
-    }
+async function save() {
+    // Lưu mọi thay đổi lên Firebase dựa theo ID Telegram
+    await db.collection("users").doc(userId).update(data);
+}
+
+function updateUI() {
+    document.getElementById('fish-count').innerText = Math.floor(data.fish).toLocaleString();
+    document.getElementById('coin-balance').innerText = Math.floor(data.coins).toLocaleString();
+    
+    document.getElementById('ship-lv-display').innerText = data.shipLevel;
+    document.getElementById('speed-display').innerText = data.speed.toFixed(1);
+    document.getElementById('upgrade-cost').innerText = (data.shipLevel * 2000).toLocaleString();
+    document.getElementById('est-coins').innerText = Math.floor(data.fish * 0.005).toLocaleString();
+    
+    document.getElementById('wallet-balance').innerText = Math.floor(data.coins).toLocaleString();
+    renderHistory();
 }
 
 // --- 2. LOGIC GAME ---
 
-function updateUI() {
-    let currentFish = data.fish;
-    if (data.startTime) {
-        const elapsed = (Date.now() - data.startTime) / 1000;
-        currentFish += (elapsed * data.miningSpeed);
-    }
-    
-    document.getElementById('fish-count').innerText = Math.floor(currentFish).toLocaleString();
-    document.getElementById('coin-balance').innerText = data.coins.toLocaleString();
-    document.getElementById('wallet-coin-balance').innerText = data.coins.toLocaleString();
-    document.getElementById('estimated-coins').innerText = Math.floor(currentFish * GLOBAL_RATIO).toLocaleString();
-}
-
-function checkMiningStatus() {
+function checkMining() {
     const btn = document.getElementById('btn-mine');
     const timer = document.getElementById('timer-display');
-
+    
     if (!data.startTime) {
         btn.innerText = "RA KHƠI";
         btn.disabled = false;
@@ -81,102 +80,141 @@ function checkMiningStatus() {
         return;
     }
 
-    clearInterval(tInterval);
-    tInterval = setInterval(() => {
+    const interval = setInterval(() => {
         const elapsed = Date.now() - data.startTime;
-        if (elapsed >= MINING_DURATION) {
-            clearInterval(tInterval);
-            btn.innerText = "💰 NHẬN CÁ";
+        const duration = 2 * 60 * 60 * 1000; // 2 tiếng
+
+        if (elapsed >= duration) {
+            clearInterval(interval);
+            btn.innerText = "NHẬN CÁ 💰";
             btn.disabled = false;
+            btn.onclick = claim;
             timer.classList.add('hidden');
-            btn.onclick = claimFish;
         } else {
             btn.innerText = "ĐANG ĐÀO...";
             btn.disabled = true;
             timer.classList.remove('hidden');
-            const remain = Math.floor((MINING_DURATION - elapsed) / 1000);
-            const h = Math.floor(remain / 3600).toString().padStart(2, '0');
-            const m = Math.floor((remain % 3600) / 60).toString().padStart(2, '0');
-            const s = (remain % 60).toString().padStart(2, '0');
-            timer.innerText = `${h}:${m}:${s}`;
-            updateUI();
+            const remain = Math.floor((duration - elapsed) / 1000);
+            const m = Math.floor(remain / 60);
+            const s = remain % 60;
+            timer.innerText = `${m}:${s.toString().padStart(2, '0')}`;
         }
     }, 1000);
 }
 
-async function claimFish() {
-    const earned = (MINING_DURATION / 1000) * data.miningSpeed;
+async function claim() {
+    const earned = (2 * 60 * 60) * data.speed; // Số cá nhận được dựa trên tốc độ
     data.fish += earned;
     data.startTime = null;
-    await sync();
-    checkMiningStatus();
+    await save();
     updateUI();
-    tg.showAlert(`✅ Đã nhận ${Math.floor(earned)} cá!`);
+    checkMining();
+    tg.showAlert(`✅ Bạn đã nhận được ${Math.floor(earned)} cá!`);
 }
 
-// --- 3. RÚT TIỀN & THÔNG BÁO TELEGRAM ---
+document.getElementById('btn-upgrade').onclick = async () => {
+    const cost = data.shipLevel * 2000;
+    if (data.coins >= cost) {
+        data.coins -= cost;
+        data.shipLevel += 1;
+        data.speed += 0.2;
+        await save();
+        updateUI();
+        tg.showAlert("🚀 Nâng cấp thành công!");
+    } else {
+        tg.showAlert("❌ Bạn không đủ xu!");
+    }
+};
 
-async function handleWithdraw() {
-    const amount = parseInt(document.getElementById('withdraw-amount').value) || 0;
+// --- 3. NHIỆM VỤ & BẠN BÈ ---
+
+window.doTask = async (type, reward) => {
+    if (data.completedTasks.includes(type)) {
+        tg.showAlert("Bạn đã làm nhiệm vụ này rồi!");
+        return;
+    }
+    window.open("https://t.me/your_channel", "_blank");
+    
+    setTimeout(async () => {
+        data.coins += reward;
+        data.completedTasks.push(type);
+        await save();
+        updateUI();
+        tg.showAlert(`✅ Nhận thành công ${reward} xu!`);
+    }, 2000);
+};
+
+document.getElementById('btn-copy-ref').onclick = () => {
+    const link = document.getElementById('ref-link').innerText;
+    navigator.clipboard.writeText(link);
+    tg.showAlert("✅ Đã sao chép link mời!");
+};
+
+// --- 4. RÚT TIỀN (ĐÃ BỎ THÔNG BÁO BOT) ---
+
+document.getElementById('btn-withdraw').onclick = async () => {
+    const amount = parseInt(document.getElementById('wd-amount').value);
     const bank = document.getElementById('bank-name').value;
-    const acc = document.getElementById('bank-account').value;
+    const acc = document.getElementById('bank-acc').value;
 
-    if (amount < 20000 || amount > data.coins) {
-        tg.showAlert("❌ Số dư không đủ hoặc số tiền rút quá thấp!");
+    if (isNaN(amount) || amount < 20000) {
+        tg.showAlert("❌ Số tiền tối thiểu là 20,000đ!");
+        return;
+    }
+    if (amount > data.coins) {
+        tg.showAlert("❌ Số dư xu không đủ!");
         return;
     }
 
-    tg.showConfirm(`Rút ${amount.toLocaleString()} VNĐ về ${bank}?`, async (ok) => {
+    tg.showConfirm(`Bạn muốn rút ${amount.toLocaleString()}đ về ${bank}?`, async (ok) => {
         if (!ok) return;
 
-        // Gửi thông báo về Telegram qua API trực tiếp
-        const message = `🔔 <b>LỆNH RÚT MỚI</b>\n👤 User: <code>${userId}</code>\n💰 Số tiền: ${amount.toLocaleString()}đ\n🏦 Bank: ${bank}\n💳 STK: ${acc}`;
-        
-        try {
-            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: ADMIN_CHAT_ID, text: message, parse_mode: 'HTML' })
-            });
+        // Lưu thông tin vào lịch sử trên Firebase để Admin kiểm tra
+        data.coins -= amount;
+        data.history.unshift({
+            amount: amount,
+            bank: bank,
+            account: acc, // Lưu cả STK vào DB để Admin biết đường chuyển tiền
+            status: 'Đang xử lý',
+            time: new Date().toLocaleString('vi-VN')
+        });
 
-            // Cập nhật dữ liệu
-            data.coins -= amount;
-            data.history.unshift({ amount, bank, status: 'Đang xử lý', time: new Date().toLocaleString('vi-VN') });
-            await sync();
-            updateUI();
-            updateHistoryUI();
-            tg.showAlert("✅ Lệnh rút đã được gửi tới Admin!");
-        } catch (e) {
-            tg.showAlert("⚠️ Lỗi gửi thông báo!");
-        }
+        await save();
+        updateUI();
+        document.getElementById('wd-amount').value = ""; // Clear input
+        tg.showAlert("✅ Gửi lệnh rút thành công! Vui lòng chờ Admin duyệt trên hệ thống.");
     });
-}
+};
 
-// --- 4. KHỞI CHẠY ---
-
-function switchTab(tab) {
+// Điều hướng Tab
+window.switchTab = (tab) => {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
     document.getElementById(`tab-${tab}`).classList.remove('hidden');
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.replace('text-blue-400', 'text-gray-500'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.replace('text-blue-400', 'text-gray-500'));
     document.getElementById(`nav-${tab}`).classList.replace('text-gray-500', 'text-blue-400');
-}
+};
 
-function updateHistoryUI() {
-    const container = document.getElementById('history-container');
-    container.innerHTML = data.history.map(h => `
-        <div class="flex justify-between bg-[#161b2c] p-3 rounded-xl border border-slate-700">
-            <span>-${h.amount.toLocaleString()}đ</span>
-            <span class="text-yellow-500">${h.status}</span>
+function renderHistory() {
+    const div = document.getElementById('history-list');
+    div.innerHTML = data.history.map(h => `
+        <div class="flex justify-between text-[10px] bg-[#0f172a] p-3 rounded-xl border border-slate-800">
+            <div>
+                <p class="font-bold text-white">Rút -${h.amount.toLocaleString()}đ</p>
+                <p class="text-gray-500">${h.time}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-yellow-500 font-bold">${h.status}</p>
+                <p class="text-gray-500 text-[8px]">${h.bank}</p>
+            </div>
         </div>
-    `).join('') || '<p class="text-gray-500 italic text-center">Chưa có giao dịch</p>';
+    `).join('') || '<p class="text-center text-gray-500 text-xs">Chưa có giao dịch</p>';
 }
 
-window.onload = () => {
-    loadData();
-    document.getElementById('btn-mine').onclick = () => {
-        data.startTime = Date.now();
-        sync();
-        checkMiningStatus();
-    };
-    document.getElementById('btn-withdraw').onclick = handleWithdraw;
+window.onload = init;
+
+document.getElementById('btn-mine').onclick = () => {
+    if (data.startTime) return;
+    data.startTime = Date.now();
+    save();
+    checkMining();
 };
