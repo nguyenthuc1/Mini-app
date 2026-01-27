@@ -1,6 +1,6 @@
 // --- 0. CẤU HÌNH FIREBASE (Dựa trên ảnh của bạn) ---
 const firebaseConfig = {
-  apiKey: "AIzaSyAc8psT5Up6aEu8VnCz1TZ4sSNTKmf8oA",
+  apiKey: "AIzaSyAc0psT5Up6aEu0VnCz1TZ4sSNTKmif8oA",
   authDomain: "telegram-bot-backup-11c83.firebaseapp.com",
   databaseURL: "https://telegram-bot-backup-11c83-default-rtdb.firebaseio.com",
   projectId: "telegram-bot-backup-11c83",
