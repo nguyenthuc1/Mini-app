@@ -55,11 +55,15 @@ async function init() {
     });
 }
 
-
 async function save() {
-    // Lưu dữ liệu lên Realtime Database
-    await db.ref('users/' + userId).set(data);
+    try {
+        // Sử dụng return để đảm bảo promise được trả về và await có hiệu lực
+        return await db.ref('users/' + userId).set(data);
+    } catch (error) {
+        console.error("Lỗi khi lưu dữ liệu:", error);
+    }
 }
+
 
 function updateUI() {
     document.getElementById('fish-count').innerText = Math.floor(data.fish).toLocaleString();
@@ -119,28 +123,27 @@ function startMining() {
 }
 async function claim() {
     const now = Date.now();
-    const duration = 3 * 60 * 60 * 1000; // Mốc 3 tiếng như bạn đã yêu cầu
+    const duration = 3 * 60 * 60 * 1000;
     const elapsed = now - data.startTime;
 
-    // Tính toán số cá dựa trên thời gian thực tế trôi qua (tối đa 3 tiếng)
     const effectiveTimeSeconds = Math.min(elapsed, duration) / 1000;
     const earned = effectiveTimeSeconds * data.speed;
 
-    // Cộng cá vào biến cục bộ
+    // 1. Cập nhật dữ liệu cục bộ
     data.fish += earned;
     data.startTime = null; 
-    
-    // LỆNH QUAN TRỌNG: Lưu ngay lập tức lên Firebase
-    try {
-        await db.ref('users/' + userId).set(data); 
-        updateUI();
-        checkMining();
-        tg.showAlert(`✅ Bạn đã nhận được ${Math.floor(earned).toLocaleString()} cá!`);
-    } catch (error) {
-        console.error("Lỗi lưu dữ liệu:", error);
-        tg.showAlert("❌ Lỗi kết nối, không thể cộng cá!");
-    }
+
+    // 2. Ép buộc lưu lên Firebase và CHỈ cập nhật UI khi thành công
+    tg.showConfirm(`Bạn nhận được ${Math.floor(earned)} cá. Xác nhận lưu?`, async (ok) => {
+        if(ok) {
+            await save(); // Đợi lưu xong
+            updateUI();
+            checkMining();
+            tg.showAlert("✅ Đã lưu dữ liệu thành công!");
+        }
+    });
 }
+
 
 // --- 3. BÁN CÁ & NÂNG CẤP ---
 
