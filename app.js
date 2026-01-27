@@ -1,4 +1,4 @@
-// --- 0. CẤU HÌNH FIREBASE CỦA BẠN ---
+// --- 0. CẤU HÌNH FIREBASE (Dựa trên ảnh của bạn) ---
 const firebaseConfig = {
   apiKey: "AIzaSyAc8psT5Up6aEu8VnCz1TZ4sSNTKmf8oA",
   authDomain: "telegram-bot-backup-11c83.firebaseapp.com",
@@ -6,19 +6,20 @@ const firebaseConfig = {
   projectId: "telegram-bot-backup-11c83",
   storageBucket: "telegram-bot-backup-11c83.firebasestorage.app",
   messagingSenderId: "363675104532",
-  appId: "1:363675104532:web:6c51d1c7318b765e897e01",
-  measurementId: "G-332FLBBX3B"
+  appId: "1:363675104532:web:6c51d1c7318b765e897e01"
 };
 
+// Khởi tạo Firebase Realtime Database
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const db = firebase.database(); 
 
+// Lấy thông tin từ Telegram Mini App
 const tg = window.Telegram.WebApp;
 tg.expand();
-
-// Đảm bảo mỗi User ID là duy nhất để không trùng dữ liệu
+// Sử dụng userId để đảm bảo thông tin không bị trùng
 const userId = String(tg.initDataUnsafe?.user?.id || '88888888'); 
 
+// Khung dữ liệu mặc định
 let data = {
     fish: 0,
     coins: 0,
@@ -29,31 +30,33 @@ let data = {
     completedTasks: []
 };
 
-// --- 1. HÀM XỬ LÝ DỮ LIỆU ---
+// --- 1. HÀM KHỞI TẠO & ĐỒNG BỘ ---
 
 async function init() {
-    try {
-        const doc = await db.collection("users").doc(userId).get();
-        if (doc.exists) {
-            data = { ...data, ...doc.data() };
+    // Tải dữ liệu người dùng từ Firebase
+    db.ref('users/' + userId).once('value').then((snapshot) => {
+        if (snapshot.exists()) {
+            data = { ...data, ...snapshot.val() };
         } else {
-            // Tạo mới người dùng nếu chưa có trong Database
-            await db.collection("users").doc(userId).set(data);
+            // Nếu là người dùng mới, khởi tạo dữ liệu lên server
+            db.ref('users/' + userId).set(data);
         }
         
-        // Cập nhật Link mời (Thay YourBotName bằng tên bot thật của bạn)
-        document.getElementById('ref-link').innerText = `https://t.me/YourBotName?start=${userId}`;
+        // Cập nhật Link mời bạn bè
+        const refLink = document.getElementById('ref-link');
+        if(refLink) refLink.innerText = `https://t.me/YourBotName?start=${userId}`;
         
         updateUI();
-        checkMining();
-    } catch (e) {
+        checkMining(); // Kiểm tra trạng thái đào cá ngay khi vào app
+    }).catch(e => {
         console.error("Lỗi khởi tạo:", e);
-    }
+        tg.showAlert("Lỗi kết nối máy chủ!");
+    });
 }
 
 async function save() {
-    // Lưu mọi thay đổi lên Firebase dựa theo ID Telegram
-    await db.collection("users").doc(userId).update(data);
+    // Lưu dữ liệu lên Realtime Database
+    await db.ref('users/' + userId).set(data);
 }
 
 function updateUI() {
@@ -69,7 +72,7 @@ function updateUI() {
     renderHistory();
 }
 
-// --- 2. LOGIC GAME ---
+// --- 2. LOGIC ĐÀO CÁ (3 TIẾNG & OFFLINE) ---
 
 function checkMining() {
     const btn = document.getElementById('btn-mine');
@@ -78,13 +81,15 @@ function checkMining() {
     if (!data.startTime) {
         btn.innerText = "RA KHƠI";
         btn.disabled = false;
+        btn.onclick = startMining;
         timer.classList.add('hidden');
         return;
     }
 
     const interval = setInterval(() => {
-        const elapsed = Date.now() - data.startTime;
-        const duration = 2 * 60 * 60 * 1000; // 2 tiếng
+        const now = Date.now();
+        const elapsed = now - data.startTime;
+        const duration = 3 * 60 * 60 * 1000; // Mốc 3 tiếng đào
 
         if (elapsed >= duration) {
             clearInterval(interval);
@@ -97,22 +102,52 @@ function checkMining() {
             btn.disabled = true;
             timer.classList.remove('hidden');
             const remain = Math.floor((duration - elapsed) / 1000);
-            const m = Math.floor(remain / 60);
+            const h = Math.floor(remain / 3600);
+            const m = Math.floor((remain % 3600) / 60);
             const s = remain % 60;
-            timer.innerText = `${m}:${s.toString().padStart(2, '0')}`;
+            timer.innerText = `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
     }, 1000);
 }
 
+function startMining() {
+    data.startTime = Date.now();
+    save(); // Lưu mốc bắt đầu để tính toán khi người dùng offline
+    checkMining();
+}
+
 async function claim() {
-    const earned = (2 * 60 * 60) * data.speed; // Số cá nhận được dựa trên tốc độ
+    const now = Date.now();
+    const duration = 3 * 60 * 60 * 1000;
+    const elapsed = now - data.startTime;
+
+    // Tính toán số cá dựa trên thời gian thực trôi qua (tối đa 3 tiếng)
+    const effectiveTimeSeconds = Math.min(elapsed, duration) / 1000;
+    const earned = effectiveTimeSeconds * data.speed;
+
     data.fish += earned;
-    data.startTime = null;
+    data.startTime = null; // Reset để ra khơi chuyến mới
+    
     await save();
     updateUI();
     checkMining();
-    tg.showAlert(`✅ Bạn đã nhận được ${Math.floor(earned)} cá!`);
+    tg.showAlert(`✅ Bạn nhận được ${Math.floor(earned).toLocaleString()} cá!`);
 }
+
+// --- 3. BÁN CÁ & NÂNG CẤP ---
+
+document.getElementById('btn-sell').onclick = async () => {
+    if (data.fish < 100) {
+        tg.showAlert("Cần tối thiểu 100 cá để bán!");
+        return;
+    }
+    const coinsEarned = data.fish * 0.005;
+    data.coins += coinsEarned;
+    data.fish = 0;
+    await save();
+    updateUI();
+    tg.showAlert(`✅ Đã nhận ${Math.floor(coinsEarned).toLocaleString()} xu!`);
+};
 
 document.getElementById('btn-upgrade').onclick = async () => {
     const cost = data.shipLevel * 2000;
@@ -128,21 +163,21 @@ document.getElementById('btn-upgrade').onclick = async () => {
     }
 };
 
-// --- 3. NHIỆM VỤ & BẠN BÈ ---
+// --- 4. NHIỆM VỤ & BẠN BÈ ---
 
 window.doTask = async (type, reward) => {
-    if (data.completedTasks.includes(type)) {
-        tg.showAlert("Bạn đã làm nhiệm vụ này rồi!");
+    if (data.completedTasks?.includes(type)) {
+        tg.showAlert("Nhiệm vụ này đã xong!");
         return;
     }
     window.open("https://t.me/your_channel", "_blank");
-    
     setTimeout(async () => {
+        if(!data.completedTasks) data.completedTasks = [];
         data.coins += reward;
         data.completedTasks.push(type);
         await save();
         updateUI();
-        tg.showAlert(`✅ Nhận thành công ${reward} xu!`);
+        tg.showAlert(`✅ Nhận thưởng thành công: +${reward} xu`);
     }, 2000);
 };
 
@@ -152,71 +187,74 @@ document.getElementById('btn-copy-ref').onclick = () => {
     tg.showAlert("✅ Đã sao chép link mời!");
 };
 
-// --- 4. RÚT TIỀN (ĐÃ BỎ THÔNG BÁO BOT) ---
+// --- 5. RÚT TIỀN (VỚI TÊN CHỦ TÀI KHOẢN) ---
 
 document.getElementById('btn-withdraw').onclick = async () => {
     const amount = parseInt(document.getElementById('wd-amount').value);
     const bank = document.getElementById('bank-name').value;
+    const owner = document.getElementById('bank-owner').value;
     const acc = document.getElementById('bank-acc').value;
 
     if (isNaN(amount) || amount < 20000) {
-        tg.showAlert("❌ Số tiền tối thiểu là 20,000đ!");
+        tg.showAlert("❌ Số tiền tối thiểu là 20.000đ!");
         return;
     }
     if (amount > data.coins) {
         tg.showAlert("❌ Số dư xu không đủ!");
         return;
     }
+    if (!owner || !bank || !acc) {
+        tg.showAlert("❌ Vui lòng điền đủ thông tin ngân hàng!");
+        return;
+    }
 
-    tg.showConfirm(`Bạn muốn rút ${amount.toLocaleString()}đ về ${bank}?`, async (ok) => {
+    tg.showConfirm(`Xác nhận rút ${amount.toLocaleString()}đ về ${bank}?`, async (ok) => {
         if (!ok) return;
 
-        // Lưu thông tin vào lịch sử trên Firebase để Admin kiểm tra
         data.coins -= amount;
+        if(!data.history) data.history = [];
         data.history.unshift({
-            amount: amount,
-            bank: bank,
-            account: acc, // Lưu cả STK vào DB để Admin biết đường chuyển tiền
+            amount, bank, owner, account: acc,
             status: 'Đang xử lý',
             time: new Date().toLocaleString('vi-VN')
         });
 
         await save();
         updateUI();
-        document.getElementById('wd-amount').value = ""; // Clear input
-        tg.showAlert("✅ Gửi lệnh rút thành công! Vui lòng chờ Admin duyệt trên hệ thống.");
+        document.getElementById('wd-amount').value = "";
+        tg.showAlert("✅ Lệnh rút đã được ghi nhận trên hệ thống!");
     });
 };
 
-// Điều hướng Tab
+// --- 6. ĐIỀU HƯỚNG TAB ---
+
 window.switchTab = (tab) => {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
     document.getElementById(`tab-${tab}`).classList.remove('hidden');
+    
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.replace('text-blue-400', 'text-gray-500'));
-    document.getElementById(`nav-${tab}`).classList.replace('text-gray-500', 'text-blue-400');
+    const activeBtn = document.getElementById(`nav-${tab}`);
+    if(activeBtn) activeBtn.classList.replace('text-gray-500', 'text-blue-400');
+    
+    updateUI();
 };
 
 function renderHistory() {
     const div = document.getElementById('history-list');
-    div.innerHTML = data.history.map(h => `
-        <div class="flex justify-between text-[10px] bg-[#0f172a] p-3 rounded-xl border border-slate-800">
+    if(!div) return;
+    div.innerHTML = (data.history || []).map(h => `
+        <div class="flex justify-between p-3 bg-[#0f172a] rounded-xl mb-2 border border-slate-800 text-[10px]">
             <div>
-                <p class="font-bold text-white">Rút -${h.amount.toLocaleString()}đ</p>
+                <p class="text-white font-bold">Rút -${h.amount.toLocaleString()}đ</p>
                 <p class="text-gray-500">${h.time}</p>
             </div>
             <div class="text-right">
                 <p class="text-yellow-500 font-bold">${h.status}</p>
-                <p class="text-gray-500 text-[8px]">${h.bank}</p>
+                <p class="text-gray-400 text-[8px]">${h.owner}</p>
             </div>
         </div>
-    `).join('') || '<p class="text-center text-gray-500 text-xs">Chưa có giao dịch</p>';
+    `).join('') || '<p class="text-center text-gray-500 py-4 text-xs">Chưa có giao dịch nào</p>';
 }
 
+// Khởi chạy khi tải xong trang
 window.onload = init;
-
-document.getElementById('btn-mine').onclick = () => {
-    if (data.startTime) return;
-    data.startTime = Date.now();
-    save();
-    checkMining();
-};
