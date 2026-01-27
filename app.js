@@ -33,26 +33,28 @@ let data = {
 // --- 1. HÀM KHỞI TẠO & ĐỒNG BỘ ---
 
 async function init() {
-    // Tải dữ liệu người dùng từ Firebase
-    db.ref('users/' + userId).once('value').then((snapshot) => {
-        if (snapshot.exists()) {
-            data = { ...data, ...snapshot.val() };
-        } else {
-            // Nếu là người dùng mới, khởi tạo dữ liệu lên server
-            db.ref('users/' + userId).set(data);
-        }
-        
-        // Cập nhật Link mời bạn bè
-        const refLink = document.getElementById('ref-link');
-        if(refLink) refLink.innerText = `https://t.me/YourBotName?start=${userId}`;
-        
-        updateUI();
-        checkMining(); // Kiểm tra trạng thái đào cá ngay khi vào app
-    }).catch(e => {
-        console.error("Lỗi khởi tạo:", e);
-        tg.showAlert("Lỗi kết nối máy chủ!");
+    // 1. Đăng nhập ẩn danh vào Firebase
+    firebase.auth().signInAnonymously().then(async (userCredential) => {
+        const fbUser = userCredential.user;
+        console.log("Firebase Auth ID:", fbUser.uid);
+
+        // 2. Lấy dữ liệu từ Realtime Database dựa trên userId Telegram
+        db.ref('users/' + userId).once('value').then((snapshot) => {
+            if (snapshot.exists()) {
+                data = { ...data, ...snapshot.val() };
+            } else {
+                // Nếu là user mới, tạo bản ghi với userId Telegram
+                db.ref('users/' + userId).set(data);
+            }
+            updateUI();
+            checkMining(); 
+        });
+    }).catch((error) => {
+        console.error("Lỗi Auth:", error);
+        tg.showAlert("Không thể xác thực với máy chủ!");
     });
 }
+
 
 async function save() {
     // Lưu dữ liệu lên Realtime Database
