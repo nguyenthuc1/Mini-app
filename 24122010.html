@@ -1,38 +1,62 @@
-// Dùng cấu hình Firebase giống hệt app.js của bạn
-const db = firebase.database();
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body style="font-family: Arial; padding: 20px; background: #f0f2f5;">
+    <h2>Danh sách lệnh rút tiền</h2>
+    <div id="admin-list">Đang tải...</div>
 
-function loadWithdrawals() {
-    const listDiv = document.getElementById('admin-list');
-    listDiv.innerHTML = "Đang tải...";
+    <script>
+        // Cấu hình Firebase của bạn
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc8psT5Up6aEu8VnCz1TZ4sSNTKmf8oA",
+            authDomain: "telegram-bot-backup-11c83.firebaseapp.com",
+            databaseURL: "https://telegram-bot-backup-11c83-default-rtdb.firebaseio.com",
+            projectId: "telegram-bot-backup-11c83",
+            storageBucket: "telegram-bot-backup-11c83.firebasestorage.app",
+            messagingSenderId: "363675104532",
+            appId: "1:363675104532:web:6c51d1c7318b765e897e01"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    db.ref('users').once('value', (snapshot) => {
-        let html = '';
-        snapshot.forEach((userSnap) => {
-            const userId = userSnap.key;
-            const userData = userSnap.val();
-            
-            if (userData.history) {
-                userData.history.forEach((order, index) => {
-                    if (order.status === 'Đang xử lý') {
-                        html += `
-                        <div class="order-item" style="border: 1px solid #ccc; margin: 10px; padding: 10px;">
-                            <p><b>User ID:</b> ${userId}</p>
-                            <p><b>Số tiền:</b> ${order.amount.toLocaleString()}đ</p>
-                            <p><b>Ngân hàng:</b> ${order.bank} - ${order.owner}</p>
-                            <p><b>STK:</b> ${order.account}</p>
-                            <button onclick="approve('${userId}', ${index})">Xác nhận đã chuyển</button>
-                        </div>`;
+        function loadWithdrawals() {
+            const listDiv = document.getElementById('admin-list');
+            db.ref('users').once('value', (snapshot) => {
+                let html = '';
+                snapshot.forEach((userSnap) => {
+                    const userId = userSnap.key;
+                    const userData = userSnap.val();
+                    if (userData.history) {
+                        userData.history.forEach((order, index) => {
+                            if (order.status === 'Đang xử lý') {
+                                // Sử dụng dấu ` (backtick) để bọc chuỗi HTML
+                                html += `
+                                <div style="background:white; padding:15px; margin-bottom:10px; border-radius:8px; border-left:5px solid #28a745;">
+                                    <p><b>User ID:</b> ${userId}</p>
+                                    <p><b>Số tiền:</b> ${order.amount.toLocaleString()}đ</p>
+                                    <p><b>Ngân hàng:</b> ${order.bank} - ${order.owner}</p>
+                                    <p><b>STK:</b> ${order.account}</p>
+                                    <button onclick="approve('${userId}', ${index})" style="background:#28a745; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">Xác nhận đã chuyển</button>
+                                </div>`;
+                            }
+                        });
                     }
                 });
-            }
-        });
-        listDiv.innerHTML = html || "Không có lệnh rút nào đang chờ.";
-    });
-}
+                listDiv.innerHTML = html || "Không có lệnh rút nào đang chờ.";
+            });
+        }
 
-// Hàm đổi trạng thái thành "Thành công" trên Firebase
-function approve(uid, index) {
-    db.ref(`users/${uid}/history/${index}`).update({ status: 'Thành công' });
-    alert("Đã duyệt!");
-    loadWithdrawals();
-}
+        function approve(uid, index) {
+            db.ref(`users/${uid}/history/${index}`).update({ status: 'Thành công' })
+              .then(() => { alert("Đã duyệt!"); loadWithdrawals(); });
+        }
+
+        window.onload = loadWithdrawals;
+    </script>
+</body>
+</html>
