@@ -5,13 +5,6 @@ const SUPABASE_KEY = 'sb_publishable_uwAvdH2z8vC56pwTgmXulQ_ciRf8iGf';
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
-// --- 0. CẤU HÌNH SUPABASE ---
-const SUPABASE_URL = 'https://icfirearfofkosodtmii.supabase.co'; 
-const SUPABASE_KEY = 'sb_publishable_uwAvdH2z8vC56pwTgmXulQ_ciRf8iGf';
-
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
 
 // --- 1. BIẾN TOÀN CỤC ---
 // Lấy userId một lần duy nhất ở đầu file
