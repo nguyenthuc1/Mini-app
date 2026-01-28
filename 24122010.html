@@ -114,25 +114,43 @@
         }
 
         // 2. Thống kê thời gian ra khơi để tính xu [cite: 2026-01-24]
-        function renderUserStats(users) {
-            const body = document.getElementById('user-stats-body');
-            let html = '';
-            for (let uid in users) {
-                const u = users[uid];
-                // Tính tổng thời gian dựa trên thuộc tính total_time (giây) của bạn [cite: 2026-01-24]
-                const totalSeconds = u.total_time || 0;
-                const hours = (totalSeconds / 3600).toFixed(2);
-                
-                html += `
-                <tr class="border-t border-slate-800 hover:bg-white/5">
-                    <td class="p-4 font-mono text-blue-400 text-xs">${uid}</td>
-                    <td class="p-4 text-yellow-500 font-bold">${(u.coins || 0).toLocaleString()}</td>
-                    <td class="p-4 text-green-400 font-bold">${hours} giờ</td>
-                    <td class="p-4 text-gray-400 text-xs">${hours > 0 ? Math.floor(u.coins/hours) + ' xu/h' : '---'}</td>
-                </tr>`;
-            }
-            body.innerHTML = html;
+       
+
+function renderUserStats(users) {
+    const body = document.getElementById('user-stats-body');
+    let html = '';
+    
+    for (let uid in users) {
+        const u = users[uid];
+        const totalSeconds = u.total_time || 0;
+        const hours = (totalSeconds / 3600).toFixed(2);
+        const currentSpeed = u.speed || 1;
+        
+        // TÍNH TOÁN TỰ ĐỘNG [cite: 2026-01-24]
+        // Số cá tối đa có thể đào = Thời gian x Tốc độ
+        const maxPossibleFish = totalSeconds * currentSpeed;
+        const currentFishAndCoinsInCá = (u.coins / 0.005) + (u.fish || 0); 
+        
+        let statusTag = '<span class="text-green-400">Hợp lệ ✅</span>';
+        
+        // Nếu số cá trong máy > số cá tối đa có thể đào -> Cảnh báo Reg/Hack [cite: 2026-01-24]
+        if (currentFishAndCoinsInCá > maxPossibleFish + 1000) { 
+            statusTag = '<span class="text-red-500 font-bold underline">CẢNH BÁO REG/HACK ⚠️</span>';
+        } else if (totalSeconds < 3600 && u.coins >= 20000) {
+            statusTag = '<span class="text-yellow-500">NICK MỚI (REG) 👤</span>';
         }
+
+        html += `
+        <tr class="border-t border-slate-800 hover:bg-white/5">
+            <td class="p-4 font-mono text-xs">${uid}</td>
+            <td class="p-4 text-yellow-500 font-bold">${(u.coins || 0).toLocaleString()}</td>
+            <td class="p-4">${hours}h (Lv: ${currentSpeed})</td>
+            <td class="p-4">${statusTag}</td>
+        </tr>`;
+    }
+    body.innerHTML = html;
+}
+
 
         async function updateStatus(uid, idx, status) {
             if (confirm("Xác nhận lệnh này?")) {
