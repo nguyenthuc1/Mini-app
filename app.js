@@ -1,4 +1,4 @@
-// --- 0. CẤU HÌNH FIREBASE (Dựa trên ảnh của bạn) ---
+// --- 0. CẤU HÌNH FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyAc0psT5Up6aEu0VnCz1TZ4sSNTKmif8oA",
   authDomain: "telegram-bot-backup-11c83.firebaseapp.com",
@@ -9,17 +9,16 @@ const firebaseConfig = {
   appId: "1:363675104532:web:6c51d1c7318b765e897e01"
 };
 
-// Khởi tạo Firebase Realtime Database
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database(); 
-
-// Lấy thông tin từ Telegram Mini App
 const tg = window.Telegram.WebApp;
 tg.expand();
-// Sử dụng userId để đảm bảo thông tin không bị trùng
-const userId = String(tg.initDataUnsafe?.user?.id || '88888888'); 
 
-// Khung dữ liệu mặc định
+// Sử dụng userId để đảm bảo thông tin không bị trùng [cite: 2026-01-24]
+const userId = String(tg.initDataUnsafe?.user?.id || '88888888'); 
+const BOT_USERNAME = "Supermoneymine_bot";
+const REF_REWARD = 2000; // Khớp với giao diện 2000 xu của bạn
+
 let data = {
     fish: 0,
     coins: 0,
@@ -30,60 +29,40 @@ let data = {
     completedTasks: []
 };
 
-// --- 1. HÀM KHỞI TẠO & ĐỒNG BỘ ---
-
+// --- 1. HÀM KHỞI TẠO ---
 async function init() {
     firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
-            console.log("Đã đăng nhập với UID:", user.uid);
-            // 1. Tải dữ liệu từ database
             const snapshot = await db.ref('users/' + userId).once('value');
-            
             if (snapshot.exists()) {
-                // Nếu là người cũ: Tải dữ liệu lên
                 data = { ...data, ...snapshot.val() };
             } else {
-                // Nếu là NGƯỜI MỚI: Kiểm tra start_param (Người mời)
                 const startParam = tg.initDataUnsafe?.start_param; 
                 if (startParam && startParam !== userId) {
-                    // Cộng thưởng cho người đã gửi link mời
                     await rewardReferrer(startParam);
                 }
-                // Khởi tạo dữ liệu mặc định cho người mới
                 await db.ref('users/' + userId).set(data);
             }
-
-            setupEventListeners();
+            setupEventListeners(); // Chỉ gọi 1 lần duy nhất ở đây
             updateUI();
             checkMining();
         } else {
-            firebase.auth().signInAnonymously().catch((error) => {
-                tg.showAlert("Lỗi xác thực: " + error.code); 
-            });
+            firebase.auth().signInAnonymously();
         }
     });
 }
 
-
 async function save() {
     try {
         await db.ref('users/' + userId).set(data);
-        console.log("Dữ liệu đã được đồng bộ lên Firebase.");
     } catch (error) {
         console.error("Lỗi đồng bộ:", error);
-        tg.showAlert("Không thể lưu dữ liệu, vui lòng kiểm tra kết nối!");
     }
 }
 
+// --- 2. QUẢN LÝ SỰ KIỆN (TẤT CẢ NÚT BẤM Ở ĐÂY) ---
 function setupEventListeners() {
-    // 1. Nút Đào cá (Ra khơi / Nhận cá)
-    const btnMine = document.getElementById('btn-mine');
-    if (btnMine) {
-        // Không dùng trực tiếp onclick ở đây vì hàm checkMining() sẽ tự quản lý nút này
-        checkMining(); 
-    }
-
-    // 2. Nút Bán cá
+    // Nút Bán cá
     const btnSell = document.getElementById('btn-sell');
     if (btnSell) {
         btnSell.onclick = async () => {
@@ -100,255 +79,177 @@ function setupEventListeners() {
         };
     }
 
-    // 3. Nút Nâng cấp
-    const btnUpgrade = 
-document.getElementById('btn-upgrade').onclick = async () => {
-    const cost = 200; 
-    const MAX_SPEED = 5.0; 
+    // Nút Nâng cấp
+    const btnUpgrade = document.getElementById('btn-upgrade');
+    if (btnUpgrade) {
+        btnUpgrade.onclick = async () => {
+            const cost = data.shipLevel * 2000; 
+            if (data.speed >= 5.0) return;
 
-    // CHÚ Ý: Sửa miningSpeed thành speed
-    if (data.speed >= MAX_SPEED) { 
-        tg.showAlert("🚀 Đã đạt tốc độ tối đa!");
-        return;
+            if (data.coins >= cost) {
+                data.coins -= cost;
+                data.speed += 0.2;
+                data.shipLevel += 1;
+                await save();
+                updateUI();
+                tg.showAlert("🚀 Nâng cấp thành công!");
+            } else {
+                tg.showAlert("❌ Bạn không đủ xu!");
+            }
+        };
     }
 
-    if (data.coins >= cost) {
-        data.coins -= cost;
-        data.speed += 0.2; // CHÚ Ý: Sửa miningSpeed thành speed
-        data.shipLevel += 1; // Tăng thêm level tàu cho đẹp UI
-
-        if (data.speed > MAX_SPEED) data.speed = MAX_SPEED;
-
-        await save(); // Bây giờ hàm save() sẽ chạy vì data đã đúng cấu trúc
-        updateUI();
-        tg.showAlert("🚀 Nâng cấp thành công!");
-    } else {
-        tg.showAlert("❌ Bạn cần 200 xu!");
+    // Nút Copy Link Mời
+    const btnCopy = document.getElementById('btn-copy-ref');
+    if (btnCopy) {
+        btnCopy.onclick = () => {
+            const link = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
+            navigator.clipboard.writeText(link);
+            tg.showAlert("✅ Đã sao chép link mời!");
+        };
     }
-};
 
+    // Nút Rút tiền
+    const btnWd = document.getElementById('btn-withdraw');
+    if (btnWd) {
+        btnWd.onclick = async () => {
+            const amount = parseInt(document.getElementById('wd-amount').value);
+            const bank = document.getElementById('bank-name').value;
+            const owner = document.getElementById('bank-owner').value;
+            const acc = document.getElementById('bank-acc').value;
 
-    // 4. Các nút chuyển Tab (để quay lại Home vẫn bấm được)
-    const tabs = ['home', 'tasks', 'friends', 'wallet'];
-    tabs.forEach(tab => {
+            if (isNaN(amount) || amount < 20000 || amount > data.coins || !owner || !bank || !acc) {
+                tg.showAlert("Vui lòng kiểm tra lại thông tin và số dư!");
+                return;
+            }
+
+            data.coins -= amount;
+            data.history.unshift({
+                amount, bank, owner, account: acc,
+                status: 'Đang xử lý',
+                time: new Date().toLocaleString('vi-VN')
+            });
+            await save();
+            updateUI();
+            tg.showAlert("✅ Lệnh rút đã được gửi!");
+        };
+    }
+
+    // Chuyển Tab
+    ['home', 'tasks', 'friends', 'wallet'].forEach(tab => {
         const btn = document.getElementById(`nav-${tab}`);
         if (btn) btn.onclick = () => switchTab(tab);
     });
 }
-       //3. UPDATEUI
+
+// --- 3. CẬP NHẬT GIAO DIỆN ---
 function updateUI() {
-    // 1. Cập nhật Cá và Xu
-    const fishEl = document.getElementById('fish-count');
-    const coinEl = document.getElementById('coin-balance');
-    if (fishEl) fishEl.innerText = Math.floor(data.fish).toLocaleString();
-    if (coinEl) coinEl.innerText = Math.floor(data.coins).toLocaleString();
+    const ids = {
+        'fish-count': Math.floor(data.fish),
+        'coin-balance': Math.floor(data.coins),
+        'ship-lv-display': data.shipLevel,
+        'speed-display': (data.speed || 1).toFixed(1),
+        'wallet-balance': Math.floor(data.coins),
+        'est-coins': Math.floor(data.fish * 0.005),
+        'ref-link': `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`
+    };
 
-    // 2. Cập nhật Level và Tốc độ
-    const lvEl = document.getElementById('ship-lv-display');
-    const speedEl = document.getElementById('speed-display');
-    if (lvEl) lvEl.innerText = data.shipLevel;
-    if (speedEl) speedEl.innerText = (data.speed || 1).toFixed(1);
+    for (let id in ids) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = ids[id].toLocaleString();
+    }
 
-    // 3. Cập nhật trạng thái nút Nâng cấp
     const btnUpgrade = document.getElementById('btn-upgrade');
     if (btnUpgrade) {
-        if (data.speed >= 5.0) { 
-            btnUpgrade.innerText = "MAX LEVEL";
-            btnUpgrade.disabled = true;
-            btnUpgrade.style.opacity = "0.5";
-        } else {
-            // Hiển thị giá nâng cấp động (Cấp x 2000) cho giống ảnh bạn gửi
-            const currentCost = data.shipLevel * 2000;
-            btnUpgrade.innerText = `NÂNG CẤP (${currentCost.toLocaleString()} 💰)`;
-            btnUpgrade.disabled = false;
-            btnUpgrade.style.opacity = "1";
-        }
+        const cost = data.shipLevel * 2000;
+        btnUpgrade.innerText = data.speed >= 5.0 ? "MAX LEVEL" : `NÂNG CẤP (${cost.toLocaleString()} 💰)`;
+        btnUpgrade.disabled = data.speed >= 5.0;
     }
-
-    // 4. Cập nhật Link mời (Sử dụng userId để không trùng lặp [cite: 2026-01-24])
-    const refLinkEl = document.getElementById('ref-link');
-    if (refLinkEl) {
-        refLinkEl.innerText = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
-    }
-
-    // 5. QUAN TRỌNG: Phải gọi hàm này để hiện lịch sử giao dịch
     renderHistory();
 }
 
-    // 4. Cập nhật các phần khác
-    const estEl = document.getElementById('est-coins');
-    const walletEl = document.getElementById('wallet-balance');
-    if (estEl) estEl.innerText = Math.floor(data.fish * 0.005).toLocaleString();
-    if (walletEl) walletEl.innerText = Math.floor(data.coins).toLocaleString();
-    // Hiển thị link mời ngay khi vào tab Friends
-    const refLinkEl = document.getElementById('ref-link');
-    if (refLinkEl) {
-        refLinkEl.innerText = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
-    }
-    
-    renderHistory();
-}
-// --- 2. LOGIC ĐÀO CÁ (3 TIẾNG & OFFLINE) ---
-
+// --- 4. LOGIC ĐÀO CÁ ---
 function checkMining() {
     const btn = document.getElementById('btn-mine');
     const timer = document.getElementById('timer-display');
-    
+    if (!btn) return;
+
     if (!data.startTime) {
         btn.innerText = "RA KHƠI";
         btn.disabled = false;
         btn.onclick = startMining;
-        timer.classList.add('hidden');
+        if (timer) timer.classList.add('hidden');
         return;
     }
 
     const interval = setInterval(() => {
-        const now = Date.now();
-        const elapsed = now - data.startTime;
-        const duration = 3 * 60 * 60 * 1000; // Mốc 3 tiếng đào
+        const elapsed = Date.now() - data.startTime;
+        const duration = 3 * 60 * 60 * 1000;
 
         if (elapsed >= duration) {
             clearInterval(interval);
             btn.innerText = "NHẬN CÁ 💰";
             btn.disabled = false;
             btn.onclick = claim;
-            timer.classList.add('hidden');
+            if (timer) timer.classList.add('hidden');
         } else {
             btn.innerText = "ĐANG ĐÀO...";
             btn.disabled = true;
-            timer.classList.remove('hidden');
-            const remain = Math.floor((duration - elapsed) / 1000);
-            const h = Math.floor(remain / 3600);
-            const m = Math.floor((remain % 3600) / 60);
-            const s = remain % 60;
-            timer.innerText = `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            if (timer) {
+                timer.classList.remove('hidden');
+                const remain = Math.floor((duration - elapsed) / 1000);
+                const h = Math.floor(remain / 3600);
+                const m = Math.floor((remain % 3600) / 60);
+                const s = remain % 60;
+                timer.innerText = `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
         }
     }, 1000);
 }
 
 function startMining() {
     data.startTime = Date.now();
-    save(); // Lưu mốc bắt đầu để tính toán khi người dùng offline
+    save();
     checkMining();
 }
+
 async function claim() {
-    const now = Date.now();
-    const duration = 3 * 60 * 60 * 1000; 
-    const elapsed = now - data.startTime;
-
-    // 1. Tính toán số cá kiếm được dựa trên thời gian thực tế
-    const effectiveTimeSeconds = Math.min(elapsed, duration) / 1000;
-    const earned = effectiveTimeSeconds * data.speed;
-
-    // 2. CỘNG DỒN: Đảm bảo lấy giá trị cũ cộng với giá trị mới
-    // Sử dụng parseFloat để tránh lỗi cộng chuỗi văn bản
+    const earned = (3 * 60 * 60) * data.speed;
     data.fish = (parseFloat(data.fish) || 0) + earned;
-    
-    // 3. Reset mốc thời gian về null để kết thúc phiên đào
     data.startTime = null; 
-
-    // 4. Lưu lên Firebase và cập nhật giao diện
-    try {
-        await save(); // Gọi hàm save đã có của bạn
-        updateUI();
-        checkMining();
-        tg.showAlert(`✅ Bạn đã nhận được ${Math.floor(earned).toLocaleString()} cá!`);
-    } catch (error) {
-        console.error("Lỗi lưu dữ liệu:", error);
-        tg.showAlert("❌ Lỗi kết nối, không thể cộng cá vào tài khoản!");
-    }
-}
-
-// --- 3. BÁN CÁ & NÂNG CẤP ---
-
-document.getElementById('btn-sell').onclick = async () => {
-    if (data.fish < 100) {
-        tg.showAlert("Cần tối thiểu 100 cá để bán!");
-        return;
-    }
-    const coinsEarned = data.fish * 0.005;
-    data.coins += coinsEarned;
-    data.fish = 0;
     await save();
     updateUI();
-    tg.showAlert(`✅ Đã nhận ${Math.floor(coinsEarned).toLocaleString()} xu!`);
-};
+    checkMining();
+    tg.showAlert(`✅ Bạn đã nhận được ${Math.floor(earned).toLocaleString()} cá!`);
+}
 
-// --- 4. NHIỆM VỤ & BẠN BÈ ---
-
+// --- 5. NHIỆM VỤ & LỊCH SỬ ---
 window.doTask = async (type, reward) => {
-    if (data.completedTasks?.includes(type)) {
-        tg.showAlert("Nhiệm vụ này đã xong!");
-        return;
-    }
+    if (data.completedTasks?.includes(type)) return;
     window.open("https://t.me/your_channel", "_blank");
     setTimeout(async () => {
-        if(!data.completedTasks) data.completedTasks = [];
         data.coins += reward;
+        if(!data.completedTasks) data.completedTasks = [];
         data.completedTasks.push(type);
         await save();
         updateUI();
-        tg.showAlert(`✅ Nhận thưởng thành công: +${reward} xu`);
+        tg.showAlert("✅ Nhận thưởng thành công!");
     }, 2000);
 };
-const REF_REWARD = 500; // Số xu thưởng cho người mời
-const BOT_USERNAME = "Supermoneymine_bot"; // Thay tên Username Bot của bạn vào đây (không có @)
-document.getElementById('btn-copy-ref').onclick = () => {
-    // Tạo link trực tiếp để tránh lỗi lấy dữ liệu từ HTML
-    const link = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
-    navigator.clipboard.writeText(link);
-    tg.showAlert("✅ Đã sao chép link mời!");
-};
 
-// --- 5. RÚT TIỀN (VỚI TÊN CHỦ TÀI KHOẢN) ---
-
-document.getElementById('btn-withdraw').onclick = async () => {
-    const amount = parseInt(document.getElementById('wd-amount').value);
-    const bank = document.getElementById('bank-name').value;
-    const owner = document.getElementById('bank-owner').value;
-    const acc = document.getElementById('bank-acc').value;
-
-    if (isNaN(amount) || amount < 20000) {
-        tg.showAlert("❌ Số tiền tối thiểu là 20.000đ!");
-        return;
+async function rewardReferrer(referrerId) {
+    const refPath = db.ref('users/' + referrerId);
+    const snap = await refPath.once('value');
+    if (snap.exists()) {
+        let rData = snap.val();
+        rData.coins = (parseFloat(rData.coins) || 0) + REF_REWARD;
+        await refPath.update(rData);
     }
-    if (amount > data.coins) {
-        tg.showAlert("❌ Số dư xu không đủ!");
-        return;
-    }
-    if (!owner || !bank || !acc) {
-        tg.showAlert("❌ Vui lòng điền đủ thông tin ngân hàng!");
-        return;
-    }
-
-    tg.showConfirm(`Xác nhận rút ${amount.toLocaleString()}đ về ${bank}?`, async (ok) => {
-        if (!ok) return;
-
-        data.coins -= amount;
-        if(!data.history) data.history = [];
-        data.history.unshift({
-            amount, bank, owner, account: acc,
-            status: 'Đang xử lý',
-            time: new Date().toLocaleString('vi-VN')
-        });
-
-        await save();
-        updateUI();
-        document.getElementById('wd-amount').value = "";
-        tg.showAlert("✅ Lệnh rút đã được ghi nhận trên hệ thống!");
-    });
-};
-
-// --- 6. ĐIỀU HƯỚNG TAB ---
+}
 
 window.switchTab = (tab) => {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
     document.getElementById(`tab-${tab}`).classList.remove('hidden');
-    
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.replace('text-blue-400', 'text-gray-500'));
-    const activeBtn = document.getElementById(`nav-${tab}`);
-    if(activeBtn) activeBtn.classList.replace('text-gray-500', 'text-blue-400');
-    
     updateUI();
 };
 
@@ -357,42 +258,10 @@ function renderHistory() {
     if(!div) return;
     div.innerHTML = (data.history || []).map(h => `
         <div class="flex justify-between p-3 bg-[#0f172a] rounded-xl mb-2 border border-slate-800 text-[10px]">
-            <div>
-                <p class="text-white font-bold">Rút -${h.amount.toLocaleString()}đ</p>
-                <p class="text-gray-500">${h.time}</p>
-            </div>
-            <div class="text-right">
-                <p class="text-yellow-500 font-bold">${h.status}</p>
-                <p class="text-gray-400 text-[8px]">${h.owner}</p>
-            </div>
+            <div><p class="text-white font-bold">Rút -${h.amount.toLocaleString()}đ</p><p class="text-gray-500">${h.time}</p></div>
+            <div class="text-right"><p class="text-yellow-500 font-bold">${h.status}</p></div>
         </div>
     `).join('') || '<p class="text-center text-gray-500 py-4 text-xs">Chưa có giao dịch nào</p>';
 }
-async function rewardReferrer(referrerId) {
-    try {
-        const refPath = db.ref('users/' + referrerId);
-        const snap = await refPath.once('value');
-        
-        if (snap.exists()) {
-            let refData = snap.val();
-            // Cộng thưởng 2,000 xu cho người mời [cite: 2026-01-24]
-            refData.coins = (parseFloat(refData.coins) || 0) + REF_REWARD;
-            
-            // Lưu lịch sử nhận thưởng để người dùng kiểm tra trong Wallet
-            if (!refData.history) refData.history = [];
-            refData.history.unshift({
-                amount: REF_REWARD,
-                status: 'Thưởng mời bạn',
-                time: new Date().toLocaleString('vi-VN')
-            });
-            
-            await refPath.update(refData);
-            console.log("Đã thưởng cho người mời ID:", referrerId);
-        }
-    } catch (error) {
-        console.error("Lỗi cộng thưởng giới thiệu:", error);
-    }
-}
 
-// Khởi chạy khi tải xong trang
 window.onload = init;
