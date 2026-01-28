@@ -33,7 +33,8 @@ async function init() {
             if (snap.exists()) {
                 data = Object.assign(data, snap.val());
                 
-                // Đảm bảo speed không vượt quá giới hạn
+                // Đảm bảo speed không vượt quá giới hạn và làm tròn
+                data.speed = Math.round((data.speed || 1) * 10) / 10;
                 if (data.speed > MAX_SPEED) {
                     data.speed = MAX_SPEED;
                 }
@@ -134,6 +135,9 @@ function handleSell() {
 }
 
 function handleUpgrade() {
+    // Làm tròn speed để tránh lỗi floating point
+    data.speed = Math.round(data.speed * 10) / 10;
+    
     // Kiểm tra đã đạt max level chưa
     if (data.speed >= MAX_SPEED) {
         tg.showAlert(`⚠️ Đã đạt tốc độ tối đa ${MAX_SPEED} cá/giây!`);
@@ -146,16 +150,20 @@ function handleUpgrade() {
         return;
     }
     
-    // Nâng cấp
-    data.coins -= UPGRADE_COST;
-    data.speed += SPEED_INCREMENT;
+    // Tính tốc độ mới
+    let newSpeed = data.speed + SPEED_INCREMENT;
+    newSpeed = Math.round(newSpeed * 10) / 10; // Làm tròn 1 chữ số thập phân
     
-    // Đảm bảo không vượt quá giới hạn
-    if (data.speed > MAX_SPEED) {
-        data.speed = MAX_SPEED;
+    // Kiểm tra không vượt quá MAX
+    if (newSpeed > MAX_SPEED) {
+        newSpeed = MAX_SPEED;
     }
     
+    // Nâng cấp
+    data.coins -= UPGRADE_COST;
+    data.speed = newSpeed;
     data.shipLevel += 1;
+    
     save(); 
     updateUI();
     tg.showAlert(`⚡ Nâng cấp thành công! Tốc độ: ${data.speed.toFixed(1)} cá/s`);
