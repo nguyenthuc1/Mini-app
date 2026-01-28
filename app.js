@@ -17,7 +17,7 @@ const db = firebase.database();
 const tg = window.Telegram.WebApp;
 const userId = String(tg.initDataUnsafe?.user?.id || '88888888');
 const BOT_USERNAME = "Supermoneymine_bot";
-const REF_REWARD = 2000; // THIẾU DÒNG NÀY LÀ LIỆT NÚT NGAY [cite: 2026-01-24]
+const REF_REWARD = 500; // THIẾU DÒNG NÀY LÀ LIỆT NÚT NGAY [cite: 2026-01-24]
 
 let data = { fish: 0, coins: 0, speed: 1, shipLevel: 1, startTime: null, history: [], completedTasks: [] };
 
@@ -74,7 +74,7 @@ function setupEventListeners() {
     });
 
     safeClick('btn-upgrade', async () => {
-        const cost = data.shipLevel * 2000;
+        const cost = data.shipLevel * 200;
         if (data.coins < cost) return tg.showAlert("Bạn cần " + cost + " xu!");
         if (data.speed >= 5.0) return tg.showAlert("Đã đạt cấp tối đa!");
         data.coins -= cost;
