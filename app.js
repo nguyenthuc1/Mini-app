@@ -42,6 +42,7 @@ async function init() {
                 if (snapshot.exists()) {
                     data = { ...data, ...snapshot.val() };
                 }
+setupEventListeners();
                 updateUI();
                 checkMining();
             });
