@@ -3,31 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Rút Tiền - Fish Mining</title>
+    <title>Admin Panel - Fish Mining Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 </head>
 <body class="bg-[#0b0f1a] text-white p-4 font-sans">
-    <div class="max-w-5xl mx-auto">
-        <header class="flex justify-between items-center mb-8 bg-[#161b2c] p-6 rounded-2xl border border-slate-700">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-wrap justify-between items-center mb-6 bg-[#161b2c] p-6 rounded-2xl border border-slate-700 gap-4">
             <div>
-                <h1 class="text-xl font-bold text-yellow-500 uppercase tracking-wider">Hệ Thống Duyệt Lệnh</h1>
-                <p class="text-xs text-gray-400 mt-1">Dữ liệu thời gian thực từ Firebase</p>
+                <h1 class="text-xl font-bold text-yellow-500 uppercase">Hệ Thống Quản Trị</h1>
+                <p class="text-xs text-gray-400 mt-1">Duyệt lệnh rút & Kiểm tra thời gian ra khơi [cite: 2026-01-24]</p>
             </div>
-            <button onclick="loadRequests()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-xl font-bold text-sm transition-all active:scale-95">
-                Làm mới 🔄
-            </button>
+            <div class="flex gap-2">
+                <button onclick="loadData()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-xl font-bold text-sm transition-all">Làm mới 🔄</button>
+            </div>
         </header>
 
-        <div class="grid grid-cols-1 gap-4" id="admin-list">
-            <div class="text-center py-20 text-gray-500 italic">Đang tải lệnh rút...</div>
+        <div class="flex gap-4 mb-6">
+            <button onclick="switchTab('withdraw')" id="tab-withdraw" class="px-6 py-2 rounded-full bg-yellow-600 font-bold text-sm">Lệnh rút tiền</button>
+            <button onclick="switchTab('users')" id="tab-users" class="px-6 py-2 rounded-full bg-[#161b2c] font-bold text-sm border border-slate-700">Thống kê User</button>
+        </div>
+
+        <div id="section-withdraw" class="grid grid-cols-1 gap-4">
+            <div class="text-center py-20 text-gray-500 italic">Đang tải dữ liệu...</div>
+        </div>
+
+        <div id="section-users" class="hidden overflow-x-auto bg-[#161b2c] rounded-2xl border border-slate-700">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-[#1e253a] text-gray-400 uppercase text-[10px] tracking-wider">
+                    <tr>
+                        <th class="p-4">User ID</th>
+                        <th class="p-4">Số dư Xu</th>
+                        <th class="p-4">Tổng Giờ Ra Khơi</th>
+                        <th class="p-4">Dự tính Xu/Giờ</th>
+                    </tr>
+                </thead>
+                <tbody id="user-stats-body"></tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        // CẤU HÌNH FIREBASE (Giữ nguyên config của bạn) [cite: 2026-01-24]
+        // Cấu hình Firebase [cite: 2026-01-24]
         const firebaseConfig = {
             apiKey: "AIzaSyAc0psT5Up6aEu0VnCz1TZ4sSNTKmif8oA",
             authDomain: "telegram-bot-backup-11c83.firebaseapp.com",
@@ -41,94 +60,107 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 1. TỰ ĐỘNG ĐĂNG NHẬP ĐỂ TRÁNH LỖI RULES [cite: 2026-01-24]
+        // Đăng nhập Admin [cite: 2026-01-24]
         firebase.auth().onAuthStateChanged(async (user) => {
-            if (!user) {
-                await firebase.auth().signInAnonymously();
-            } else {
-                console.log("Admin đã đăng nhập:", user.uid);
-                loadRequests();
-            }
+            if (!user) await firebase.auth().signInAnonymously();
+            else loadData();
         });
 
-        // 2. TẢI DANH SÁCH LỆNH RÚT [cite: 2026-01-24]
-        async function loadRequests() {
-            const container = document.getElementById('admin-list');
+        function switchTab(tab) {
+            document.getElementById('section-withdraw').classList.toggle('hidden', tab !== 'withdraw');
+            document.getElementById('section-users').classList.toggle('hidden', tab !== 'users');
+            document.getElementById('tab-withdraw').className = tab === 'withdraw' ? "px-6 py-2 rounded-full bg-yellow-600 font-bold text-sm" : "px-6 py-2 rounded-full bg-[#161b2c] border border-slate-700 font-bold text-sm";
+            document.getElementById('tab-users').className = tab === 'users' ? "px-6 py-2 rounded-full bg-yellow-600 font-bold text-sm" : "px-6 py-2 rounded-full bg-[#161b2c] border border-slate-700 font-bold text-sm";
+        }
+
+        async function loadData() {
             try {
                 const snap = await db.ref('users').once('value');
-                const allUsers = snap.val();
-                let html = '';
-                let hasRequest = false;
+                const allUsers = snap.val() || {};
+                renderWithdrawals(allUsers);
+                renderUserStats(allUsers);
+            } catch (e) { alert("Lỗi tải data: " + e.message); }
+        }
 
-                for (let uid in allUsers) {
-                    const userData = allUsers[uid];
-                    if (userData.history) {
-                        userData.history.forEach((item, index) => {
-                            // Chỉ hiển thị các lệnh có trạng thái "Đang xử lý" [cite: 2026-01-24]
-                            if (item.status === 'Đang xử lý') {
-                                hasRequest = true;
-                                html += createRequestCard(uid, item, index);
-                            }
-                        });
+        // 1. Hiển thị lệnh rút tiền [cite: 2026-01-24]
+        function renderWithdrawals(users) {
+            const container = document.getElementById('section-withdraw');
+            let html = '';
+            let count = 0;
+            for (let uid in users) {
+                (users[uid].history || []).forEach((item, idx) => {
+                    if (item.status === 'Đang xử lý') {
+                        count++;
+                        html += `
+                        <div class="bg-[#161b2c] border border-slate-700 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4">
+                            <div class="flex-1 min-w-[200px]">
+                                <p class="text-[10px] text-blue-400 font-mono italic">ID: ${uid}</p>
+                                <h3 class="font-bold text-lg text-white">${item.amount.toLocaleString()} VNĐ</h3>
+                                <div class="text-xs text-gray-400 mt-2 space-y-1">
+                                    <p>🏦 Ngân hàng: ${item.bank}</p>
+                                    <p>💳 STK: ${item.account}</p>
+                                    <p>👤 Tên: <span class="text-yellow-500 font-bold">${item.name || 'N/A'}</span></p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="updateStatus('${uid}', ${idx}, 'Thành công')" class="bg-green-600 px-4 py-2 rounded-lg text-xs font-bold">DUYỆT ✅</button>
+                                <button onclick="refundPrompt('${uid}', ${idx}, ${item.amount})" class="bg-red-600 px-4 py-2 rounded-lg text-xs font-bold">HỦY ❌</button>
+                            </div>
+                        </div>`;
                     }
-                }
-                container.innerHTML = hasRequest ? html : '<div class="text-center py-20 bg-[#161b2c] rounded-2xl text-gray-500">🎉 Hiện tại không có lệnh nào cần duyệt!</div>';
-            } catch (error) {
-                container.innerHTML = `<div class="bg-red-900/20 border border-red-500 p-6 rounded-2xl text-red-500 text-center">Lỗi: ${error.message}<br>Thức hãy kiểm tra lại Rules trên Firebase!</div>`;
+                });
+            }
+            container.innerHTML = count > 0 ? html : '<div class="text-center py-10 text-gray-500">Không có lệnh chờ!</div>';
+        }
+
+        // 2. Thống kê thời gian ra khơi để tính xu [cite: 2026-01-24]
+        function renderUserStats(users) {
+            const body = document.getElementById('user-stats-body');
+            let html = '';
+            for (let uid in users) {
+                const u = users[uid];
+                // Tính tổng thời gian dựa trên thuộc tính total_time (giây) của bạn [cite: 2026-01-24]
+                const totalSeconds = u.total_time || 0;
+                const hours = (totalSeconds / 3600).toFixed(2);
+                
+                html += `
+                <tr class="border-t border-slate-800 hover:bg-white/5">
+                    <td class="p-4 font-mono text-blue-400 text-xs">${uid}</td>
+                    <td class="p-4 text-yellow-500 font-bold">${(u.coins || 0).toLocaleString()}</td>
+                    <td class="p-4 text-green-400 font-bold">${hours} giờ</td>
+                    <td class="p-4 text-gray-400 text-xs">${hours > 0 ? Math.floor(u.coins/hours) + ' xu/h' : '---'}</td>
+                </tr>`;
+            }
+            body.innerHTML = html;
+        }
+
+        async function updateStatus(uid, idx, status) {
+            if (confirm("Xác nhận lệnh này?")) {
+                await db.ref(`users/${uid}/history/${idx}`).update({ status: status });
+                loadData();
             }
         }
 
-        function createRequestCard(uid, item, index) {
-            return `
-            <div class="bg-[#161b2c] border border-slate-700 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 hover:border-blue-500/50 transition-all">
-                <div class="flex-1 min-w-[250px]">
-                    <p class="text-[10px] text-blue-400 font-mono mb-1">USER ID: ${uid}</p>
-                    <h3 class="font-bold text-lg text-white mb-2">${item.amount.toLocaleString()} VNĐ</h3>
-                    <div class="text-xs space-y-1 text-gray-400">
-                        <p>🏦 <b>Ngân hàng:</b> ${item.bank}</p>
-                        <p>💳 <b>Số tài khoản:</b> ${item.account}</p>
-                        <p>👤 <b>Chủ tài khoản:</b> ${item.name || 'N/A'}</p>
-                        <p class="text-[10px] text-gray-500 mt-2 italic">🕒 Gửi lúc: ${item.time}</p>
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="updateStatus('${uid}', ${index}, 'Thành công')" class="bg-green-600 hover:bg-green-500 px-5 py-3 rounded-xl text-xs font-bold transition-all shadow-lg shadow-green-900/20">
-                        DUYỆT CHI ✅
-                    </button>
-                    <button onclick="refund('${uid}', ${index}, ${item.amount})" class="bg-red-600/20 hover:bg-red-600 border border-red-600 text-red-500 hover:text-white px-5 py-3 rounded-xl text-xs font-bold transition-all">
-                        HỦY & HOÀN TIỀN ❌
-                    </button>
-                </div>
-            </div>`;
-        }
+        // 3. Hoàn tiền kèm lý do [cite: 2026-01-24]
+        async function refundPrompt(uid, idx, amount) {
+            const reason = prompt("Nhập lý do hủy lệnh (ví dụ: Sai số tài khoản):", "Thông tin ngân hàng không chính xác");
+            if (reason === null) return;
 
-        // 3. DUYỆT LỆNH [cite: 2026-01-24]
-        async function updateStatus(uid, index, status) {
-            if (!confirm(`Xác nhận đã chuyển tiền cho user ${uid}?`)) return;
-            try {
-                await db.ref(`users/${uid}/history/${index}`).update({ status: status });
-                alert("Đã duyệt thành công!");
-                loadRequests();
-            } catch (e) { alert("Lỗi: " + e.message); }
-        }
-
-        // 4. HỦY LỆNH VÀ HOÀN TIỀN (CHỐNG MẤT TIỀN USER) [cite: 2026-01-24]
-        async function refund(uid, index, amount) {
-            if (!confirm("Hủy lệnh rút này và cộng lại tiền cho người chơi?")) return;
             try {
                 const userRef = db.ref(`users/${uid}`);
                 const snap = await userRef.once('value');
-                const userData = snap.val();
-                
-                // Cộng lại tiền vào số dư hiện tại của user [cite: 2026-01-23, 2026-01-24]
-                const newCoins = (userData.coins || 0) + amount;
-                
-                await userRef.update({ coins: newCoins });
-                await userRef.child(`history/${index}`).update({ status: 'Bị từ chối (Đã hoàn tiền)' });
-                
-                alert("Đã hủy lệnh và hoàn lại " + amount.toLocaleString() + " xu cho user!");
-                loadRequests();
-            } catch (e) { alert("Lỗi khi hoàn tiền: " + e.message); }
+                const currentCoins = snap.val().coins || 0;
+
+                await userRef.update({ coins: currentCoins + amount }); // Hoàn lại xu [cite: 2026-01-23, 2026-01-24]
+                await userRef.child(`history/${idx}`).update({ 
+                    status: 'Bị từ chối',
+                    admin_note: reason,
+                    time_refund: new Date().toLocaleString('vi-VN')
+                });
+
+                alert("Đã hoàn tiền và gửi thông báo lý do!");
+                loadData();
+            } catch (e) { alert(e.message); }
         }
     </script>
 </body>
