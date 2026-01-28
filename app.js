@@ -257,14 +257,28 @@ function switchTab(tab) {
     updateUI();
 }
 
+
 function renderHistory() {
     const div = document.getElementById('history-list');
     if(!div) return;
-    div.innerHTML = (data.history || []).map(h => `
-        <div class="flex justify-between p-3 bg-[#0f172a] rounded-xl mb-2 border border-slate-800 text-[10px]">
-            <div><p class="text-white font-bold">${h.status} +${h.amount.toLocaleString()}</p><p class="text-gray-500">${h.time}</p></div>
-        </div>
-    `).join('') || '<p class="text-center text-gray-500 py-4 text-xs">Chưa có giao dịch nào</p>';
+    div.innerHTML = (data.history || []).map(h => {
+        // Nếu status là 'Đang xử lý' thì hiện dấu trừ (Rút tiền)
+        const isWithdraw = h.status === 'Đang xử lý';
+        const sign = isWithdraw ? '-' : '+';
+        const color = isWithdraw ? 'text-yellow-500' : 'text-green-500';
+
+        return `
+            <div class="flex justify-between p-3 bg-[#0f172a] rounded-xl mb-2 border border-slate-800 text-[10px]">
+                <div>
+                    <p class="text-white font-bold">${h.status}</p>
+                    <p class="text-gray-500">${h.time}</p>
+                </div>
+                <div class="text-right">
+                    <p class="${color} font-bold">${sign}${h.amount.toLocaleString()} 💰</p>
+                </div>
+            </div>
+        `;
+    }).join('') || '<p class="text-center text-gray-500 py-4 text-xs">Chưa có giao dịch nào</p>';
 }
 
 window.onload = init;
