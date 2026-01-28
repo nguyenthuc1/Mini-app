@@ -115,23 +115,18 @@ function updateUI() {
     setText('speed-display', (data.speed || 1).toFixed(1));
     setText('wallet-balance', Math.floor(data.coins).toLocaleString());
     setText('ref-link', `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`);
-function updateUI() {
-    // ... các dòng code khác giữ nguyên ...
+  // Cập nhật hiển thị giá nâng cấp 200 xu trên giao diện [cite: 2026-01-24]
     const btnUpgrade = document.getElementById('btn-upgrade');
     if (btnUpgrade) {
         if (data.speed >= 5.0) {
             btnUpgrade.innerText = "MAX LEVEL";
             btnUpgrade.disabled = true;
         } else {
-            // Hiển thị cố định 200 xu trên nút [cite: 2026-01-24]
             btnUpgrade.innerText = "NÂNG CẤP (200 💰)";
             btnUpgrade.disabled = false;
         }
-    
-    
-    if (typeof renderHistory === 'function') renderHistory();
+    }
 }
-
 // --- 4. LOGIC ĐÀO CÁ ---
 function checkMining() {
     const btn = document.getElementById('btn-mine');
@@ -200,26 +195,27 @@ window.doTask = async (type, reward) => {
         tg.showAlert("✅ Nhận thưởng thành công!");
     }, 2000);
 };
-
 async function rewardReferrer(referrerId) {
     try {
         const refPath = db.ref('users/' + referrerId);
         const snap = await refPath.once('value');
         if (snap.exists()) {
             let rData = snap.val();
+            // Cộng thưởng theo biến REF_REWARD (500 xu) đã khai báo ở trên [cite: 2026-01-24]
             rData.coins = (parseFloat(rData.coins) || 0) + REF_REWARD;
+            
+            // Ghi nhận vào lịch sử của người mời
+            if(!rData.history) rData.history = [];
+            rData.history.unshift({
+                amount: REF_REWARD,
+                status: 'Thưởng mời bạn',
+                time: new Date().toLocaleString('vi-VN')
+            });
+
             await refPath.update(rData);
         }
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error("Lỗi thưởng người mời:", e); }
 }
-
-function switchTab(tab) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-    const target = document.getElementById(`tab-${tab}`);
-    if (target) target.classList.remove('hidden');
-    updateUI();
-}
-
 function renderHistory() {
     const div = document.getElementById('history-list');
     if(!div) return;
