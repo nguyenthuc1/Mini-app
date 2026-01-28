@@ -33,28 +33,37 @@ let data = {
 // --- 1. HÀM KHỞI TẠO & ĐỒNG BỘ ---
 
 async function init() {
-    // Chỉ khởi tạo khi Firebase đã sẵn sàng
-    firebase.auth().onAuthStateChanged((user) => {
+    firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
             console.log("Đã đăng nhập với UID:", user.uid);
-            // Tải dữ liệu từ database sau khi xác thực thành công
-            db.ref('users/' + userId).once('value').then((snapshot) => {
-                if (snapshot.exists()) {
-                    data = { ...data, ...snapshot.val() };
+            // 1. Tải dữ liệu từ database
+            const snapshot = await db.ref('users/' + userId).once('value');
+            
+            if (snapshot.exists()) {
+                // Nếu là người cũ: Tải dữ liệu lên
+                data = { ...data, ...snapshot.val() };
+            } else {
+                // Nếu là NGƯỜI MỚI: Kiểm tra start_param (Người mời)
+                const startParam = tg.initDataUnsafe?.start_param; 
+                if (startParam && startParam !== userId) {
+                    // Cộng thưởng cho người đã gửi link mời
+                    await rewardReferrer(startParam);
                 }
-setupEventListeners();
-                updateUI();
-                checkMining();
-            });
+                // Khởi tạo dữ liệu mặc định cho người mới
+                await db.ref('users/' + userId).set(data);
+            }
+
+            setupEventListeners();
+            updateUI();
+            checkMining();
         } else {
-            // Nếu chưa đăng nhập, thực hiện đăng nhập ẩn danh
             firebase.auth().signInAnonymously().catch((error) => {
-                console.error("Lỗi xác thực chi tiết:", error.code);
                 tg.showAlert("Lỗi xác thực: " + error.code); 
             });
         }
     });
 }
+
 
 async function save() {
     try {
@@ -161,8 +170,15 @@ function updateUI() {
     if (estEl) estEl.innerText = Math.floor(data.fish * 0.005).toLocaleString();
     if (walletEl) walletEl.innerText = Math.floor(data.coins).toLocaleString();
     
-    renderHistory();
+    renderHistory(); 
+    // Thêm đoạn này vào cuối hàm
+    const refLinkEl = document.getElementById('ref-link');
+    if (refLinkEl) {
+        refLinkEl.innerText = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
+    }
 }
+
+
 
 
 // --- 2. LOGIC ĐÀO CÁ (3 TIẾNG & OFFLINE) ---
@@ -268,9 +284,17 @@ window.doTask = async (type, reward) => {
         tg.showAlert(`✅ Nhận thưởng thành công: +${reward} xu`);
     }, 2000);
 };
+const REF_REWARD = 500; // Số xu thưởng cho người mời
+const BOT_USERNAME = "Supermoneymine_bot"; // Thay tên Username Bot của bạn vào đây (không có @)
 
+// Tạo link mời dựa trên userId của Telegram [cite: 2026-01-24]
+const refLink = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
+const refLinkEl = document.getElementById('ref-link');
+if (refLinkEl) refLinkEl.innerText = refLink;
+
+// Tìm đến đoạn nút copy-ref trong ảnh số 3
 document.getElementById('btn-copy-ref').onclick = () => {
-    const link = document.getElementById('ref-link').innerText;
+    const link = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
     navigator.clipboard.writeText(link);
     tg.showAlert("✅ Đã sao chép link mời!");
 };
