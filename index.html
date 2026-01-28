@@ -9,105 +9,348 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes float { 
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        @keyframes wave {
+            0% { transform: translateX(0) translateY(0); }
+            50% { transform: translateX(-25%) translateY(-10px); }
+            100% { transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
+        }
+        @keyframes bubble {
+            0% { transform: translateY(0) scale(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-100px) scale(1); opacity: 0; }
+        }
+        
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120'%3E%3Cpath d='M0,50 Q300,0 600,50 T1200,50 L1200,120 L0,120 Z' fill='%2306b6d4' opacity='0.3'/%3E%3C/svg%3E");
+            animation: wave 10s linear infinite;
+        }
+        
+        .wave:nth-child(2) {
+            animation-duration: 15s;
+            opacity: 0.5;
+            bottom: 10px;
+        }
+        
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        .bubble {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: bubble 3s ease-in infinite;
+        }
+        
+        .glow-button {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glow-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .glow-button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .gradient-border {
+            position: relative;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 2px;
+            background: linear-gradient(145deg, #3b82f6, #8b5cf6, #ec4899);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+    </style>
 </head>
-<body class="bg-[#0b0f1a] text-white font-sans select-none">
+<body class="bg-gradient-to-b from-[#0a0e1a] via-[#0f172a] to-[#1e293b] text-white font-sans select-none overflow-x-hidden">
 
-    <div id="loading-screen" style="position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #0f172a;">
-        <div style="width: 48px; height: 48px; border: 4px solid #3b82f6; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-        <p style="color: white; font-size: 14px; margin-top: 16px;">Đang tải dữ liệu...</p>
+    <!-- Loading Screen với hiệu ứng đẹp hơn -->
+    <div id="loading-screen" style="position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+        <div style="position: relative;">
+            <div style="width: 80px; height: 80px; border: 4px solid transparent; border-top-color: #3b82f6; border-right-color: #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 32px;">🐟</div>
+        </div>
+        <p style="color: white; font-size: 16px; margin-top: 24px; font-weight: 600;">Đang tải dữ liệu...</p>
+        <div style="width: 200px; height: 4px; background: rgba(59, 130, 246, 0.2); border-radius: 10px; margin-top: 16px; overflow: hidden;">
+            <div class="shimmer" style="width: 100%; height: 100%; background: linear-gradient(90deg, transparent, #3b82f6, transparent);"></div>
+        </div>
     </div>
 
-    <div class="p-4 bg-[#161b2c] rounded-b-3xl shadow-lg border-b border-slate-700 sticky top-0 z-50">
+    <!-- Header với gradient và hiệu ứng -->
+    <div class="p-4 bg-gradient-to-r from-[#1e293b] via-[#334155] to-[#1e293b] rounded-b-3xl shadow-2xl border-b-2 border-blue-500/30 sticky top-0 z-50 backdrop-blur-md">
         <div class="flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl">🐟</span>
-                <span id="fish-count" class="text-xl font-bold">0</span>
+            <div class="flex items-center gap-3 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 px-4 py-2 rounded-2xl border border-blue-500/30">
+                <span class="text-3xl animate-bounce" style="animation-duration: 2s;">🐟</span>
+                <div>
+                    <p class="text-[10px] text-gray-400 uppercase">Tổng cá</p>
+                    <span id="fish-count" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">0</span>
+                </div>
             </div>
-            <div class="flex items-center gap-2 bg-[#0f172a] px-3 py-1 rounded-full border border-yellow-500/50">
-                <span id="coin-balance" class="text-yellow-400 font-bold">0</span>
-                <span class="text-sm text-yellow-500">💰</span>
+            <div class="flex items-center gap-3 bg-gradient-to-r from-yellow-600/20 to-orange-600/20 px-4 py-2 rounded-2xl border border-yellow-500/30">
+                <span class="text-2xl">💰</span>
+                <div>
+                    <p class="text-[10px] text-gray-400 uppercase">Xu</p>
+                    <span id="coin-balance" class="text-xl font-bold text-yellow-400">0</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <main class="p-4 pb-28">
+    <main class="p-4 pb-32 relative">
+        <!-- Background decorations -->
+        <div class="fixed inset-0 pointer-events-none overflow-hidden opacity-20">
+            <div class="bubble" style="left: 10%; animation-delay: 0s;"></div>
+            <div class="bubble" style="left: 30%; animation-delay: 1s;"></div>
+            <div class="bubble" style="left: 50%; animation-delay: 2s;"></div>
+            <div class="bubble" style="left: 70%; animation-delay: 1.5s;"></div>
+            <div class="bubble" style="left: 90%; animation-delay: 0.5s;"></div>
+        </div>
+
+        <!-- TAB HOME -->
         <div id="tab-home" class="tab-content">
-            <div class="flex flex-col items-center py-6">
-                <div class="relative w-40 h-40 bg-blue-500/10 rounded-full flex items-center justify-center border-2 border-blue-500/20">
-                    <span class="text-6xl animate-bounce">🚢</span>
-                    <div class="absolute -bottom-2 bg-blue-600 px-3 py-1 rounded-full text-[10px] font-bold">LV.<span id="ship-lv-display">1</span></div>
-                </div>
-                <div class="flex flex-col items-center mt-8">
-                    <div id="timer-display" class="text-2xl font-mono text-yellow-400 mb-4 hidden">03:00:00</div>
-                    <button id="btn-mine" class="w-64 h-16 bg-blue-600 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-all">RA KHƠI</button>
-                </div>
-                <button id="btn-sell" class="mt-3 w-full py-3 bg-[#1e293b] rounded-2xl font-semibold border border-slate-700 text-sm">Bán cá</button>
-                <div class="w-full mt-8 bg-[#161b2c] p-4 rounded-2xl border border-slate-700">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-blue-400">Nâng cấp tàu</h3>
-                        <span class="text-[10px] text-gray-400">Tăng tốc độ khai thác</span>
+            <div class="flex flex-col items-center py-8">
+                <!-- Ship container với hiệu ứng nước -->
+                <div class="relative w-52 h-52 mb-8">
+                    <!-- Waves background -->
+                    <div class="absolute inset-0 rounded-full overflow-hidden">
+                        <div class="wave"></div>
+                        <div class="wave"></div>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-gray-400">Tốc độ: <b id="speed-display">1.0</b> cá/s</p>
+                    
+                    <!-- Ship circle -->
+                    <div class="relative w-full h-full bg-gradient-to-br from-blue-500/20 via-cyan-500/20 to-blue-600/20 rounded-full flex items-center justify-center border-4 border-blue-500/40 shadow-2xl" style="animation: pulse-glow 3s ease-in-out infinite;">
+                        <span class="text-8xl" style="animation: float 3s ease-in-out infinite;">🚢</span>
+                    </div>
+                    
+                    <!-- Ship Level Badge -->
+                    <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-2 rounded-full text-sm font-bold shadow-lg border-2 border-blue-400">
+                        LV.<span id="ship-lv-display">1</span>
+                    </div>
+                </div>
+
+                <!-- Timer Display -->
+                <div class="flex flex-col items-center mt-4 mb-6">
+                    <div id="timer-display" class="text-4xl font-mono font-bold text-transparent bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text mb-6 hidden">03:00:00</div>
+                    
+                    <!-- Mine Button với hiệu ứng đẹp -->
+                    <button id="btn-mine" class="glow-button w-72 h-20 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-3xl font-bold text-xl shadow-2xl active:scale-95 transition-all border-2 border-blue-400/50 relative overflow-hidden">
+                        <span class="relative z-10">⛵ RA KHƠI</span>
+                    </button>
+                </div>
+
+                <!-- Sell Button -->
+                <button id="btn-sell" class="card-hover mt-4 w-full py-4 bg-gradient-to-r from-emerald-600/20 to-green-600/20 rounded-2xl font-semibold border-2 border-emerald-500/30 text-base backdrop-blur-sm">
+                    <span class="text-xl mr-2">💵</span> Bán cá lấy xu
+                </button>
+
+                <!-- Upgrade Card -->
+                <div class="gradient-border w-full mt-8 p-6 rounded-3xl card-hover backdrop-blur-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">⚡</span>
+                            <div>
+                                <h3 class="font-bold text-lg bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Nâng cấp tàu</h3>
+                                <p class="text-xs text-gray-400">Tăng tốc độ khai thác</p>
+                            </div>
                         </div>
-                        <button id="btn-upgrade" class="px-5 py-2 bg-yellow-600 rounded-xl font-bold text-xs">200 💰</button>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-slate-800/50 to-slate-700/50 p-4 rounded-xl mb-4 border border-slate-600/30">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-300">Tốc độ hiện tại</span>
+                            <span class="text-xl font-bold text-cyan-400"><span id="speed-display">1.0</span> 🐟/s</span>
+                        </div>
+                    </div>
+
+                    <button id="btn-upgrade" class="glow-button w-full py-4 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-all border-2 border-yellow-400/50">
+                        <span class="text-2xl mr-2">💰</span> 200 Xu - Nâng cấp
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB TASKS -->
+        <div id="tab-tasks" class="tab-content hidden">
+            <div class="text-center mb-8">
+                <span class="text-6xl">📋</span>
+                <h2 class="text-2xl font-bold mt-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Nhiệm vụ hàng ngày</h2>
+                <p class="text-sm text-gray-400 mt-2">Hoàn thành để nhận thưởng</p>
+            </div>
+            
+            <div id="tasks-list" class="space-y-4">
+                <div class="gradient-border p-5 rounded-2xl card-hover backdrop-blur-sm">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-4">
+                            <span class="text-4xl">📢</span>
+                            <div>
+                                <p class="font-bold text-base">Tham gia Channel</p>
+                                <p class="text-xs text-gray-400 mt-1">Theo dõi kênh chính thức</p>
+                            </div>
+                        </div>
+                        <button class="glow-button px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl font-bold text-sm border-2 border-blue-400/50">
+                            +500 💰
+                        </button>
+                    </div>
+                </div>
+
+                <div class="gradient-border p-5 rounded-2xl card-hover backdrop-blur-sm">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-4">
+                            <span class="text-4xl">👥</span>
+                            <div>
+                                <p class="font-bold text-base">Mời 5 bạn bè</p>
+                                <p class="text-xs text-gray-400 mt-1">Nhận thưởng lớn</p>
+                            </div>
+                        </div>
+                        <button class="glow-button px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl font-bold text-sm border-2 border-green-400/50">
+                            +1000 💰
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="tab-tasks" class="tab-content hidden">
-            <h2 class="text-xl font-bold mb-6">Nhiệm vụ</h2>
-            <div id="tasks-list" class="space-y-3">
-                <div class="bg-[#161b2c] p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
-                    <p class="text-sm font-bold">Tham gia Channel</p>
-                    <button class="px-4 py-2 bg-blue-600 rounded-lg text-xs">+500 💰</button>
-                </div>
-            </div>
-        </div>
-
+        <!-- TAB FRIENDS -->
         <div id="tab-friends" class="tab-content hidden text-center">
-            <div class="py-6">
-                <span class="text-6xl">👥</span>
-                <h2 class="text-xl font-bold mt-4">Mời bạn bè</h2>
-                <div class="mt-8 p-4 bg-[#0f172a] rounded-2xl border border-dashed border-slate-600">
-                    <p id="ref-link" class="text-[10px] text-blue-400 break-all mb-3">Đang tạo link...</p>
-                    <button id="btn-copy-ref" class="px-6 py-2 bg-slate-700 rounded-lg text-xs font-bold">Sao chép Link</button>
+            <div class="py-8">
+                <span class="text-7xl inline-block" style="animation: float 3s ease-in-out infinite;">👥</span>
+                <h2 class="text-2xl font-bold mt-6 bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">Mời bạn bè</h2>
+                <p class="text-sm text-gray-400 mt-2">Nhận 10% hoa hồng từ bạn bè</p>
+                
+                <div class="mt-10 p-6 gradient-border rounded-3xl backdrop-blur-sm">
+                    <p class="text-xs text-gray-400 mb-3 uppercase font-semibold">Link giới thiệu của bạn</p>
+                    <div class="bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl mb-4 border border-slate-600/30">
+                        <p id="ref-link" class="text-xs text-blue-400 break-all font-mono">Đang tạo link...</p>
+                    </div>
+                    <button id="btn-copy-ref" class="glow-button w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl font-bold text-base border-2 border-purple-400/50">
+                        <span class="text-xl mr-2">📋</span> Sao chép Link
+                    </button>
+                </div>
+
+                <div class="mt-8 grid grid-cols-3 gap-4 text-center">
+                    <div class="gradient-border p-4 rounded-2xl backdrop-blur-sm">
+                        <p class="text-2xl font-bold text-yellow-400">0</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Bạn bè</p>
+                    </div>
+                    <div class="gradient-border p-4 rounded-2xl backdrop-blur-sm">
+                        <p class="text-2xl font-bold text-green-400">0</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Hoa hồng</p>
+                    </div>
+                    <div class="gradient-border p-4 rounded-2xl backdrop-blur-sm">
+                        <p class="text-2xl font-bold text-purple-400">0</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Tổng thu</p>
+                    </div>
                 </div>
             </div>
         </div>
 
+        <!-- TAB WALLET -->
         <div id="tab-wallet" class="tab-content hidden">
-            <h2 class="text-xl font-bold mb-6">Ví tiền</h2>
-            <div class="bg-gradient-to-br from-indigo-900 to-slate-900 p-6 rounded-3xl border border-indigo-500/30 mb-6 text-center">
-                <p id="wallet-balance" class="text-3xl font-bold">0</p>
-                <p class="text-xs text-gray-400 uppercase">Xu tích lũy</p>
+            <div class="text-center mb-8">
+                <span class="text-6xl">💰</span>
+                <h2 class="text-2xl font-bold mt-4 bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">Ví tiền</h2>
             </div>
-            <div class="space-y-3 bg-[#161b2c] p-4 rounded-2xl">
-                <input type="text" id="bank-name" placeholder="Ngân hàng" class="w-full bg-[#0b0f1a] p-3 rounded-xl text-sm border border-slate-700">
-                <input type="text" id="bank-owner" placeholder="Chủ tài khoản" class="w-full bg-[#0b0f1a] p-3 rounded-xl text-sm border border-slate-700">
-                <input type="text" id="bank-acc" placeholder="Số tài khoản" class="w-full bg-[#0b0f1a] p-3 rounded-xl text-sm border border-slate-700">
-                <input type="number" id="wd-amount" placeholder="Số tiền rút (Min 20,000)" class="w-full bg-[#0b0f1a] p-3 rounded-xl text-sm border border-slate-700">
-                <button id="btn-withdraw" class="w-full py-3 bg-green-600 rounded-xl font-bold">GỬI LỆNH RÚT</button>
+
+            <div class="bg-gradient-to-br from-indigo-900/50 via-purple-900/50 to-pink-900/50 p-8 rounded-3xl border-2 border-indigo-500/30 mb-8 text-center backdrop-blur-sm shadow-2xl">
+                <p class="text-sm text-gray-300 mb-2 uppercase font-semibold">Số dư khả dụng</p>
+                <p id="wallet-balance" class="text-5xl font-bold bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 bg-clip-text text-transparent">0</p>
+                <p class="text-xs text-gray-400 uppercase mt-2">Xu tích lũy</p>
             </div>
-            <div id="history-list" class="mt-6 space-y-2"></div>
+
+            <div class="gradient-border p-6 rounded-3xl backdrop-blur-sm mb-6">
+                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                    <span class="text-2xl">🏦</span> Thông tin rút tiền
+                </h3>
+                <div class="space-y-3">
+                    <input type="text" id="bank-name" placeholder="Tên ngân hàng (VD: Vietcombank)" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none">
+                    <input type="text" id="bank-owner" placeholder="Tên chủ tài khoản" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none">
+                    <input type="text" id="bank-acc" placeholder="Số tài khoản" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none">
+                    <input type="number" id="wd-amount" placeholder="Số tiền rút (Tối thiểu 20,000đ)" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none">
+                    <button id="btn-withdraw" class="glow-button w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl font-bold text-base border-2 border-green-400/50 mt-4">
+                        <span class="text-xl mr-2">✅</span> GỬI LỆNH RÚT TIỀN
+                    </button>
+                </div>
+            </div>
+
+            <div class="gradient-border p-6 rounded-3xl backdrop-blur-sm">
+                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                    <span class="text-2xl">📜</span> Lịch sử giao dịch
+                </h3>
+                <div id="history-list" class="space-y-3 max-h-96 overflow-y-auto"></div>
+            </div>
         </div>
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-[#161b2c]/90 backdrop-blur-md border-t border-slate-700 flex justify-around p-3 pb-8 z-50">
-        <button id="nav-home" class="nav-btn flex flex-col items-center text-blue-400">
-            <span class="text-xl">🏠</span><span class="text-[9px] mt-1 font-bold">HOME</span>
+    <!-- Navigation với gradient và hiệu ứng -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#1e293b]/95 via-[#334155]/95 to-[#1e293b]/95 backdrop-blur-xl border-t-2 border-blue-500/20 flex justify-around p-3 pb-8 z-50 shadow-2xl">
+        <button id="nav-home" class="nav-btn flex flex-col items-center text-blue-400 transition-all">
+            <span class="text-2xl mb-1">🏠</span>
+            <span class="text-[10px] font-bold">HOME</span>
         </button>
-        <button id="nav-tasks" class="nav-btn flex flex-col items-center text-gray-500">
-            <span class="text-xl">📋</span><span class="text-[9px] mt-1 font-bold">TASKS</span>
+        <button id="nav-tasks" class="nav-btn flex flex-col items-center text-gray-500 transition-all hover:text-purple-400">
+            <span class="text-2xl mb-1">📋</span>
+            <span class="text-[10px] font-bold">TASKS</span>
         </button>
-        <button id="nav-friends" class="nav-btn flex flex-col items-center text-gray-500">
-            <span class="text-xl">🤝</span><span class="text-[9px] mt-1 font-bold">FRIENDS</span>
+        <button id="nav-friends" class="nav-btn flex flex-col items-center text-gray-500 transition-all hover:text-pink-400">
+            <span class="text-2xl mb-1">🤝</span>
+            <span class="text-[10px] font-bold">FRIENDS</span>
         </button>
-        <button id="nav-wallet" class="nav-btn flex flex-col items-center text-gray-500">
-            <span class="text-xl">💰</span><span class="text-[9px] mt-1 font-bold">WALLET</span>
+        <button id="nav-wallet" class="nav-btn flex flex-col items-center text-gray-500 transition-all hover:text-yellow-400">
+            <span class="text-2xl mb-1">💰</span>
+            <span class="text-[10px] font-bold">WALLET</span>
         </button>
     </nav>
 
