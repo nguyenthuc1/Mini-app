@@ -137,7 +137,7 @@ function updateUI() {
     renderHistory();
 }
 
-function switchTab(tab) {
+window.switchTab = function(tab) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
     const target = document.getElementById(`tab-${tab}`);
     if (target) target.classList.remove('hidden');
