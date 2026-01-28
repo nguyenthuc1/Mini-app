@@ -33,13 +33,13 @@
         <div id="section-users" class="hidden overflow-x-auto bg-[#161b2c] rounded-2xl border border-slate-700">
             <table class="w-full text-left text-sm">
                 <thead class="bg-[#1e253a] text-gray-400 uppercase text-[10px] tracking-wider">
-                    <tr>
-                        <th class="p-4">User ID</th>
-                        <th class="p-4">Số dư Xu</th>
-                        <th class="p-4">Tổng Giờ Ra Khơi</th>
-                        <th class="p-4">Dự tính Xu/Giờ</th>
-                    </tr>
-                </thead>
+    <tr>
+        <th class="p-4">User ID</th>
+        <th class="p-4">Số dư Xu</th>
+        <th class="p-4">Thời gian (Lv)</th>
+        <th class="p-4">Đánh giá & Refs</th>
+    </tr>
+</thead>
                 <tbody id="user-stats-body"></tbody>
             </table>
         </div>
@@ -114,47 +114,42 @@
         }
 
         // 2. Thống kê thời gian ra khơi để tính xu [cite: 2026-01-24]
-       
-
-function renderUserStats(users) {
+      function renderUserStats(users) {
     const body = document.getElementById('user-stats-body');
     let html = '';
-    
+
     for (let uid in users) {
         const u = users[uid];
         const totalSeconds = u.total_time || 0;
         const hours = (totalSeconds / 3600).toFixed(2);
         const currentSpeed = u.speed || 1;
-        
+
         // TÍNH TOÁN TỰ ĐỘNG [cite: 2026-01-24]
-        // Số cá tối đa có thể đào = Thời gian x Tốc độ
         const maxPossibleFish = totalSeconds * currentSpeed;
         const currentFishAndCoinsInCá = (u.coins / 0.005) + (u.fish || 0); 
-        
+
         let statusTag = '<span class="text-green-400">Hợp lệ ✅</span>';
-        
-        // Nếu số cá trong máy > số cá tối đa có thể đào -> Cảnh báo Reg/Hack [cite: 2026-01-24]
+
         if (currentFishAndCoinsInCá > maxPossibleFish + 1000) { 
             statusTag = '<span class="text-red-500 font-bold underline">CẢNH BÁO REG/HACK ⚠️</span>';
         } else if (totalSeconds < 3600 && u.coins >= 20000) {
             statusTag = '<span class="text-yellow-500">NICK MỚI (REG) 👤</span>';
         }
 
+        // CHỈ DÙNG 1 LẦN html += và đóng đúng dấu ngoặc backtick (`)
         html += `
         <tr class="border-t border-slate-800 hover:bg-white/5">
-            <td class="p-4 font-mono text-xs">${uid}</td>
+            <td class="p-4 font-mono text-xs text-blue-400">${uid}</td>
             <td class="p-4 text-yellow-500 font-bold">${(u.coins || 0).toLocaleString()}</td>
-            <td class="p-4">${hours}h (Lv: ${currentSpeed})</td>
-            html += `
-<td class="p-4 text-xs">
-    ${statusTag} <br> 
-    <span class="text-blue-400">Mời: ${u.total_refs || 0} người</span>
-</td>`;
-
+            <td class="p-4">${hours}h <span class="text-[10px] text-gray-500">(Lv: ${currentSpeed})</span></td>
+            <td class="p-4 text-xs">
+                ${statusTag} <br> 
+                <span class="text-blue-400 font-bold">Mời: ${u.total_refs || 0} người</span>
+            </td>
+        </tr>`;
     }
     body.innerHTML = html;
 }
-
 
         async function updateStatus(uid, idx, status) {
             if (confirm("Xác nhận lệnh này?")) {
