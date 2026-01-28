@@ -123,6 +123,7 @@ function setupEventListeners() { // Sửa 'Function' thành 'function' viết th
         data.coins -= amount;
         const newHistory = {
             amount: amount,
+name: name,
             bank: bank,
             account: account,
             status: 'Đang xử lý',
