@@ -20,29 +20,41 @@ let data = { fish: 0, coins: 0, speed: 1, shipLevel: 1, startTime: null, history
 
 // --- 1. KHỞI TẠO ---
 async function init() {
-    console.log("Đang kết nối Firebase cho User:", userId);
+    console.log("Đang kết nối Firebase cho User:", userId); [cite: 2026-01-24]
     firebase.auth().onAuthStateChanged(async (user) => {
         if (!user) {
-            firebase.auth().signInAnonymously();
+            firebase.auth().signInAnonymously(); [cite: 2026-01-24]
             return;
         }
         try {
-            const snap = await db.ref('users/' + userId).once('value');
+            const snap = await db.ref('users/' + userId).once('value'); [cite: 2026-01-24]
             if (snap.exists()) {
-                data = { ...data, ...snap.val() };
-                console.log("Đã tải dữ liệu thành công!");
+                data = { ...data, ...snap.val() }; [cite: 2026-01-24]
+                console.log("Đã tải dữ liệu thành công!"); [cite: 2026-01-24]
             } else {
-                console.log("User mới, đang tạo profile...");
-                const startParam = tg.initDataUnsafe?.start_param;
-                if (startParam && startParam !== userId) await rewardReferrer(startParam);
-                await db.ref('users/' + userId).set(data);
+                console.log("User mới, đang tạo profile..."); [cite: 2026-01-24]
+                const startParam = tg.initDataUnsafe?.start_param; [cite: 2026-01-24]
+                if (startParam && startParam !== userId) await rewardReferrer(startParam); [cite: 2026-01-24]
+                await db.ref('users/' + userId).set(data); [cite: 2026-01-24]
             }
-            setupEventListeners();
-            updateUI();
-            checkMining();
+            
+            // Khởi tạo các chức năng sau khi có data [cite: 2026-01-24]
+            setupEventListeners(); [cite: 2026-01-24]
+            updateUI(); [cite: 2026-01-24]
+            checkMining(); [cite: 2026-01-24]
+
+            // --- CHÈN VÀO ĐÂY: ẨN MÀN HÌNH LOADING --- [cite: 2026-01-24]
+            const loader = document.getElementById('loading-screen'); [cite: 2026-01-24]
+            if (loader) {
+                loader.style.display = 'none'; [cite: 2026-01-24]
+                console.log("Đã ẩn màn hình Loading."); [cite: 2026-01-24]
+            }
+
         } catch (e) { 
-            console.error("Lỗi khởi tạo:", e);
-            alert("Lỗi kết nối dữ liệu!"); 
+            console.error("Lỗi khởi tạo:", e); [cite: 2026-01-24]
+            // Nếu lỗi cũng nên ẩn loading để user thấy lỗi hoặc thử lại
+            const loader = document.getElementById('loading-screen'); [cite: 2026-01-24]
+            if (loader) loader.style.display = 'none'; [cite: 2026-01-24]
         }
     });
 }
