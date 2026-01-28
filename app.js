@@ -270,10 +270,6 @@ function switchTab(tab) {
     if (target) target.classList.remove('hidden');
     updateUI();
 }
-
-
-function renderHistory() {
-  
 function renderHistory() {
     const div = document.getElementById('history-list');
     if(!div) return;
