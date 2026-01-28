@@ -132,7 +132,14 @@ function updateUI() {
     
     document.getElementById('ship-lv-display').innerText = data.shipLevel;
     document.getElementById('speed-display').innerText = data.speed.toFixed(1);
-    document.getElementById('upgrade-cost').innerText = (data.shipLevel * 2000).toLocaleString();
+   const btnUpgrade = document.getElementById('btn-upgrade');
+if (data.miningSpeed >= 5.0) {
+    btnUpgrade.innerText = "MAX LEVEL";
+    btnUpgrade.disabled = true;
+} else {
+    btnUpgrade.innerText = "NÂNG CẤP (200 💰)";
+    btnUpgrade.disabled = false;
+}
     document.getElementById('est-coins').innerText = Math.floor(data.fish * 0.005).toLocaleString();
     
     document.getElementById('wallet-balance').innerText = Math.floor(data.coins).toLocaleString();
