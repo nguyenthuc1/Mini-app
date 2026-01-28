@@ -127,7 +127,7 @@ function updateUI() {
             btnUpgrade.innerText = "NÂNG CẤP (200 💰)";
             btnUpgrade.disabled = false;
         }
-    }
+    
     
     if (typeof renderHistory === 'function') renderHistory();
 }
