@@ -44,12 +44,16 @@ async function init() {
 }
 
 // --- 2. GÁN SỰ KIỆN ---
-function setupEventListeners() {
+function setupEventListeners() { // Sửa 'Function' thành 'function' viết thường
     const safeClick = (id, fn) => {
         const el = document.getElementById(id);
-        if (el) { el.onclick = null; el.onclick = fn; }
+        if (el) { 
+            el.onclick = null; 
+            el.onclick = fn; 
+        }
     };
 
+    // 1. Bán cá
     safeClick('btn-sell', async () => {
         if (data.fish < 100) return tg.showAlert("Cần tối thiểu 100 cá!");
         const earned = data.fish * 0.005;
@@ -60,29 +64,63 @@ function setupEventListeners() {
         tg.showAlert(`✅ Đã nhận ${Math.floor(earned).toLocaleString()} xu!`);
     });
 
+    // 2. Nâng cấp tàu
     safeClick('btn-upgrade', async () => {
-        const cost = 200; // Giá nâng cấp 200 xu [cite: 2026-01-24]
+        const cost = 200; 
         if (data.coins < cost) return tg.showAlert("Bạn cần 200 xu!");
         if (data.speed >= 5.0) return tg.showAlert("Đã đạt cấp tối đa!");
         data.coins -= cost;
         data.speed += 0.2;
-        data.shipLevel += 1; // Tăng level tàu [cite: 2026-01-24]
+        data.shipLevel += 1;
         await save();
         updateUI();
         tg.showAlert("🚀 Nâng cấp thành công!");
     });
 
+    // 3. Copy Ref
     safeClick('btn-copy-ref', () => {
         const link = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
         navigator.clipboard.writeText(link);
         tg.showAlert("✅ Đã copy link giới thiệu!");
     });
 
+    // 4. Chuyển Tab
     ['home', 'tasks', 'friends', 'wallet'].forEach(tab => {
         safeClick(`nav-${tab}`, () => switchTab(tab));
     });
-}
 
+    // 5. Rút tiền
+    safeClick('btn-withdraw', async () => {
+        const amount = parseInt(document.getElementById('withdraw-amount')?.value);
+        const bank = document.getElementById('withdraw-bank')?.value;
+        const account = document.getElementById('withdraw-account')?.value;
+        const name = document.getElementById('withdraw-name')?.value;
+
+        if (!amount || amount < 20000) return tg.showAlert("Số tiền rút tối thiểu là 20,000đ!");
+        if (!bank || !account || !name) return tg.showAlert("Vui lòng điền đầy đủ thông tin!");
+        if (data.coins < amount) return tg.showAlert("Số dư xu không đủ!");
+
+        data.coins -= amount;
+        const newHistory = {
+            amount: amount,
+            bank: bank,
+            account: account,
+            name: name,
+            status: 'Đang xử lý',
+            time: new Date().toLocaleString('vi-VN')
+        };
+        
+        if (!data.history) data.history = [];
+        data.history.unshift(newHistory);
+
+        await save();
+        updateUI();
+        tg.showAlert("✅ Gửi yêu cầu rút tiền thành công!");
+        document.getElementById('withdraw-amount').value = '';
+    });
+} // Đóng hàm setupEventListeners ở đây
+
+// Đưa hàm save ra ngoài để các hàm khác có thể dùng chung [cite: 2026-01-24]
 async function save() {
     await db.ref('users/' + userId).set(data);
 }
