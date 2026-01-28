@@ -65,7 +65,56 @@ async function save() {
     }
 }
 
+function setupEventListeners() {
+    // 1. Nút Đào cá (Ra khơi / Nhận cá)
+    const btnMine = document.getElementById('btn-mine');
+    if (btnMine) {
+        // Không dùng trực tiếp onclick ở đây vì hàm checkMining() sẽ tự quản lý nút này
+        checkMining(); 
+    }
 
+    // 2. Nút Bán cá
+    const btnSell = document.getElementById('btn-sell');
+    if (btnSell) {
+        btnSell.onclick = async () => {
+            if (data.fish < 100) {
+                tg.showAlert("Cần tối thiểu 100 cá để bán!");
+                return;
+            }
+            const coinsEarned = data.fish * 0.005;
+            data.coins += coinsEarned;
+            data.fish = 0;
+            await save();
+            updateUI();
+            tg.showAlert(`✅ Đã nhận ${Math.floor(coinsEarned).toLocaleString()} xu!`);
+        };
+    }
+
+    // 3. Nút Nâng cấp
+    const btnUpgrade = document.getElementById('btn-upgrade');
+    if (btnUpgrade) {
+        btnUpgrade.onclick = async () => {
+            const cost = data.shipLevel * 2000;
+            if (data.coins >= cost) {
+                data.coins -= cost;
+                data.shipLevel += 1;
+                data.speed += 0.2;
+                await save();
+                updateUI();
+                tg.showAlert("🚀 Nâng cấp thành công!");
+            } else {
+                tg.showAlert("❌ Bạn không đủ xu!");
+            }
+        };
+    }
+
+    // 4. Các nút chuyển Tab (để quay lại Home vẫn bấm được)
+    const tabs = ['home', 'tasks', 'friends', 'wallet'];
+    tabs.forEach(tab => {
+        const btn = document.getElementById(`nav-${tab}`);
+        if (btn) btn.onclick = () => switchTab(tab);
+    });
+}
 
 function updateUI() {
     document.getElementById('fish-count').innerText = Math.floor(data.fish).toLocaleString();
