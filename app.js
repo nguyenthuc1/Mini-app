@@ -92,22 +92,31 @@ function setupEventListeners() {
     }
 
     // 3. Nút Nâng cấp
-    const btnUpgrade = document.getElementById('btn-upgrade');
-    if (btnUpgrade) {
-        btnUpgrade.onclick = async () => {
-            const cost = data.shipLevel * 2000;
-            if (data.coins >= cost) {
-                data.coins -= cost;
-                data.shipLevel += 1;
-                data.speed += 0.2;
-                await save();
-                updateUI();
-                tg.showAlert("🚀 Nâng cấp thành công!");
-            } else {
-                tg.showAlert("❌ Bạn không đủ xu!");
-            }
-        };
+    const btnUpgrade = 
+document.getElementById('btn-upgrade').onclick = async () => {
+    const cost = 200; // Cố định 200 xu theo ý bạn
+    const MAX_SPEED = 5.0; // Giới hạn 5 cá/giây
+
+    // Kiểm tra nếu đã đạt giới hạn
+    if (data.miningSpeed >= MAX_SPEED) {
+        tg.showAlert("🚀 Đã đạt tốc độ tối đa!");
+        return;
     }
+
+    if (data.coins >= cost) {
+        data.coins -= cost;
+        data.miningSpeed += 0.2; // Mỗi lần cộng 0.2
+        
+        // Chặn không cho vượt quá 5.0
+        if (data.miningSpeed > MAX_SPEED) data.miningSpeed = MAX_SPEED;
+
+        await save(); // Lưu lên Firebase
+        updateUI();
+        tg.showAlert("🚀 Nâng cấp thành công!");
+    } else {
+        tg.showAlert("❌ Bạn cần 200 xu!");
+    }
+};
 
     // 4. Các nút chuyển Tab (để quay lại Home vẫn bấm được)
     const tabs = ['home', 'tasks', 'friends', 'wallet'];
@@ -215,21 +224,30 @@ document.getElementById('btn-sell').onclick = async () => {
     updateUI();
     tg.showAlert(`✅ Đã nhận ${Math.floor(coinsEarned).toLocaleString()} xu!`);
 };
-
 document.getElementById('btn-upgrade').onclick = async () => {
-    const cost = data.shipLevel * 2000;
+    const cost = 200; // Cố định 200 xu theo ý bạn
+    const MAX_SPEED = 5.0; // Giới hạn 5 cá/giây
+
+    // Kiểm tra nếu đã đạt giới hạn
+    if (data.miningSpeed >= MAX_SPEED) {
+        tg.showAlert("🚀 Đã đạt tốc độ tối đa!");
+        return;
+    }
+
     if (data.coins >= cost) {
         data.coins -= cost;
-        data.shipLevel += 1;
-        data.speed += 0.2;
-        await save();
+        data.miningSpeed += 0.2; // Mỗi lần cộng 0.2
+        
+        // Chặn không cho vượt quá 5.0
+        if (data.miningSpeed > MAX_SPEED) data.miningSpeed = MAX_SPEED;
+
+        await save(); // Lưu lên Firebase
         updateUI();
         tg.showAlert("🚀 Nâng cấp thành công!");
     } else {
-        tg.showAlert("❌ Bạn không đủ xu!");
+        tg.showAlert("❌ Bạn cần 200 xu!");
     }
 };
-
 // --- 4. NHIỆM VỤ & BẠN BÈ ---
 
 window.doTask = async (type, reward) => {
