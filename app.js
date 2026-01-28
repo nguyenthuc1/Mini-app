@@ -206,5 +206,13 @@ async function rewardReferrer(referrerId) {
         await refPath.set(rData); [cite: 2026-01-24]
     }
 }
+// Lệnh ép buộc ẩn loading sau 4 giây để cứu vãn UI [cite: 2026-01-24]
+setTimeout(() => {
+    const loader = document.getElementById('loading-screen');
+    if (loader && loader.style.display !== 'none') {
+        loader.style.display = 'none';
+        console.log("Đã ép buộc ẩn loading!"); [cite: 2026-01-24]
+    }
+}, 4000);
 
 window.onload = init;
