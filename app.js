@@ -9,15 +9,12 @@ const firebaseConfig = {
   appId: "1:363675104532:web:6c51d1c7318b765e897e01"
 };
 
-// Khởi tạo
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const tg = window.Telegram.WebApp;
 const userId = String(tg.initDataUnsafe?.user?.id || '88888888');
 const BOT_USERNAME = "Supermoneymine_bot";
-const REF_REWARD = 500; // THIẾU DÒNG NÀY LÀ LIỆT NÚT NGAY [cite: 2026-01-24]
+const REF_REWARD = 500; // Thưởng mời bạn bè [cite: 2026-01-24]
 
 let data = { fish: 0, coins: 0, speed: 1, shipLevel: 1, startTime: null, history: [], completedTasks: [] };
 
@@ -29,27 +26,20 @@ async function init() {
             firebase.auth().signInAnonymously();
             return;
         }
-        
         try {
             const snap = await db.ref('users/' + userId).once('value');
             if (snap.exists()) {
                 data = { ...data, ...snap.val() };
             } else {
                 const startParam = tg.initDataUnsafe?.start_param;
-                if (startParam && startParam !== userId) {
-                    await rewardReferrer(startParam);
-                }
+                if (startParam && startParam !== userId) await rewardReferrer(startParam);
                 await db.ref('users/' + userId).set(data);
             }
-            
-            // Chỉ chạy các hàm này khi đã có data từ Database
             setupEventListeners();
             updateUI();
             checkMining();
             console.log("Hệ thống đã sẵn sàng!");
-        } catch (e) {
-            console.error("Lỗi khởi tạo:", e);
-        }
+        } catch (e) { console.error("Lỗi khởi tạo:", e); }
     });
 }
 
@@ -57,10 +47,7 @@ async function init() {
 function setupEventListeners() {
     const safeClick = (id, fn) => {
         const el = document.getElementById(id);
-        if (el) {
-            el.onclick = null; // Xóa onclick cũ để tránh bị lặp
-            el.onclick = fn;
-        }
+        if (el) { el.onclick = null; el.onclick = fn; }
     };
 
     safeClick('btn-sell', async () => {
@@ -73,20 +60,18 @@ function setupEventListeners() {
         tg.showAlert(`✅ Đã nhận ${Math.floor(earned).toLocaleString()} xu!`);
     });
 
- safeClick('btn-upgrade', async () => {
-    const cost = 200; 
-    
-    if (data.coins < cost) return tg.showAlert("Bạn cần " + cost + " xu!");
-    if (data.speed >= 5.0) return tg.showAlert("Đã đạt cấp tối đa!");
-    
-    data.coins -= cost;
-    data.speed += 0.2;
-    data.shipLevel += 1; // Vẫn tăng level để người dùng thấy tiến trình [cite: 2026-01-24]
-    
-    await save();
-    updateUI();
-    tg.showAlert("🚀 Nâng cấp thành công!");
-});
+    safeClick('btn-upgrade', async () => {
+        const cost = 200; // Giá nâng cấp 200 xu [cite: 2026-01-24]
+        if (data.coins < cost) return tg.showAlert("Bạn cần 200 xu!");
+        if (data.speed >= 5.0) return tg.showAlert("Đã đạt cấp tối đa!");
+        data.coins -= cost;
+        data.speed += 0.2;
+        data.shipLevel += 1; // Tăng level tàu [cite: 2026-01-24]
+        await save();
+        updateUI();
+        tg.showAlert("🚀 Nâng cấp thành công!");
+    });
+
     safeClick('btn-copy-ref', () => {
         const link = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
         navigator.clipboard.writeText(link);
@@ -98,11 +83,11 @@ function setupEventListeners() {
     });
 }
 
-// --- 3. BỔ TRỢ ---
 async function save() {
     await db.ref('users/' + userId).set(data);
 }
 
+// --- 3. CẬP NHẬT GIAO DIỆN ---
 function updateUI() {
     const setText = (id, val) => {
         const el = document.getElementById(id);
@@ -115,18 +100,20 @@ function updateUI() {
     setText('speed-display', (data.speed || 1).toFixed(1));
     setText('wallet-balance', Math.floor(data.coins).toLocaleString());
     setText('ref-link', `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`);
-  // Cập nhật hiển thị giá nâng cấp 200 xu trên giao diện [cite: 2026-01-24]
+
     const btnUpgrade = document.getElementById('btn-upgrade');
     if (btnUpgrade) {
         if (data.speed >= 5.0) {
             btnUpgrade.innerText = "MAX LEVEL";
             btnUpgrade.disabled = true;
         } else {
-            btnUpgrade.innerText = "NÂNG CẤP (200 💰)";
+            btnUpgrade.innerText = "NÂNG CẤP (200 💰)"; // Hiện giá 200 [cite: 2026-01-24]
             btnUpgrade.disabled = false;
         }
     }
+    renderHistory(); // Gọi hàm vẽ lịch sử ở đây
 }
+
 // --- 4. LOGIC ĐÀO CÁ ---
 function checkMining() {
     const btn = document.getElementById('btn-mine');
@@ -143,7 +130,7 @@ function checkMining() {
 
     const interval = setInterval(() => {
         const elapsed = Date.now() - data.startTime;
-        const duration = 3 * 60 * 60 * 1000;
+        const duration = 3 * 60 * 60 * 1000; // Phiên đào 3 tiếng [cite: 2026-01-24]
 
         if (elapsed >= duration) {
             clearInterval(interval);
@@ -166,11 +153,7 @@ function checkMining() {
     }, 1000);
 }
 
-function startMining() {
-    data.startTime = Date.now();
-    save();
-    checkMining();
-}
+function startMining() { data.startTime = Date.now(); save(); checkMining(); }
 
 async function claim() {
     const earned = (3 * 60 * 60) * data.speed;
@@ -179,10 +162,10 @@ async function claim() {
     await save();
     updateUI();
     checkMining();
-    tg.showAlert(`✅ Bạn đã nhận được ${Math.floor(earned).toLocaleString()} cá!`);
+    tg.showAlert(`✅ Đã nhận ${Math.floor(earned).toLocaleString()} cá!`);
 }
 
-// --- 5. NHIỆM VỤ & LỊCH SỬ ---
+// --- 5. NHIỆM VỤ, REFERRAL & TAB ---
 window.doTask = async (type, reward) => {
     if (data.completedTasks?.includes(type)) return tg.showAlert("Đã hoàn thành!");
     window.open("https://t.me/your_channel", "_blank");
@@ -195,34 +178,38 @@ window.doTask = async (type, reward) => {
         tg.showAlert("✅ Nhận thưởng thành công!");
     }, 2000);
 };
+
 async function rewardReferrer(referrerId) {
     try {
         const refPath = db.ref('users/' + referrerId);
         const snap = await refPath.once('value');
         if (snap.exists()) {
             let rData = snap.val();
-            // Cộng thưởng theo biến REF_REWARD (500 xu) đã khai báo ở trên [cite: 2026-01-24]
-            rData.coins = (parseFloat(rData.coins) || 0) + REF_REWARD;
-            
-            // Ghi nhận vào lịch sử của người mời
+            rData.coins = (parseFloat(rData.coins) || 0) + REF_REWARD; // Cộng 500 xu [cite: 2026-01-24]
             if(!rData.history) rData.history = [];
             rData.history.unshift({
                 amount: REF_REWARD,
                 status: 'Thưởng mời bạn',
                 time: new Date().toLocaleString('vi-VN')
             });
-
             await refPath.update(rData);
         }
-    } catch(e) { console.error("Lỗi thưởng người mời:", e); }
+    } catch(e) { console.error(e); }
 }
+
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+    const target = document.getElementById(`tab-${tab}`);
+    if (target) target.classList.remove('hidden');
+    updateUI();
+}
+
 function renderHistory() {
     const div = document.getElementById('history-list');
     if(!div) return;
     div.innerHTML = (data.history || []).map(h => `
         <div class="flex justify-between p-3 bg-[#0f172a] rounded-xl mb-2 border border-slate-800 text-[10px]">
-            <div><p class="text-white font-bold">Rút -${h.amount.toLocaleString()}đ</p><p class="text-gray-500">${h.time}</p></div>
-            <div class="text-right"><p class="text-yellow-500 font-bold">${h.status}</p></div>
+            <div><p class="text-white font-bold">${h.status} +${h.amount.toLocaleString()}</p><p class="text-gray-500">${h.time}</p></div>
         </div>
     `).join('') || '<p class="text-center text-gray-500 py-4 text-xs">Chưa có giao dịch nào</p>';
 }
