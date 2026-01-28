@@ -130,8 +130,9 @@ document.getElementById('btn-upgrade').onclick = async () => {
 function updateUI() {
     document.getElementById('fish-count').innerText = Math.floor(data.fish).toLocaleString();
     document.getElementById('coin-balance').innerText = Math.floor(data.coins).toLocaleString();
+    
     const btnUpgrade = document.getElementById('btn-upgrade');
-    // Sửa miningSpeed thành speed
+    // Kiểm tra speed
     if (data.speed >= 5.0) { 
         btnUpgrade.innerText = "MAX LEVEL";
         btnUpgrade.disabled = true;
@@ -139,9 +140,14 @@ function updateUI() {
         btnUpgrade.innerText = "NÂNG CẤP (200 💰)";
         btnUpgrade.disabled = false;
     }
-    document.getElementById('est-coins').innerText = Math.floor(data.fish * 0.005).toLocaleString();
-    
-    document.getElementById('wallet-balance').innerText = Math.floor(data.coins).toLocaleString();
+
+    // Các dòng này phải nằm TRƯỚC dấu đóng ngoặc của hàm
+    if (document.getElementById('est-coins')) {
+        document.getElementById('est-coins').innerText = Math.floor(data.fish * 0.005).toLocaleString();
+    }
+    if (document.getElementById('wallet-balance')) {
+        document.getElementById('wallet-balance').innerText = Math.floor(data.coins).toLocaleString();
+    }
     renderHistory();
 }
 
