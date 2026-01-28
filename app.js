@@ -137,18 +137,17 @@ document.getElementById('btn-upgrade').onclick = async () => {
 }
        //3. UPDATEUI
 function updateUI() {
-    // 1. Cập nhật Cá và Xu (Các id này chắc chắn bạn đã có)
+    // 1. Cập nhật Cá và Xu
     const fishEl = document.getElementById('fish-count');
     const coinEl = document.getElementById('coin-balance');
     if (fishEl) fishEl.innerText = Math.floor(data.fish).toLocaleString();
     if (coinEl) coinEl.innerText = Math.floor(data.coins).toLocaleString();
 
-    // 2. Cập nhật Level và Tốc độ (Đoạn này giúp UI nhảy số ngay)
+    // 2. Cập nhật Level và Tốc độ
     const lvEl = document.getElementById('ship-lv-display');
     const speedEl = document.getElementById('speed-display');
-    
-    if (lvEl) lvEl.innerText = data.shipLevel; // Cập nhật số Level
-    if (speedEl) speedEl.innerText = data.speed.toFixed(1); // Cập nhật 1.2, 1.4...
+    if (lvEl) lvEl.innerText = data.shipLevel;
+    if (speedEl) speedEl.innerText = (data.speed || 1).toFixed(1);
 
     // 3. Cập nhật trạng thái nút Nâng cấp
     const btnUpgrade = document.getElementById('btn-upgrade');
@@ -158,29 +157,37 @@ function updateUI() {
             btnUpgrade.disabled = true;
             btnUpgrade.style.opacity = "0.5";
         } else {
-            btnUpgrade.innerText = "NÂNG CẤP (200 💰)";
+            // Hiển thị giá nâng cấp động (Cấp x 2000) cho giống ảnh bạn gửi
+            const currentCost = data.shipLevel * 2000;
+            btnUpgrade.innerText = `NÂNG CẤP (${currentCost.toLocaleString()} 💰)`;
             btnUpgrade.disabled = false;
             btnUpgrade.style.opacity = "1";
         }
     }
+
+    // 4. Cập nhật Link mời (Sử dụng userId để không trùng lặp [cite: 2026-01-24])
+    const refLinkEl = document.getElementById('ref-link');
+    if (refLinkEl) {
+        refLinkEl.innerText = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
+    }
+
+    // 5. QUAN TRỌNG: Phải gọi hàm này để hiện lịch sử giao dịch
+    renderHistory();
+}
 
     // 4. Cập nhật các phần khác
     const estEl = document.getElementById('est-coins');
     const walletEl = document.getElementById('wallet-balance');
     if (estEl) estEl.innerText = Math.floor(data.fish * 0.005).toLocaleString();
     if (walletEl) walletEl.innerText = Math.floor(data.coins).toLocaleString();
-    
-    renderHistory(); 
-    // Thêm đoạn này vào cuối hàm
+    // Hiển thị link mời ngay khi vào tab Friends
     const refLinkEl = document.getElementById('ref-link');
     if (refLinkEl) {
         refLinkEl.innerText = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
     }
+    
+    renderHistory();
 }
-
-
-
-
 // --- 2. LOGIC ĐÀO CÁ (3 TIẾNG & OFFLINE) ---
 
 function checkMining() {
@@ -286,14 +293,8 @@ window.doTask = async (type, reward) => {
 };
 const REF_REWARD = 500; // Số xu thưởng cho người mời
 const BOT_USERNAME = "Supermoneymine_bot"; // Thay tên Username Bot của bạn vào đây (không có @)
-
-// Tạo link mời dựa trên userId của Telegram [cite: 2026-01-24]
-const refLink = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
-const refLinkEl = document.getElementById('ref-link');
-if (refLinkEl) refLinkEl.innerText = refLink;
-
-// Tìm đến đoạn nút copy-ref trong ảnh số 3
 document.getElementById('btn-copy-ref').onclick = () => {
+    // Tạo link trực tiếp để tránh lỗi lấy dữ liệu từ HTML
     const link = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
     navigator.clipboard.writeText(link);
     tg.showAlert("✅ Đã sao chép link mời!");
@@ -366,6 +367,31 @@ function renderHistory() {
             </div>
         </div>
     `).join('') || '<p class="text-center text-gray-500 py-4 text-xs">Chưa có giao dịch nào</p>';
+}
+async function rewardReferrer(referrerId) {
+    try {
+        const refPath = db.ref('users/' + referrerId);
+        const snap = await refPath.once('value');
+        
+        if (snap.exists()) {
+            let refData = snap.val();
+            // Cộng thưởng 2,000 xu cho người mời [cite: 2026-01-24]
+            refData.coins = (parseFloat(refData.coins) || 0) + REF_REWARD;
+            
+            // Lưu lịch sử nhận thưởng để người dùng kiểm tra trong Wallet
+            if (!refData.history) refData.history = [];
+            refData.history.unshift({
+                amount: REF_REWARD,
+                status: 'Thưởng mời bạn',
+                time: new Date().toLocaleString('vi-VN')
+            });
+            
+            await refPath.update(refData);
+            console.log("Đã thưởng cho người mời ID:", referrerId);
+        }
+    } catch (error) {
+        console.error("Lỗi cộng thưởng giới thiệu:", error);
+    }
 }
 
 // Khởi chạy khi tải xong trang
