@@ -43,22 +43,35 @@ async function init() {
             updateUI(); [cite: 2026-01-24]
             checkMining(); [cite: 2026-01-24]
 
-            // --- CHÈN VÀO ĐÂY: ẨN MÀN HÌNH LOADING --- [cite: 2026-01-24]
-            const loader = document.getElementById('loading-screen'); [cite: 2026-01-24]
-            if (loader) {
-                loader.style.display = 'none'; [cite: 2026-01-24]
-                console.log("Đã ẩn màn hình Loading."); [cite: 2026-01-24]
+const loader = document.getElementById('loading-screen'); // Lấy UI loading [cite: 2026-01-24]
+    
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) {
+            firebase.auth().signInAnonymously();
+            return;
+        }
+        try {
+            const snap = await db.ref('users/' + userId).once('value');
+            if (snap.exists()) {
+                data = { ...data, ...snap.val() };
+            } else {
+                await db.ref('users/' + userId).set(data);
             }
+            
+            setupEventListeners();
+            updateUI();
+            checkMining();
 
-        } catch (e) { 
-            console.error("Lỗi khởi tạo:", e); [cite: 2026-01-24]
-            // Nếu lỗi cũng nên ẩn loading để user thấy lỗi hoặc thử lại
-            const loader = document.getElementById('loading-screen'); [cite: 2026-01-24]
-            if (loader) loader.style.display = 'none'; [cite: 2026-01-24]
+            // Lệnh quan trọng nhất để phá băng UI [cite: 2026-01-24]
+            if (loader) loader.style.display = 'none'; 
+
+        } catch (e) {
+            console.error(e);
+            // Kể cả khi lỗi Firebase cũng phải tắt loading để user thấy app [cite: 2026-01-24]
+            if (loader) loader.style.display = 'none';
         }
     });
 }
-
 // --- 2. GÁN SỰ KIỆN ---
 function setupEventListeners() {
     const safeClick = (id, fn) => {
