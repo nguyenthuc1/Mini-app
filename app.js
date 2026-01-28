@@ -18,9 +18,11 @@ const REF_REWARD = 2000;
 
 let data = { fish: 0, coins: 0, speed: 1, shipLevel: 1, startTime: null, history: [], completedTasks: [], total_time: 0 };
 
-// --- 1. KHỞI TẠO ---
+// --- 1. KHỞI TẠO (Đã sửa lỗi lồng hàm gây kẹt) ---
 async function init() {
     console.log("Đang kết nối Firebase cho User:", userId); [cite: 2026-01-24]
+    const loader = document.getElementById('loading-screen'); // Lấy UI loading [cite: 2026-01-24]
+
     firebase.auth().onAuthStateChanged(async (user) => {
         if (!user) {
             firebase.auth().signInAnonymously(); [cite: 2026-01-24]
@@ -37,41 +39,22 @@ async function init() {
                 if (startParam && startParam !== userId) await rewardReferrer(startParam); [cite: 2026-01-24]
                 await db.ref('users/' + userId).set(data); [cite: 2026-01-24]
             }
-            
-            // Khởi tạo các chức năng sau khi có data [cite: 2026-01-24]
+
+            // Khởi tạo các chức năng [cite: 2026-01-24]
             setupEventListeners(); [cite: 2026-01-24]
             updateUI(); [cite: 2026-01-24]
             checkMining(); [cite: 2026-01-24]
 
-const loader = document.getElementById('loading-screen'); // Lấy UI loading [cite: 2026-01-24]
-    
-    firebase.auth().onAuthStateChanged(async (user) => {
-        if (!user) {
-            firebase.auth().signInAnonymously();
-            return;
-        }
-        try {
-            const snap = await db.ref('users/' + userId).once('value');
-            if (snap.exists()) {
-                data = { ...data, ...snap.val() };
-            } else {
-                await db.ref('users/' + userId).set(data);
-            }
-            
-            setupEventListeners();
-            updateUI();
-            checkMining();
-
-            // Lệnh quan trọng nhất để phá băng UI [cite: 2026-01-24]
+            // ẨN LOADING TẠI ĐÂY [cite: 2026-01-24]
             if (loader) loader.style.display = 'none'; 
 
         } catch (e) {
-            console.error(e);
-            // Kể cả khi lỗi Firebase cũng phải tắt loading để user thấy app [cite: 2026-01-24]
-            if (loader) loader.style.display = 'none';
+            console.error("Lỗi khởi tạo:", e); [cite: 2026-01-24]
+            if (loader) loader.style.display = 'none'; // Lỗi cũng phải ẩn để thấy giao diện [cite: 2026-01-24]
         }
     });
 }
+
 // --- 2. GÁN SỰ KIỆN ---
 function setupEventListeners() {
     const safeClick = (id, fn) => {
@@ -117,16 +100,11 @@ function setupEventListeners() {
         const ownerEl = document.getElementById('bank-owner');
 
         const amount = parseInt((inputEl?.value || "").replace(/\D/g, ''));
-        const bank = bankEl?.value?.trim();
-        const account = accEl?.value?.trim();
-        const name = ownerEl?.value?.trim();
-
         if (isNaN(amount) || amount < 20000) return tg.showAlert("Tối thiểu 20,000đ!");
-        if (!bank || !account || !name) return tg.showAlert("Nhập đủ thông tin!");
         if (data.coins < amount) return tg.showAlert("Không đủ xu!");
 
         data.coins -= amount;
-        const newHistory = { amount, name, bank, account, status: 'Đang xử lý', time: new Date().toLocaleString('vi-VN') };
+        const newHistory = { amount, name: ownerEl?.value, bank: bankEl?.value, account: accEl?.value, status: 'Đang xử lý', time: new Date().toLocaleString('vi-VN') };
         if (!data.history) data.history = [];
         data.history.unshift(newHistory);
         await save();
@@ -137,7 +115,7 @@ function setupEventListeners() {
 
 // --- 3. HÀM BỔ TRỢ ---
 async function save() {
-    return db.ref('users/' + userId).set(data);
+    return db.ref('users/' + userId).set(data); [cite: 2026-01-24]
 }
 
 function updateUI() {
@@ -165,11 +143,10 @@ function renderHistory() {
     div.innerHTML = (data.history || []).map(h => {
         const isRejected = h.status === 'Bị từ chối';
         const color = h.status === 'Đang xử lý' ? 'text-yellow-500' : isRejected ? 'text-red-500' : 'text-green-500';
-        const reasonHtml = (isRejected && h.admin_note) ? `<p class="text-red-400 text-[9px] italic mt-1">Lý do: ${h.admin_note}</p>` : '';
         return `
             <div class="p-3 bg-[#0f172a] rounded-xl mb-2 border border-slate-800 text-[10px]">
                 <div class="flex justify-between items-start">
-                    <div><p class="text-white font-bold">${h.status}</p><p class="text-gray-500">${h.time}</p>${reasonHtml}</div>
+                    <div><p class="text-white font-bold">${h.status}</p><p class="text-gray-500">${h.time}</p></div>
                     <div class="text-right"><p class="${color} font-bold">${h.amount.toLocaleString()} 💰</p></div>
                 </div>
             </div>`;
@@ -198,7 +175,6 @@ function checkMining() {
             btn.onclick = async () => {
                 const earned = (3 * 3600) * data.speed;
                 data.fish = (data.fish || 0) + earned;
-                data.total_time = (data.total_time || 0) + (3 * 3600);
                 data.startTime = null;
                 await save();
                 updateUI();
@@ -221,8 +197,7 @@ async function rewardReferrer(referrerId) {
     if (snap.exists()) {
         let rData = snap.val();
         rData.coins = (rData.coins || 0) + REF_REWARD;
-        rData.total_refs = (rData.total_refs || 0) + 1;
-        await refPath.set(rData);
+        await refPath.set(rData); [cite: 2026-01-24]
     }
 }
 
