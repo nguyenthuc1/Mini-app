@@ -90,34 +90,49 @@ function setupEventListeners() { // Sửa 'Function' thành 'function' viết th
     });
 
     // 5. Rút tiền
-    safeClick('btn-withdraw', async () => {
-        const amount = parseInt(document.getElementById('withdraw-amount')?.value);
-        const bank = document.getElementById('withdraw-bank')?.value;
-        const account = document.getElementById('withdraw-account')?.value;
-        const name = document.getElementById('withdraw-name')?.value;
+        safeClick('btn-withdraw', async () => {
+        // Lấy giá trị, xóa sạch dấu phẩy hoặc dấu chấm nếu người dùng lỡ nhập vào
+        let rawAmount = document.getElementById('withdraw-amount')?.value || "";
+        let cleanAmount = rawAmount.replace(/[,.]/g, ''); // Xóa sạch dấu , và .
+        const amount = parseInt(cleanAmount);
 
-        if (!amount || amount < 20000) return tg.showAlert("Số tiền rút tối thiểu là 20,000đ!");
-        if (!bank || !account || !name) return tg.showAlert("Vui lòng điền đầy đủ thông tin!");
-        if (data.coins < amount) return tg.showAlert("Số dư xu không đủ!");
+        const bank = document.getElementById('withdraw-bank')?.value?.trim();
+        const account = document.getElementById('withdraw-account')?.value?.trim();
+        const name = document.getElementById('withdraw-name')?.value?.trim();
 
+        // Kiểm tra logic rút tiền [cite: 2026-01-24]
+        if (isNaN(amount) || amount < 20000) {
+            return tg.showAlert("Số tiền rút tối thiểu là 20,000đ!");
+        }
+        if (!bank || !account || !name) {
+            return tg.showAlert("Vui lòng điền đầy đủ thông tin nhận tiền!");
+        }
+        if (data.coins < amount) {
+            return tg.showAlert("Số dư xu của bạn không đủ để rút!");
+        }
+
+        // Thực hiện trừ xu và lưu lịch sử [cite: 2026-01-24]
         data.coins -= amount;
         const newHistory = {
             amount: amount,
             bank: bank,
             account: account,
             name: name,
-            status: 'Đang xử lý',
+            status: 'Đang xử lý', // Trạng thái mặc định khi mới gửi [cite: 2026-01-24]
             time: new Date().toLocaleString('vi-VN')
         };
         
         if (!data.history) data.history = [];
-        data.history.unshift(newHistory);
+        data.history.unshift(newHistory); // Đưa yêu cầu mới nhất lên đầu [cite: 2026-01-24]
 
-        await save();
+        await save(); // Lưu vào Database theo userId [cite: 2026-01-23, 2026-01-24]
         updateUI();
-        tg.showAlert("✅ Gửi yêu cầu rút tiền thành công!");
+        tg.showAlert("✅ Gửi yêu cầu rút tiền thành công! Admin sẽ duyệt sớm.");
+        
+        // Reset ô nhập tiền
         document.getElementById('withdraw-amount').value = '';
     });
+
 } // Đóng hàm setupEventListeners ở đây
 
 // Đưa hàm save ra ngoài để các hàm khác có thể dùng chung [cite: 2026-01-24]
