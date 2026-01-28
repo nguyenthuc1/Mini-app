@@ -126,30 +126,44 @@ document.getElementById('btn-upgrade').onclick = async () => {
         if (btn) btn.onclick = () => switchTab(tab);
     });
 }
-
+       //3. UPDATEUI
 function updateUI() {
-    document.getElementById('fish-count').innerText = Math.floor(data.fish).toLocaleString();
-    document.getElementById('coin-balance').innerText = Math.floor(data.coins).toLocaleString();
+    // 1. Cập nhật Cá và Xu (Các id này chắc chắn bạn đã có)
+    const fishEl = document.getElementById('fish-count');
+    const coinEl = document.getElementById('coin-balance');
+    if (fishEl) fishEl.innerText = Math.floor(data.fish).toLocaleString();
+    if (coinEl) coinEl.innerText = Math.floor(data.coins).toLocaleString();
+
+    // 2. Cập nhật Level và Tốc độ (Đoạn này giúp UI nhảy số ngay)
+    const lvEl = document.getElementById('ship-lv-display');
+    const speedEl = document.getElementById('speed-display');
     
+    if (lvEl) lvEl.innerText = data.shipLevel; // Cập nhật số Level
+    if (speedEl) speedEl.innerText = data.speed.toFixed(1); // Cập nhật 1.2, 1.4...
+
+    // 3. Cập nhật trạng thái nút Nâng cấp
     const btnUpgrade = document.getElementById('btn-upgrade');
-    // Kiểm tra speed
-    if (data.speed >= 5.0) { 
-        btnUpgrade.innerText = "MAX LEVEL";
-        btnUpgrade.disabled = true;
-    } else {
-        btnUpgrade.innerText = "NÂNG CẤP (200 💰)";
-        btnUpgrade.disabled = false;
+    if (btnUpgrade) {
+        if (data.speed >= 5.0) { 
+            btnUpgrade.innerText = "MAX LEVEL";
+            btnUpgrade.disabled = true;
+            btnUpgrade.style.opacity = "0.5";
+        } else {
+            btnUpgrade.innerText = "NÂNG CẤP (200 💰)";
+            btnUpgrade.disabled = false;
+            btnUpgrade.style.opacity = "1";
+        }
     }
 
-    // Các dòng này phải nằm TRƯỚC dấu đóng ngoặc của hàm
-    if (document.getElementById('est-coins')) {
-        document.getElementById('est-coins').innerText = Math.floor(data.fish * 0.005).toLocaleString();
-    }
-    if (document.getElementById('wallet-balance')) {
-        document.getElementById('wallet-balance').innerText = Math.floor(data.coins).toLocaleString();
-    }
+    // 4. Cập nhật các phần khác
+    const estEl = document.getElementById('est-coins');
+    const walletEl = document.getElementById('wallet-balance');
+    if (estEl) estEl.innerText = Math.floor(data.fish * 0.005).toLocaleString();
+    if (walletEl) walletEl.innerText = Math.floor(data.coins).toLocaleString();
+    
     renderHistory();
 }
+
 
 // --- 2. LOGIC ĐÀO CÁ (3 TIẾNG & OFFLINE) ---
 
