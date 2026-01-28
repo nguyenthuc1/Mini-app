@@ -214,12 +214,17 @@ function checkMining() {
 }
 
 function startMining() { data.startTime = Date.now(); save(); checkMining(); }
-
 async function claim() {
-    const earned = (3 * 60 * 60) * data.speed;
+    const sessionSeconds = 3 * 60 * 60; // 3 tiếng quy ra giây [cite: 2026-01-24]
+    const earned = sessionSeconds * data.speed;
+    
     data.fish = (parseFloat(data.fish) || 0) + earned;
+    
+    // Cộng dồn tổng thời gian vào data của user [cite: 2026-01-24]
+    data.total_time = (data.total_time || 0) + sessionSeconds;
+    
     data.startTime = null; 
-    await save();
+    await save(); // Lưu lên Firebase theo userId [cite: 2026-01-23]
     updateUI();
     checkMining();
     tg.showAlert(`✅ Đã nhận ${Math.floor(earned).toLocaleString()} cá!`);
