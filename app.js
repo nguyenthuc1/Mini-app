@@ -23,7 +23,7 @@ const userId = String(tg.initDataUnsafe?.user?.id || '88888888');
 let data = {
     fish: 0,
     coins: 0,
-    speed: 0.5,
+    speed: 1,
     shipLevel: 1,
     startTime: null,
     history: [],
