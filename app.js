@@ -273,22 +273,33 @@ function switchTab(tab) {
 
 
 function renderHistory() {
+  
+function renderHistory() {
     const div = document.getElementById('history-list');
     if(!div) return;
+    
     div.innerHTML = (data.history || []).map(h => {
-        // Nếu status là 'Đang xử lý' thì hiện dấu trừ (Rút tiền)
         const isWithdraw = h.status === 'Đang xử lý';
+        const isRejected = h.status === 'Bị từ chối'; // Thêm kiểm tra bị từ chối [cite: 2026-01-24]
         const sign = isWithdraw ? '-' : '+';
-        const color = isWithdraw ? 'text-yellow-500' : 'text-green-500';
+        const color = isWithdraw ? 'text-yellow-500' : 
+                      isRejected ? 'text-red-500' : 'text-green-500';
+
+        // Nếu bị từ chối và có lý do từ Admin, tạo đoạn mã HTML hiển thị lý do [cite: 2026-01-24]
+        const reasonHtml = (isRejected && h.admin_note) 
+            ? `<p class="text-red-400 text-[9px] italic mt-1">Lý do: ${h.admin_note}</p>` 
+            : '';
 
         return `
-            <div class="flex justify-between p-3 bg-[#0f172a] rounded-xl mb-2 border border-slate-800 text-[10px]">
-                <div>
-                    <p class="text-white font-bold">${h.status}</p>
-                    <p class="text-gray-500">${h.time}</p>
-                </div>
-                <div class="text-right">
-                    <p class="${color} font-bold">${sign}${h.amount.toLocaleString()} 💰</p>
+            <div class="p-3 bg-[#0f172a] rounded-xl mb-2 border border-slate-800 text-[10px]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-white font-bold">${h.status}</p>
+                        <p class="text-gray-500">${h.time}</p>
+                        ${reasonHtml} </div>
+                    <div class="text-right">
+                        <p class="${color} font-bold">${sign}${h.amount.toLocaleString()} 💰</p>
+                    </div>
                 </div>
             </div>
         `;
