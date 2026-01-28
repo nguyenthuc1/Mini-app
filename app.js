@@ -214,20 +214,22 @@ function checkMining() {
 }
 
 function startMining() { data.startTime = Date.now(); save(); checkMining(); }
+
 async function claim() {
-    const sessionSeconds = 3 * 60 * 60; // 3 tiếng quy ra giây [cite: 2026-01-24]
-    const earned = sessionSeconds * data.speed;
+    const sessionSeconds = 3 * 60 * 60; // 3 tiếng [cite: 2026-01-24]
+    const earnedFish = sessionSeconds * data.speed; // Tính cá theo speed hiện tại [cite: 2026-01-24]
     
-    data.fish = (parseFloat(data.fish) || 0) + earned;
+    data.fish = (parseFloat(data.fish) || 0) + earnedFish;
+    data.total_time = (data.total_time || 0) + sessionSeconds; // Lưu tổng thời gian [cite: 2026-01-24]
     
-    // Cộng dồn tổng thời gian vào data của user [cite: 2026-01-24]
-    data.total_time = (data.total_time || 0) + sessionSeconds;
+    // Lưu thêm tổng số cá đã đào để Admin đối soát [cite: 2026-01-24]
+    data.total_fish_earned = (data.total_fish_earned || 0) + earnedFish;
     
     data.startTime = null; 
-    await save(); // Lưu lên Firebase theo userId [cite: 2026-01-23]
+    await save(); // Đồng bộ lên Firebase theo đúng User ID [cite: 2026-01-23]
     updateUI();
     checkMining();
-    tg.showAlert(`✅ Đã nhận ${Math.floor(earned).toLocaleString()} cá!`);
+    tg.showAlert(`✅ Đã nhận ${Math.floor(earnedFish).toLocaleString()} cá!`);
 }
 
 // --- 5. NHIỆM VỤ, REFERRAL & TAB ---
