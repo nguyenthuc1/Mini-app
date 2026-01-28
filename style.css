@@ -1,32 +1,291 @@
-::-webkit-scrollbar { display: none; }
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+@keyframes spin { 
+    to { transform: rotate(360deg); } 
+}
 
-.tab-content { animation: fadeIn 0.3s ease-in-out; }
+@keyframes float { 
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+@keyframes wave {
+    0% { transform: translateX(0) translateY(0); }
+    50% { transform: translateX(-25%) translateY(-10px); }
+    100% { transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
+}
+
+@keyframes bubble {
+    0% { transform: translateY(0) scale(0); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateY(-100px) scale(1); opacity: 0; }
+}
+
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-#ship-icon.mining { animation: shipMove 2s infinite ease-in-out; }
-@keyframes shipMove {
-    0%, 100% { transform: translateY(0) rotate(0); }
-    50% { transform: translateY(-10px) rotate(2deg); }
+/* ========================================
+   WAVE EFFECTS
+   ======================================== */
+.wave {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 200%;
+    height: 100px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120'%3E%3Cpath d='M0,50 Q300,0 600,50 T1200,50 L1200,120 L0,120 Z' fill='%2306b6d4' opacity='0.3'/%3E%3C/svg%3E");
+    animation: wave 10s linear infinite;
 }
 
-.loading-spinner {
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #3498db;
-    border-radius: 50%;
-    width: 12px; height: 12px;
-    animation: spin 1s linear infinite;
-    display: inline-block; margin-right: 5px;
+.wave:nth-child(2) {
+    animation-duration: 15s;
+    opacity: 0.5;
+    bottom: 10px;
 }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    border: 1px solid #2d3748;
-    background-color: #1a202c;
-    color: white;
+
+/* ========================================
+   SHIMMER EFFECT
+   ======================================== */
+.shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+
+/* ========================================
+   BUBBLE DECORATION
+   ======================================== */
+.bubble {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    animation: bubble 3s ease-in infinite;
+}
+
+/* ========================================
+   GLOW BUTTON EFFECT
+   ======================================== */
+.glow-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.glow-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.glow-button:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* ========================================
+   CARD HOVER EFFECT
+   ======================================== */
+.card-hover {
+    transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+}
+
+/* ========================================
+   GRADIENT BORDER
+   ======================================== */
+.gradient-border {
+    position: relative;
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+}
+
+.gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(145deg, #3b82f6, #8b5cf6, #ec4899);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* ========================================
+   SCROLLBAR STYLING
+   ======================================== */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #2563eb, #7c3aed);
+}
+
+/* ========================================
+   LOADING SCREEN
+   ======================================== */
+#loading-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+#loading-screen .spinner {
+    width: 80px;
+    height: 80px;
+    border: 4px solid transparent;
+    border-top-color: #3b82f6;
+    border-right-color: #8b5cf6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+#loading-screen .progress-bar {
+    width: 200px;
+    height: 4px;
+    background: rgba(59, 130, 246, 0.2);
+    border-radius: 10px;
+    margin-top: 16px;
+    overflow: hidden;
+}
+
+/* ========================================
+   INPUT FOCUS EFFECTS
+   ======================================== */
+input:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+/* ========================================
+   NAVIGATION ACTIVE STATE
+   ======================================== */
+.nav-btn {
+    transition: all 0.3s ease;
+}
+
+.nav-btn:active {
+    transform: scale(0.9);
+}
+
+/* ========================================
+   BACKGROUND GRADIENTS
+   ======================================== */
+.bg-ocean-gradient {
+    background: linear-gradient(180deg, 
+        rgba(6, 182, 212, 0.1) 0%, 
+        rgba(59, 130, 246, 0.1) 50%, 
+        rgba(139, 92, 246, 0.1) 100%
+    );
+}
+
+/* ========================================
+   TEXT GRADIENTS
+   ======================================== */
+.text-gradient-blue {
+    background: linear-gradient(90deg, #60a5fa, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.text-gradient-yellow {
+    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.text-gradient-purple {
+    background: linear-gradient(90deg, #a78bfa, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+   ======================================== */
+@media (max-width: 640px) {
+    .bubble {
+        width: 8px;
+        height: 8px;
+    }
+    
+    .glow-button::before {
+        width: 200px;
+        height: 200px;
+    }
+}
+
+/* ========================================
+   DARK MODE ENHANCEMENTS
+   ======================================== */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   DISABLE TEXT SELECTION ON BUTTONS
+   ======================================== */
+button {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
