@@ -94,29 +94,30 @@ function setupEventListeners() {
     // 3. Nút Nâng cấp
     const btnUpgrade = 
 document.getElementById('btn-upgrade').onclick = async () => {
-    const cost = 200; // Cố định 200 xu theo ý bạn
-    const MAX_SPEED = 5.0; // Giới hạn 5 cá/giây
+    const cost = 200; 
+    const MAX_SPEED = 5.0; 
 
-    // Kiểm tra nếu đã đạt giới hạn
-    if (data.miningSpeed >= MAX_SPEED) {
+    // CHÚ Ý: Sửa miningSpeed thành speed
+    if (data.speed >= MAX_SPEED) { 
         tg.showAlert("🚀 Đã đạt tốc độ tối đa!");
         return;
     }
 
     if (data.coins >= cost) {
         data.coins -= cost;
-        data.miningSpeed += 0.2; // Mỗi lần cộng 0.2
-        
-        // Chặn không cho vượt quá 5.0
-        if (data.miningSpeed > MAX_SPEED) data.miningSpeed = MAX_SPEED;
+        data.speed += 0.2; // CHÚ Ý: Sửa miningSpeed thành speed
+        data.shipLevel += 1; // Tăng thêm level tàu cho đẹp UI
 
-        await save(); // Lưu lên Firebase
+        if (data.speed > MAX_SPEED) data.speed = MAX_SPEED;
+
+        await save(); // Bây giờ hàm save() sẽ chạy vì data đã đúng cấu trúc
         updateUI();
         tg.showAlert("🚀 Nâng cấp thành công!");
     } else {
         tg.showAlert("❌ Bạn cần 200 xu!");
     }
 };
+
 
     // 4. Các nút chuyển Tab (để quay lại Home vẫn bấm được)
     const tabs = ['home', 'tasks', 'friends', 'wallet'];
@@ -129,17 +130,15 @@ document.getElementById('btn-upgrade').onclick = async () => {
 function updateUI() {
     document.getElementById('fish-count').innerText = Math.floor(data.fish).toLocaleString();
     document.getElementById('coin-balance').innerText = Math.floor(data.coins).toLocaleString();
-    
-    document.getElementById('ship-lv-display').innerText = data.shipLevel;
-    document.getElementById('speed-display').innerText = data.speed.toFixed(1);
-   const btnUpgrade = document.getElementById('btn-upgrade');
-if (data.miningSpeed >= 5.0) {
-    btnUpgrade.innerText = "MAX LEVEL";
-    btnUpgrade.disabled = true;
-} else {
-    btnUpgrade.innerText = "NÂNG CẤP (200 💰)";
-    btnUpgrade.disabled = false;
-}
+    const btnUpgrade = document.getElementById('btn-upgrade');
+    // Sửa miningSpeed thành speed
+    if (data.speed >= 5.0) { 
+        btnUpgrade.innerText = "MAX LEVEL";
+        btnUpgrade.disabled = true;
+    } else {
+        btnUpgrade.innerText = "NÂNG CẤP (200 💰)";
+        btnUpgrade.disabled = false;
+    }
     document.getElementById('est-coins').innerText = Math.floor(data.fish * 0.005).toLocaleString();
     
     document.getElementById('wallet-balance').innerText = Math.floor(data.coins).toLocaleString();
