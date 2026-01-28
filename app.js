@@ -16,11 +16,10 @@ const userId = String(tg.initDataUnsafe?.user?.id || '88888888');
 const BOT_USERNAME = "Supermoneymine_bot";
 const REF_REWARD = 2000; // Thưởng mời bạn bè [cite: 2026-01-24]
 
-let data = { fish: 0, coins: 0, speed: 1, shipLevel: 1, startTime: null, history: [], completedTasks: [] };
+let data = { fish: 0, coins: 0, speed: 1, shipLevel: 1, startTime: null, history: [], completedTasks: [], total_time: 0 };
 
 // --- 1. KHỞI TẠO ---
 async function init() {
-    console.log("App đang khởi động...");
     firebase.auth().onAuthStateChanged(async (user) => {
         if (!user) {
             firebase.auth().signInAnonymously();
@@ -33,18 +32,17 @@ async function init() {
             } else {
                 const startParam = tg.initDataUnsafe?.start_param;
                 if (startParam && startParam !== userId) await rewardReferrer(startParam);
-                await db.ref('users/' + userId).set(data);
+                await db.ref('users/' + userId).set(data); // Lưu ID người dùng mới để tránh trùng [cite: 2026-01-23, 2026-01-24]
             }
             setupEventListeners();
             updateUI();
             checkMining();
-            console.log("Hệ thống đã sẵn sàng!");
         } catch (e) { console.error("Lỗi khởi tạo:", e); }
     });
 }
 
 // --- 2. GÁN SỰ KIỆN ---
-function setupEventListeners() { // Sửa 'Function' thành 'function' viết thường
+function setupEventListeners() {
     const safeClick = (id, fn) => {
         const el = document.getElementById(id);
         if (el) { 
@@ -89,62 +87,45 @@ function setupEventListeners() { // Sửa 'Function' thành 'function' viết th
         safeClick(`nav-${tab}`, () => switchTab(tab));
     });
 
-    // 5. Rút tiền
-           safeClick('btn-withdraw', async () => {
-        // 1. Lấy đúng ID từ HTML của bạn là 'wd-amount'
+    // 5. Rút tiền [cite: 2026-01-24]
+    safeClick('btn-withdraw', async () => {
         const inputEl = document.getElementById('wd-amount');
         const bankEl = document.getElementById('bank-name');
         const accEl = document.getElementById('bank-acc');
         const ownerEl = document.getElementById('bank-owner');
 
-        // 2. Làm sạch dữ liệu nhập vào (xóa dấu phẩy, dấu chấm) [cite: 2026-01-24]
         let rawAmount = inputEl?.value || "";
         let cleanAmount = rawAmount.toString().replace(/\D/g, ''); 
         const amount = parseInt(cleanAmount);
-
         const bank = bankEl?.value?.trim();
         const account = accEl?.value?.trim();
         const name = ownerEl?.value?.trim();
 
-        // 3. Kiểm tra điều kiện rút [cite: 2026-01-24]
-        if (isNaN(amount) || amount < 20000) {
-            return tg.showAlert("Số tiền rút tối thiểu là 20,000đ!");
-        }
-        
-        if (!bank || !account || !name) {
-            return tg.showAlert("Vui lòng điền đủ: Ngân hàng, STK và Tên!");
-        }
+        if (isNaN(amount) || amount < 20000) return tg.showAlert("Số tiền rút tối thiểu là 20,000đ!");
+        if (!bank || !account || !name) return tg.showAlert("Vui lòng điền đủ thông tin!");
+        if (data.coins < amount) return tg.showAlert("Số dư xu không đủ!");
 
-        if (data.coins < amount) {
-            return tg.showAlert("Số dư xu của bạn không đủ!");
-        }
-
-        // 4. Trừ tiền và lưu lịch sử theo User ID [cite: 2026-01-23, 2026-01-24]
         data.coins -= amount;
         const newHistory = {
             amount: amount,
-name: name,
+            name: name,
             bank: bank,
             account: account,
             status: 'Đang xử lý',
             time: new Date().toLocaleString('vi-VN')
         };
-        
+
         if (!data.history) data.history = [];
         data.history.unshift(newHistory);
-
-        await save(); // Lưu vào Firebase [cite: 2026-01-24]
+        await save();
         updateUI();
         tg.showAlert("✅ Gửi yêu cầu rút tiền thành công!");
-        
-        // Xóa trắng ô nhập sau khi xong
-        inputEl.value = '';
+        if (inputEl) inputEl.value = '';
     });
-} // Đóng hàm setupEventListeners ở đây
+}
 
-// Đưa hàm save ra ngoài để các hàm khác có thể dùng chung [cite: 2026-01-24]
 async function save() {
-    await db.ref('users/' + userId).set(data);
+    await db.ref('users/' + userId).set(data); // Lưu theo User ID [cite: 2026-01-23, 2026-01-24]
 }
 
 // --- 3. CẬP NHẬT GIAO DIỆN ---
@@ -159,19 +140,13 @@ function updateUI() {
     setText('ship-lv-display', data.shipLevel);
     setText('speed-display', (data.speed || 1).toFixed(1));
     setText('wallet-balance', Math.floor(data.coins).toLocaleString());
-    setText('ref-link', `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`);
 
     const btnUpgrade = document.getElementById('btn-upgrade');
     if (btnUpgrade) {
-        if (data.speed >= 5.0) {
-            btnUpgrade.innerText = "MAX LEVEL";
-            btnUpgrade.disabled = true;
-        } else {
-            btnUpgrade.innerText = "NÂNG CẤP (200 💰)"; // Hiện giá 200 [cite: 2026-01-24]
-            btnUpgrade.disabled = false;
-        }
+        btnUpgrade.innerText = data.speed >= 5.0 ? "MAX LEVEL" : "NÂNG CẤP (200 💰)";
+        btnUpgrade.disabled = data.speed >= 5.0;
     }
-    renderHistory(); // Gọi hàm vẽ lịch sử ở đây
+    renderHistory();
 }
 
 // --- 4. LOGIC ĐÀO CÁ ---
@@ -190,7 +165,7 @@ function checkMining() {
 
     const interval = setInterval(() => {
         const elapsed = Date.now() - data.startTime;
-        const duration = 3 * 60 * 60 * 1000; // Phiên đào 3 tiếng [cite: 2026-01-24]
+        const duration = 3 * 60 * 60 * 1000;
 
         if (elapsed >= duration) {
             clearInterval(interval);
@@ -216,49 +191,28 @@ function checkMining() {
 function startMining() { data.startTime = Date.now(); save(); checkMining(); }
 
 async function claim() {
-    const sessionSeconds = 3 * 60 * 60; // 3 tiếng [cite: 2026-01-24]
-    const earnedFish = sessionSeconds * data.speed; // Tính cá theo speed hiện tại [cite: 2026-01-24]
-    
+    const sessionSeconds = 3 * 60 * 60;
+    const earnedFish = sessionSeconds * data.speed;
     data.fish = (parseFloat(data.fish) || 0) + earnedFish;
-    data.total_time = (data.total_time || 0) + sessionSeconds; // Lưu tổng thời gian [cite: 2026-01-24]
-    
-    // Lưu thêm tổng số cá đã đào để Admin đối soát [cite: 2026-01-24]
-    data.total_fish_earned = (data.total_fish_earned || 0) + earnedFish;
-    
+    data.total_time = (data.total_time || 0) + sessionSeconds; // Tích lũy thời gian chơi [cite: 2026-01-24]
     data.startTime = null; 
-    await save(); // Đồng bộ lên Firebase theo đúng User ID [cite: 2026-01-23]
+    await save();
     updateUI();
     checkMining();
     tg.showAlert(`✅ Đã nhận ${Math.floor(earnedFish).toLocaleString()} cá!`);
 }
 
-// --- 5. NHIỆM VỤ, REFERRAL & TAB ---
-window.doTask = async (type, reward) => {
-    if (data.completedTasks?.includes(type)) return tg.showAlert("Đã hoàn thành!");
-    window.open("https://t.me/your_channel", "_blank");
-    setTimeout(async () => {
-        data.coins += reward;
-        if(!data.completedTasks) data.completedTasks = [];
-        data.completedTasks.push(type);
-        await save();
-        updateUI();
-        tg.showAlert("✅ Nhận thưởng thành công!");
-    }, 2000);
-};
-
+// --- 5. NHIỆM VỤ & REFERRAL ---
 async function rewardReferrer(referrerId) {
     try {
         const refPath = db.ref('users/' + referrerId);
         const snap = await refPath.once('value');
         if (snap.exists()) {
             let rData = snap.val();
-            rData.coins = (parseFloat(rData.coins) || 0) + REF_REWARD; // Cộng 500 xu [cite: 2026-01-24]
+            rData.coins = (parseFloat(rData.coins) || 0) + REF_REWARD;
+            rData.total_refs = (rData.total_refs || 0) + 1; // Lưu tổng số người mời [cite: 2026-01-24]
             if(!rData.history) rData.history = [];
-            rData.history.unshift({
-                amount: REF_REWARD,
-                status: 'Thưởng mời bạn',
-                time: new Date().toLocaleString('vi-VN')
-            });
+            rData.history.unshift({ amount: REF_REWARD, status: 'Thưởng mời bạn', time: new Date().toLocaleString('vi-VN') });
             await refPath.update(rData);
         }
     } catch(e) { console.error(e); }
@@ -270,35 +224,24 @@ function switchTab(tab) {
     if (target) target.classList.remove('hidden');
     updateUI();
 }
+
 function renderHistory() {
     const div = document.getElementById('history-list');
     if(!div) return;
-    
-    div.innerHTML = (data.history || []).map(h => {
-        const isWithdraw = h.status === 'Đang xử lý';
-        const isRejected = h.status === 'Bị từ chối'; // Thêm kiểm tra bị từ chối [cite: 2026-01-24]
-        const sign = isWithdraw ? '-' : '+';
-        const color = isWithdraw ? 'text-yellow-500' : 
-                      isRejected ? 'text-red-500' : 'text-green-500';
 
-        // Nếu bị từ chối và có lý do từ Admin, tạo đoạn mã HTML hiển thị lý do [cite: 2026-01-24]
-        const reasonHtml = (isRejected && h.admin_note) 
-            ? `<p class="text-red-400 text-[9px] italic mt-1">Lý do: ${h.admin_note}</p>` 
-            : '';
+    div.innerHTML = (data.history || []).map(h => {
+        const isRejected = h.status === 'Bị từ chối';
+        const isWithdraw = h.status === 'Đang xử lý';
+        const color = isWithdraw ? 'text-yellow-500' : isRejected ? 'text-red-500' : 'text-green-500';
+        const reasonHtml = (isRejected && h.admin_note) ? `<p class="text-red-400 text-[9px] italic mt-1">Lý do: ${h.admin_note}</p>` : '';
 
         return `
             <div class="p-3 bg-[#0f172a] rounded-xl mb-2 border border-slate-800 text-[10px]">
                 <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-white font-bold">${h.status}</p>
-                        <p class="text-gray-500">${h.time}</p>
-                        ${reasonHtml} </div>
-                    <div class="text-right">
-                        <p class="${color} font-bold">${sign}${h.amount.toLocaleString()} 💰</p>
-                    </div>
+                    <div><p class="text-white font-bold">${h.status}</p><p class="text-gray-500">${h.time}</p>${reasonHtml}</div>
+                    <div class="text-right"><p class="${color} font-bold">${isWithdraw ? '-' : '+'}${h.amount.toLocaleString()} 💰</p></div>
                 </div>
-            </div>
-        `;
+            </div>`;
     }).join('') || '<p class="text-center text-gray-500 py-4 text-xs">Chưa có giao dịch nào</p>';
 }
 
