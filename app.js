@@ -90,49 +90,55 @@ function setupEventListeners() { // Sửa 'Function' thành 'function' viết th
     });
 
     // 5. Rút tiền
-        safeClick('btn-withdraw', async () => {
-        // Lấy giá trị, xóa sạch dấu phẩy hoặc dấu chấm nếu người dùng lỡ nhập vào
-        let rawAmount = document.getElementById('withdraw-amount')?.value || "";
-        let cleanAmount = rawAmount.replace(/[,.]/g, ''); // Xóa sạch dấu , và .
+           safeClick('btn-withdraw', async () => {
+        // 1. Lấy đúng ID từ HTML của bạn là 'wd-amount'
+        const inputEl = document.getElementById('wd-amount');
+        const bankEl = document.getElementById('bank-name');
+        const accEl = document.getElementById('bank-acc');
+        const ownerEl = document.getElementById('bank-owner');
+
+        // 2. Làm sạch dữ liệu nhập vào (xóa dấu phẩy, dấu chấm) [cite: 2026-01-24]
+        let rawAmount = inputEl?.value || "";
+        let cleanAmount = rawAmount.toString().replace(/\D/g, ''); 
         const amount = parseInt(cleanAmount);
 
-        const bank = document.getElementById('withdraw-bank')?.value?.trim();
-        const account = document.getElementById('withdraw-account')?.value?.trim();
-        const name = document.getElementById('withdraw-name')?.value?.trim();
+        const bank = bankEl?.value?.trim();
+        const account = accEl?.value?.trim();
+        const name = ownerEl?.value?.trim();
 
-        // Kiểm tra logic rút tiền [cite: 2026-01-24]
+        // 3. Kiểm tra điều kiện rút [cite: 2026-01-24]
         if (isNaN(amount) || amount < 20000) {
             return tg.showAlert("Số tiền rút tối thiểu là 20,000đ!");
         }
+        
         if (!bank || !account || !name) {
-            return tg.showAlert("Vui lòng điền đầy đủ thông tin nhận tiền!");
-        }
-        if (data.coins < amount) {
-            return tg.showAlert("Số dư xu của bạn không đủ để rút!");
+            return tg.showAlert("Vui lòng điền đủ: Ngân hàng, STK và Tên!");
         }
 
-        // Thực hiện trừ xu và lưu lịch sử [cite: 2026-01-24]
+        if (data.coins < amount) {
+            return tg.showAlert("Số dư xu của bạn không đủ!");
+        }
+
+        // 4. Trừ tiền và lưu lịch sử theo User ID [cite: 2026-01-23, 2026-01-24]
         data.coins -= amount;
         const newHistory = {
             amount: amount,
             bank: bank,
             account: account,
-            name: name,
-            status: 'Đang xử lý', // Trạng thái mặc định khi mới gửi [cite: 2026-01-24]
+            status: 'Đang xử lý',
             time: new Date().toLocaleString('vi-VN')
         };
         
         if (!data.history) data.history = [];
-        data.history.unshift(newHistory); // Đưa yêu cầu mới nhất lên đầu [cite: 2026-01-24]
+        data.history.unshift(newHistory);
 
-        await save(); // Lưu vào Database theo userId [cite: 2026-01-23, 2026-01-24]
+        await save(); // Lưu vào Firebase [cite: 2026-01-24]
         updateUI();
-        tg.showAlert("✅ Gửi yêu cầu rút tiền thành công! Admin sẽ duyệt sớm.");
+        tg.showAlert("✅ Gửi yêu cầu rút tiền thành công!");
         
-        // Reset ô nhập tiền
-        document.getElementById('withdraw-amount').value = '';
+        // Xóa trắng ô nhập sau khi xong
+        inputEl.value = '';
     });
-
 } // Đóng hàm setupEventListeners ở đây
 
 // Đưa hàm save ra ngoài để các hàm khác có thể dùng chung [cite: 2026-01-24]
