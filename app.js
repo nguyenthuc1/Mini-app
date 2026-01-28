@@ -14,7 +14,7 @@ const db = firebase.database();
 const tg = window.Telegram.WebApp;
 const userId = String(tg.initDataUnsafe?.user?.id || '88888888');
 const BOT_USERNAME = "Supermoneymine_bot";
-const REF_REWARD = 500; // Thưởng mời bạn bè [cite: 2026-01-24]
+const REF_REWARD = 2000; // Thưởng mời bạn bè [cite: 2026-01-24]
 
 let data = { fish: 0, coins: 0, speed: 1, shipLevel: 1, startTime: null, history: [], completedTasks: [] };
 
