@@ -3,38 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Duyệt Rút Tiền</title>
+    <title>Quản Lý Rút Tiền - Fish Mining</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 </head>
-<body class="bg-[#0b0f1a] text-white p-4">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-2xl font-bold text-yellow-500 mb-6 flex justify-between items-center">
-            QUẢN LÝ RÚT TIỀN
-            <button onclick="loadRequests()" class="text-sm bg-blue-600 px-4 py-2 rounded-lg">Làm mới 🔄</button>
-        </h1>
+<body class="bg-[#0b0f1a] text-white p-4 font-sans">
+    <div class="max-w-5xl mx-auto">
+        <header class="flex justify-between items-center mb-8 bg-[#161b2c] p-6 rounded-2xl border border-slate-700">
+            <div>
+                <h1 class="text-xl font-bold text-yellow-500 uppercase tracking-wider">Hệ Thống Duyệt Lệnh</h1>
+                <p class="text-xs text-gray-400 mt-1">Dữ liệu thời gian thực từ Firebase</p>
+            </div>
+            <button onclick="loadRequests()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-xl font-bold text-sm transition-all active:scale-95">
+                Làm mới 🔄
+            </button>
+        </header>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse bg-[#161b2c] rounded-xl overflow-hidden shadow-2xl">
-                <thead class="bg-[#1e293b] text-gray-400 uppercase text-xs">
-                    <tr>
-                        <th class="p-4">User ID</th>
-                        <th class="p-4">Thông tin</th>
-                        <th class="p-4">Số tiền</th>
-                        <th class="p-4">Thời gian</th>
-                        <th class="p-4 text-center">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-list" class="text-sm">
-                    <tr><td colspan="5" class="p-10 text-center text-gray-500 italic">Đang tải dữ liệu...</td></tr>
-                </tbody>
-            </table>
+        <div class="grid grid-cols-1 gap-4" id="admin-list">
+            <div class="text-center py-20 text-gray-500 italic">Đang tải lệnh rút...</div>
         </div>
     </div>
 
     <script>
-        // --- COPY CONFIG TỪ APP.JS CỦA BẠN VÀO ĐÂY ---
+        // CẤU HÌNH FIREBASE (Giữ nguyên config của bạn) [cite: 2026-01-24]
         const firebaseConfig = {
             apiKey: "AIzaSyAc0psT5Up6aEu0VnCz1TZ4sSNTKmif8oA",
             authDomain: "telegram-bot-backup-11c83.firebaseapp.com",
@@ -45,77 +38,98 @@
             appId: "1:363675104532:web:6c51d1c7318b765e897e01"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        async function loadRequests() {
-            const list = document.getElementById('admin-list');
-            list.innerHTML = '<tr><td colspan="5" class="p-10 text-center">Đang quét lệnh rút...</td></tr>';
+        // 1. TỰ ĐỘNG ĐĂNG NHẬP ĐỂ TRÁNH LỖI RULES [cite: 2026-01-24]
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (!user) {
+                await firebase.auth().signInAnonymously();
+            } else {
+                console.log("Admin đã đăng nhập:", user.uid);
+                loadRequests();
+            }
+        });
 
+        // 2. TẢI DANH SÁCH LỆNH RÚT [cite: 2026-01-24]
+        async function loadRequests() {
+            const container = document.getElementById('admin-list');
             try {
                 const snap = await db.ref('users').once('value');
-                const users = snap.val();
+                const allUsers = snap.val();
                 let html = '';
-                let count = 0;
+                let hasRequest = false;
 
-                for (let uid in users) {
-                    const userData = users[uid];
+                for (let uid in allUsers) {
+                    const userData = allUsers[uid];
                     if (userData.history) {
-                        userData.history.forEach((h, index) => {
-                            // Chỉ hiện các lệnh "Đang xử lý" [cite: 2026-01-24]
-                            if (h.status === 'Đang xử lý') {
-                                count++;
-                                html += `
-                                <tr class="border-b border-slate-800 hover:bg-slate-800/50">
-                                    <td class="p-4 font-mono text-blue-400 text-xs">${uid}</td>
-                                    <td class="p-4">
-                                        <div class="font-bold text-white">${h.bank}</div>
-                                        <div class="text-xs text-gray-400">${h.account} - ${h.name || 'N/A'}</div>
-                                    </td>
-                                    <td class="p-4 font-bold text-yellow-400">${h.amount.toLocaleString()}đ</td>
-                                    <td class="p-4 text-gray-500 text-[10px]">${h.time}</td>
-                                    <td class="p-4 text-center space-x-2">
-                                        <button onclick="updateStatus('${uid}', ${index}, 'Thành công')" class="bg-green-600 px-3 py-1 rounded text-[10px] font-bold">DUYỆT</button>
-                                        <button onclick="refund('${uid}', ${index}, ${h.amount})" class="bg-red-600 px-3 py-1 rounded text-[10px] font-bold">HỦY/HOÀN</button>
-                                    </td>
-                                </tr>`;
+                        userData.history.forEach((item, index) => {
+                            // Chỉ hiển thị các lệnh có trạng thái "Đang xử lý" [cite: 2026-01-24]
+                            if (item.status === 'Đang xử lý') {
+                                hasRequest = true;
+                                html += createRequestCard(uid, item, index);
                             }
                         });
                     }
                 }
-
-                list.innerHTML = count > 0 ? html : '<tr><td colspan="5" class="p-10 text-center text-gray-500">🎉 Không có lệnh nào chờ duyệt!</td></tr>';
-            } catch (e) {
-                list.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500">Lỗi: ${e.message}</td></tr>`;
+                container.innerHTML = hasRequest ? html : '<div class="text-center py-20 bg-[#161b2c] rounded-2xl text-gray-500">🎉 Hiện tại không có lệnh nào cần duyệt!</div>';
+            } catch (error) {
+                container.innerHTML = `<div class="bg-red-900/20 border border-red-500 p-6 rounded-2xl text-red-500 text-center">Lỗi: ${error.message}<br>Thức hãy kiểm tra lại Rules trên Firebase!</div>`;
             }
         }
 
+        function createRequestCard(uid, item, index) {
+            return `
+            <div class="bg-[#161b2c] border border-slate-700 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 hover:border-blue-500/50 transition-all">
+                <div class="flex-1 min-w-[250px]">
+                    <p class="text-[10px] text-blue-400 font-mono mb-1">USER ID: ${uid}</p>
+                    <h3 class="font-bold text-lg text-white mb-2">${item.amount.toLocaleString()} VNĐ</h3>
+                    <div class="text-xs space-y-1 text-gray-400">
+                        <p>🏦 <b>Ngân hàng:</b> ${item.bank}</p>
+                        <p>💳 <b>Số tài khoản:</b> ${item.account}</p>
+                        <p>👤 <b>Chủ tài khoản:</b> ${item.name || 'N/A'}</p>
+                        <p class="text-[10px] text-gray-500 mt-2 italic">🕒 Gửi lúc: ${item.time}</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="updateStatus('${uid}', ${index}, 'Thành công')" class="bg-green-600 hover:bg-green-500 px-5 py-3 rounded-xl text-xs font-bold transition-all shadow-lg shadow-green-900/20">
+                        DUYỆT CHI ✅
+                    </button>
+                    <button onclick="refund('${uid}', ${index}, ${item.amount})" class="bg-red-600/20 hover:bg-red-600 border border-red-600 text-red-500 hover:text-white px-5 py-3 rounded-xl text-xs font-bold transition-all">
+                        HỦY & HOÀN TIỀN ❌
+                    </button>
+                </div>
+            </div>`;
+        }
+
+        // 3. DUYỆT LỆNH [cite: 2026-01-24]
         async function updateStatus(uid, index, status) {
-            if (!confirm(`Xác nhận lệnh rút này đã ${status}?`)) return;
-            const ref = db.ref(`users/${uid}/history/${index}`);
-            await ref.update({ status: status });
-            alert("Đã cập nhật!");
-            loadRequests();
+            if (!confirm(`Xác nhận đã chuyển tiền cho user ${uid}?`)) return;
+            try {
+                await db.ref(`users/${uid}/history/${index}`).update({ status: status });
+                alert("Đã duyệt thành công!");
+                loadRequests();
+            } catch (e) { alert("Lỗi: " + e.message); }
         }
 
+        // 4. HỦY LỆNH VÀ HOÀN TIỀN (CHỐNG MẤT TIỀN USER) [cite: 2026-01-24]
         async function refund(uid, index, amount) {
-            if (!confirm("Hủy lệnh này và hoàn lại tiền cho user?")) return;
-            
-            // 1. Hoàn tiền [cite: 2026-01-24]
-            const userRef = db.ref(`users/${uid}`);
-            const snap = await userRef.once('value');
-            const data = snap.val();
-            const newCoins = (data.coins || 0) + amount;
-
-            // 2. Cập nhật trạng thái và số dư [cite: 2026-01-24]
-            await userRef.update({ coins: newCoins });
-            await userRef.child(`history/${index}`).update({ status: 'Bị từ chối (Đã hoàn tiền)' });
-            
-            alert("Đã hoàn tiền!");
-            loadRequests();
+            if (!confirm("Hủy lệnh rút này và cộng lại tiền cho người chơi?")) return;
+            try {
+                const userRef = db.ref(`users/${uid}`);
+                const snap = await userRef.once('value');
+                const userData = snap.val();
+                
+                // Cộng lại tiền vào số dư hiện tại của user [cite: 2026-01-23, 2026-01-24]
+                const newCoins = (userData.coins || 0) + amount;
+                
+                await userRef.update({ coins: newCoins });
+                await userRef.child(`history/${index}`).update({ status: 'Bị từ chối (Đã hoàn tiền)' });
+                
+                alert("Đã hủy lệnh và hoàn lại " + amount.toLocaleString() + " xu cho user!");
+                loadRequests();
+            } catch (e) { alert("Lỗi khi hoàn tiền: " + e.message); }
         }
-
-        window.onload = loadRequests;
     </script>
 </body>
 </html>
