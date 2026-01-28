@@ -73,18 +73,20 @@ function setupEventListeners() {
         tg.showAlert(`✅ Đã nhận ${Math.floor(earned).toLocaleString()} xu!`);
     });
 
-    safeClick('btn-upgrade', async () => {
-        const cost = data.shipLevel * 200;
-        if (data.coins < cost) return tg.showAlert("Bạn cần " + cost + " xu!");
-        if (data.speed >= 5.0) return tg.showAlert("Đã đạt cấp tối đa!");
-        data.coins -= cost;
-        data.speed += 0.2;
-        data.shipLevel += 1;
-        await save();
-        updateUI();
-        tg.showAlert("🚀 Nâng cấp thành công!");
-    });
-
+ safeClick('btn-upgrade', async () => {
+    const cost = 200; 
+    
+    if (data.coins < cost) return tg.showAlert("Bạn cần " + cost + " xu!");
+    if (data.speed >= 5.0) return tg.showAlert("Đã đạt cấp tối đa!");
+    
+    data.coins -= cost;
+    data.speed += 0.2;
+    data.shipLevel += 1; // Vẫn tăng level để người dùng thấy tiến trình [cite: 2026-01-24]
+    
+    await save();
+    updateUI();
+    tg.showAlert("🚀 Nâng cấp thành công!");
+});
     safeClick('btn-copy-ref', () => {
         const link = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
         navigator.clipboard.writeText(link);
@@ -113,14 +115,21 @@ function updateUI() {
     setText('speed-display', (data.speed || 1).toFixed(1));
     setText('wallet-balance', Math.floor(data.coins).toLocaleString());
     setText('ref-link', `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`);
-    
-    // Cập nhật giá trên nút nâng cấp
+function updateUI() {
+    // ... các dòng code khác giữ nguyên ...
     const btnUpgrade = document.getElementById('btn-upgrade');
-    if (btnUpgrade && data.speed < 5.0) {
-        btnUpgrade.innerText = `NÂNG CẤP (${(data.shipLevel * 2000).toLocaleString()} 💰)`;
+    if (btnUpgrade) {
+        if (data.speed >= 5.0) {
+            btnUpgrade.innerText = "MAX LEVEL";
+            btnUpgrade.disabled = true;
+        } else {
+            // Hiển thị cố định 200 xu trên nút [cite: 2026-01-24]
+            btnUpgrade.innerText = "NÂNG CẤP (200 💰)";
+            btnUpgrade.disabled = false;
+        }
     }
-
-    renderHistory();
+    
+    if (typeof renderHistory === 'function') renderHistory();
 }
 
 // --- 4. LOGIC ĐÀO CÁ ---
