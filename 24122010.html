@@ -145,8 +145,12 @@ function renderUserStats(users) {
             <td class="p-4 font-mono text-xs">${uid}</td>
             <td class="p-4 text-yellow-500 font-bold">${(u.coins || 0).toLocaleString()}</td>
             <td class="p-4">${hours}h (Lv: ${currentSpeed})</td>
-            <td class="p-4">${statusTag}</td>
-        </tr>`;
+            html += `
+<td class="p-4 text-xs">
+    ${statusTag} <br> 
+    <span class="text-blue-400">Mời: ${u.total_refs || 0} người</span>
+</td>`;
+
     }
     body.innerHTML = html;
 }
