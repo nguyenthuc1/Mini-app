@@ -19,9 +19,18 @@ const REF_REWARD = 2000;
 let data = { fish: 0, coins: 0, speed: 1, shipLevel: 1, startTime: null, history: [], completedTasks: [], total_time: 0 };
 
 // --- 1. KHỞI TẠO (Đã sửa lỗi lồng hàm gây kẹt) ---
+
 async function init() {
-    console.log("Đang kết nối Firebase cho User:", userId); [cite: 2026-01-24]
-    const loader = document.getElementById('loading-screen'); // Lấy UI loading [cite: 2026-01-24]
+    console.log("Hệ thống bắt đầu khởi tạo..."); [cite: 2026-01-24]
+    const loader = document.getElementById('loading-screen');
+
+    // CƠ CHẾ PHÁ BĂNG KHẨN CẤP: Sau 5 giây tự động tắt loading dù có chuyện gì xảy ra [cite: 2026-01-24]
+    const forceHide = setTimeout(() => {
+        if (loader && loader.style.display !== 'none') {
+            loader.style.display = 'none';
+            console.warn("Cảnh báo: Buộc phải ẩn Loading do Firebase phản hồi quá lâu!"); [cite: 2026-01-24]
+        }
+    }, 5000);
 
     firebase.auth().onAuthStateChanged(async (user) => {
         if (!user) {
@@ -32,25 +41,22 @@ async function init() {
             const snap = await db.ref('users/' + userId).once('value'); [cite: 2026-01-24]
             if (snap.exists()) {
                 data = { ...data, ...snap.val() }; [cite: 2026-01-24]
-                console.log("Đã tải dữ liệu thành công!"); [cite: 2026-01-24]
             } else {
-                console.log("User mới, đang tạo profile..."); [cite: 2026-01-24]
-                const startParam = tg.initDataUnsafe?.start_param; [cite: 2026-01-24]
-                if (startParam && startParam !== userId) await rewardReferrer(startParam); [cite: 2026-01-24]
+                // Lưu ID để tránh trùng thông tin người dùng [cite: 2026-01-23, 2026-01-24]
                 await db.ref('users/' + userId).set(data); [cite: 2026-01-24]
             }
 
-            // Khởi tạo các chức năng [cite: 2026-01-24]
             setupEventListeners(); [cite: 2026-01-24]
             updateUI(); [cite: 2026-01-24]
             checkMining(); [cite: 2026-01-24]
-
-            // ẨN LOADING TẠI ĐÂY [cite: 2026-01-24]
-            if (loader) loader.style.display = 'none'; 
+            
+            // Tắt Loading bình thường và hủy lệnh ép buộc [cite: 2026-01-24]
+            clearTimeout(forceHide); 
+            if (loader) loader.style.display = 'none'; [cite: 2026-01-24]
 
         } catch (e) {
-            console.error("Lỗi khởi tạo:", e); [cite: 2026-01-24]
-            if (loader) loader.style.display = 'none'; // Lỗi cũng phải ẩn để thấy giao diện [cite: 2026-01-24]
+            console.error("Lỗi kịch bản:", e); [cite: 2026-01-24]
+            if (loader) loader.style.display = 'none'; [cite: 2026-01-24]
         }
     });
 }
