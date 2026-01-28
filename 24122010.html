@@ -1,27 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Duyệt Rút Tiền</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 </head>
-<body style="font-family: Arial; padding: 20px; background: #f0f2f5;">
-    <h2>Danh sách lệnh rút tiền</h2>
-    <div id="admin-list">Đang tải...</div>
-<script>
-    
-    const adminPass = prompt("Nhập mật khẩu Admin:");
-    if (adminPass !== "Trithuc2412") { 
-        alert("Sai mật khẩu!");
-        document.body.innerHTML = "<h1>Truy cập bị từ chối</h1>";
-        window.location.href = "index.html";
-    }
+<body class="bg-[#0b0f1a] text-white p-4">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold text-yellow-500 mb-6 flex justify-between items-center">
+            QUẢN LÝ RÚT TIỀN
+            <button onclick="loadRequests()" class="text-sm bg-blue-600 px-4 py-2 rounded-lg">Làm mới 🔄</button>
+        </h1>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse bg-[#161b2c] rounded-xl overflow-hidden shadow-2xl">
+                <thead class="bg-[#1e293b] text-gray-400 uppercase text-xs">
+                    <tr>
+                        <th class="p-4">User ID</th>
+                        <th class="p-4">Thông tin</th>
+                        <th class="p-4">Số tiền</th>
+                        <th class="p-4">Thời gian</th>
+                        <th class="p-4 text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-list" class="text-sm">
+                    <tr><td colspan="5" class="p-10 text-center text-gray-500 italic">Đang tải dữ liệu...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <script>
-        // Cấu hình Firebase của bạn
+        // --- COPY CONFIG TỪ APP.JS CỦA BẠN VÀO ĐÂY ---
         const firebaseConfig = {
-            apiKey: "AIzaSyAc8psT5Up6aEu8VnCz1TZ4sSNTKmf8oA",
+            apiKey: "AIzaSyAc0psT5Up6aEu0VnCz1TZ4sSNTKmif8oA",
             authDomain: "telegram-bot-backup-11c83.firebaseapp.com",
             databaseURL: "https://telegram-bot-backup-11c83-default-rtdb.firebaseio.com",
             projectId: "telegram-bot-backup-11c83",
@@ -29,42 +44,78 @@
             messagingSenderId: "363675104532",
             appId: "1:363675104532:web:6c51d1c7318b765e897e01"
         };
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        function loadWithdrawals() {
-            const listDiv = document.getElementById('admin-list');
-            db.ref('users').once('value', (snapshot) => {
+        async function loadRequests() {
+            const list = document.getElementById('admin-list');
+            list.innerHTML = '<tr><td colspan="5" class="p-10 text-center">Đang quét lệnh rút...</td></tr>';
+
+            try {
+                const snap = await db.ref('users').once('value');
+                const users = snap.val();
                 let html = '';
-                snapshot.forEach((userSnap) => {
-                    const userId = userSnap.key;
-                    const userData = userSnap.val();
+                let count = 0;
+
+                for (let uid in users) {
+                    const userData = users[uid];
                     if (userData.history) {
-                        userData.history.forEach((order, index) => {
-                            if (order.status === 'Đang xử lý') {
-                                // Sử dụng dấu ` (backtick) để bọc chuỗi HTML
+                        userData.history.forEach((h, index) => {
+                            // Chỉ hiện các lệnh "Đang xử lý" [cite: 2026-01-24]
+                            if (h.status === 'Đang xử lý') {
+                                count++;
                                 html += `
-                                <div style="background:white; padding:15px; margin-bottom:10px; border-radius:8px; border-left:5px solid #28a745;">
-                                    <p><b>User ID:</b> ${userId}</p>
-                                    <p><b>Số tiền:</b> ${order.amount.toLocaleString()}đ</p>
-                                    <p><b>Ngân hàng:</b> ${order.bank} - ${order.owner}</p>
-                                    <p><b>STK:</b> ${order.account}</p>
-                                    <button onclick="approve('${userId}', ${index})" style="background:#28a745; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">Xác nhận đã chuyển</button>
-                                </div>`;
+                                <tr class="border-b border-slate-800 hover:bg-slate-800/50">
+                                    <td class="p-4 font-mono text-blue-400 text-xs">${uid}</td>
+                                    <td class="p-4">
+                                        <div class="font-bold text-white">${h.bank}</div>
+                                        <div class="text-xs text-gray-400">${h.account} - ${h.name || 'N/A'}</div>
+                                    </td>
+                                    <td class="p-4 font-bold text-yellow-400">${h.amount.toLocaleString()}đ</td>
+                                    <td class="p-4 text-gray-500 text-[10px]">${h.time}</td>
+                                    <td class="p-4 text-center space-x-2">
+                                        <button onclick="updateStatus('${uid}', ${index}, 'Thành công')" class="bg-green-600 px-3 py-1 rounded text-[10px] font-bold">DUYỆT</button>
+                                        <button onclick="refund('${uid}', ${index}, ${h.amount})" class="bg-red-600 px-3 py-1 rounded text-[10px] font-bold">HỦY/HOÀN</button>
+                                    </td>
+                                </tr>`;
                             }
                         });
                     }
-                });
-                listDiv.innerHTML = html || "Không có lệnh rút nào đang chờ.";
-            });
+                }
+
+                list.innerHTML = count > 0 ? html : '<tr><td colspan="5" class="p-10 text-center text-gray-500">🎉 Không có lệnh nào chờ duyệt!</td></tr>';
+            } catch (e) {
+                list.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500">Lỗi: ${e.message}</td></tr>`;
+            }
         }
 
-        function approve(uid, index) {
-            db.ref(`users/${uid}/history/${index}`).update({ status: 'Thành công' })
-              .then(() => { alert("Đã duyệt!"); loadWithdrawals(); });
+        async function updateStatus(uid, index, status) {
+            if (!confirm(`Xác nhận lệnh rút này đã ${status}?`)) return;
+            const ref = db.ref(`users/${uid}/history/${index}`);
+            await ref.update({ status: status });
+            alert("Đã cập nhật!");
+            loadRequests();
         }
 
-        window.onload = loadWithdrawals;
+        async function refund(uid, index, amount) {
+            if (!confirm("Hủy lệnh này và hoàn lại tiền cho user?")) return;
+            
+            // 1. Hoàn tiền [cite: 2026-01-24]
+            const userRef = db.ref(`users/${uid}`);
+            const snap = await userRef.once('value');
+            const data = snap.val();
+            const newCoins = (data.coins || 0) + amount;
+
+            // 2. Cập nhật trạng thái và số dư [cite: 2026-01-24]
+            await userRef.update({ coins: newCoins });
+            await userRef.child(`history/${index}`).update({ status: 'Bị từ chối (Đã hoàn tiền)' });
+            
+            alert("Đã hoàn tiền!");
+            loadRequests();
+        }
+
+        window.onload = loadRequests;
     </script>
 </body>
 </html>
