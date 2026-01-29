@@ -147,6 +147,14 @@
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
+    pointer-events: none; /* Không chặn click vào input */
+    z-index: -1; /* Đưa xuống dưới content */
+}
+
+/* Đảm bảo content bên trong có z-index cao hơn */
+.gradient-border > * {
+    position: relative;
+    z-index: 1;
 }
 
 /* ========================================
@@ -241,7 +249,16 @@
 /* ========================================
    INPUT FOCUS EFFECTS
    ======================================== */
-input:focus {
+input, textarea {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    pointer-events: auto !important;
+    touch-action: auto !important;
+}
+
+input:focus, textarea:focus {
     outline: none;
     border-color: rgba(59, 130, 246, 0.5) !important;
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
@@ -317,9 +334,16 @@ body {
 }
 
 /* ========================================
-   DISABLE TEXT SELECTION ON BUTTONS
+   DISABLE TEXT SELECTION ON BUTTONS ONLY
    ======================================== */
-button {
+button, .nav-btn {
     -webkit-tap-highlight-color: transparent;
     user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Allow selection on inputs and text areas */
+input, textarea, [contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
 }
