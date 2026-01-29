@@ -209,8 +209,7 @@ function initAdsgram() {
 
 function handleRefuel() {
     // 1. Kiểm tra đã đầy nhiên liệu chưa
-   
-if (data.fuel >= 100) {
+    if (data.fuel >= 100) {
         tg.showAlert("⛽ Nhiên liệu đã đầy (100/100)!");
         return;
     }
@@ -219,7 +218,7 @@ if (data.fuel >= 100) {
     // CHẾ ĐỘ TEST: BỎ QUA QUẢNG CÁO
     // ========================================
     console.log("🚀 Đang chạy chế độ Test - Tự động nạp nhiên liệu");
-    
+
     // Nạp đầy nhiên liệu ngay lập tức
     data.fuel = 100;
 
@@ -230,8 +229,10 @@ if (data.fuel >= 100) {
 
     save(); // Lưu ngay lên Firebase
     updateUI(); // Cập nhật giao diện
-    
+
     tg.showAlert("⛽ (TEST MODE) Đã nạp đầy nhiên liệu thành công!");
+} // <--- THÊM DẤU NÀY ĐỂ ĐÓNG HÀM handleRefuel
+
 function handleUpgrade() {
     // Làm tròn speed để tránh lỗi floating point
     data.speed = Math.round(data.speed * 10) / 10;
