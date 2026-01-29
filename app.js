@@ -199,47 +199,49 @@ let AdController = null;
 
 function initAdsgram() {
     try {
-        AdController = window.Adsgram.init({ blockId: "2777" });
+        // Sử dụng mã test 2777 nếu mã 21962 chưa Active
+        AdController = window.Adsgram.init({ blockId: "2777" }); 
         console.log("✅ Adsgram initialized");
     } catch (error) {
         console.error("❌ Adsgram init error:", error);
-    
+    }
 }
-    
-    // Kiểm tra Adsgram có sẵn không
-    if (!AdController) {
-        tg.showAlert("❌ Hệ thống quảng cáo chưa sẵn sàng. Vui lòng thử lại!");
-        initAdsgram(); // Thử init lại
+
+function handleRefuel() {
+    // 1. Kiểm tra đã đầy nhiên liệu chưa
+    if (data.fuel >= 100) {
+        tg.showAlert("⛽ Nhiên liệu đã đầy (100/100)!");
         return;
     }
     
-    // Hiển thị quảng cáo
+    // 2. Kiểm tra Adsgram có sẵn không
+    if (!AdController) {
+        tg.showAlert("❌ Hệ thống quảng cáo chưa sẵn sàng. Vui lòng thử lại!");
+        initAdsgram(); 
+        return;
+    }
+    
+    // 3. Hiển thị quảng cáo
     AdController.show()
         .then(() => {
-            // Thành công - User xem xong quảng cáo
             data.fuel = 100;
             save();
             updateUI();
             tg.showAlert("⛽ Đã nạp đầy nhiên liệu! Cảm ơn bạn đã xem quảng cáo 🎉");
         })
         .catch((error) => {
-            // Lỗi hoặc user skip
             if (error?.error === true && error?.done === false) {
-                // User đóng quảng cáo trước khi hoàn thành
                 tg.showAlert("❌ Bạn cần xem hết quảng cáo để nhận nhiên liệu!");
-            } else if (error?.error === true && error?.done === true) {
-                // Đã xem hết quảng cáo nhưng có lỗi
+            } else {
+                // Nếu lỗi khác hoặc xem xong mà lỗi, vẫn cho nạp để user không ức chế
                 data.fuel = 100;
                 save();
                 updateUI();
                 tg.showAlert("⛽ Đã nạp đầy nhiên liệu!");
-            } else {
-                // Lỗi khác (không có quảng cáo, lỗi mạng...)
-                console.error("Ad error:", error);
-                tg.showAlert("⚠️ Không có quảng cáo. Vui lòng thử lại sau!");
             }
         });
 }
+
 
 function handleUpgrade() {
     // Làm tròn speed để tránh lỗi floating point
