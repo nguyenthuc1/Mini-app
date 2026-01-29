@@ -3,25 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Trị Viên - Fish Mining</title>
+    <title>Quản Trị Hệ Thống - Fish Mining</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body { background-color: #0f172a; color: white; font-family: sans-serif; }
+        .tab-active { border-bottom: 2px solid #eab308; color: #eab308; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; }
+    </style>
 </head>
-<body class="bg-[#0f172a] text-white p-4">
-    <div class="max-w-4xl mx-auto">
-        <header class="flex justify-between items-center mb-8 bg-slate-800 p-4 rounded-xl shadow-lg">
-            <h1 class="text-xl font-bold text-yellow-500">QUẢN TRỊ VIÊN 🛡️</h1>
-            <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-xs font-bold transition">Làm mới dữ liệu 🔄</button>
+<body class="p-4">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-6 bg-slate-800 p-4 rounded-xl shadow-lg">
+            <h1 class="text-xl font-bold text-yellow-500">ADMIN PANEL 🛡️</h1>
+            <button onclick="location.reload()" class="bg-blue-600 px-4 py-2 rounded-lg text-xs font-bold">Làm mới 🔄</button>
         </header>
 
-        <div id="section-withdraw" class="grid gap-4">
-            <p class="text-center text-gray-500 py-20 italic">Đang tải lệnh rút từ hệ thống...</p>
+        <div class="flex space-x-6 mb-6 border-b border-slate-700">
+            <button id="tab-withdraw-btn" onclick="showTab('withdraw')" class="pb-2 text-sm font-bold tab-active">Lệnh rút tiền</button>
+            <button id="tab-user-btn" onclick="showTab('user')" class="pb-2 text-sm font-bold text-gray-400">Thống kê User</button>
+        </div>
+
+        <div id="tab-withdraw" class="grid gap-4">
+            <p class="text-center text-gray-500 py-10">Đang tải dữ liệu lệnh rút...</p>
+        </div>
+
+        <div id="tab-user" class="hidden overflow-x-auto card p-4">
+            <table class="w-full text-left text-xs">
+                <thead class="text-gray-400 uppercase border-b border-slate-700">
+                    <tr>
+                        <th class="p-3">User ID</th>
+                        <th class="p-3">Level</th>
+                        <th class="p-3">Số xu</th>
+                        <th class="p-3">Đã mời</th>
+                        <th class="p-3">Ra khơi</th>
+                        <th class="p-3">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody id="user-table-body">
+                    </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        // Cấu hình Firebase của bạn
         const firebaseConfig = {
             apiKey: "AIzaSyAc0psT5Up6aEu0VnCz1TZ4sSNTKmif8oA",
             authDomain: "telegram-bot-backup-11c83.firebaseapp.com",
@@ -35,78 +61,91 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // PHẦN QUAN TRỌNG: Lắng nghe dữ liệu từ Firebase
+        function showTab(tab) {
+            document.getElementById('tab-withdraw').classList.add('hidden');
+            document.getElementById('tab-user').classList.add('hidden');
+            document.getElementById('tab-withdraw-btn').classList.remove('tab-active', 'text-yellow-500');
+            document.getElementById('tab-user-btn').classList.remove('tab-active', 'text-yellow-500');
+            
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            document.getElementById('tab-' + tab + '-btn').classList.add('tab-active');
+        }
+
         db.ref('users').on('value', (snapshot) => {
             const users = snapshot.val();
-            const container = document.getElementById('section-withdraw');
+            renderWithdrawals(users);
+            renderUsers(users);
+        });
+
+        function renderWithdrawals(users) {
+            const container = document.getElementById('tab-withdraw');
             let html = '';
-            let count = 0;
-
-            if (!users) {
-                container.innerHTML = '<p class="text-center py-10 text-gray-500">Hệ thống chưa có người dùng nào.</p>';
-                return;
-            }
-
             for (let uid in users) {
-                const user = users[uid];
-                // Kiểm tra lịch sử của từng user
-                if (user.history && Array.isArray(user.history)) {
-                    user.history.forEach((h, idx) => {
-                        // Chỉ hiện lệnh rút 'Đang xử lý'
+                const u = users[uid];
+                if (u.history) {
+                    u.history.forEach((h, idx) => {
                         if (h.status === '🕐 Đang xử lý') {
-                            count++;
-                            
-                            // Đối soát thời gian ra khơi để chống hack [cite: 2026-01-24]
-                            let sailingTime = "Không rõ";
-                            let isCheat = false;
-                            if (user.startTime) {
-                                const mins = Math.floor((new Date() - new Date(user.startTime)) / 60000);
-                                sailingTime = mins + " phút";
-                                // Logic check hack: Nếu xu quá nhiều mà thời gian chơi ít [cite: 2026-01-24]
-                                if (user.coins > (mins * 2000) && mins > 0) isCheat = true;
-                            }
-
                             html += `
-                            <div class="bg-[#1e293b] border-2 ${isCheat ? 'border-red-500 bg-red-900/10' : 'border-slate-700'} p-5 rounded-2xl">
-                                <div class="flex justify-between items-start mb-4">
-                                    <span class="text-[10px] font-mono text-blue-400">ID: ${uid}</span>
-                                    ${isCheat ? '<span class="bg-red-600 text-[8px] px-2 py-1 rounded animate-pulse">NGHI VẤN HACK</span>' : ''}
+                            <div class="card p-4 flex justify-between items-center">
+                                <div>
+                                    <p class="text-[10px] text-blue-400">ID: ${uid}</p>
+                                    <p class="text-lg font-bold text-yellow-500">${Number(h.amount).toLocaleString()} VNĐ</p>
+                                    <p class="text-[10px] text-gray-400">🏦 ${h.bankName} - ${h.bankAcc} (${h.bankOwner})</p>
                                 </div>
-                                <h3 class="text-xl font-bold text-yellow-500 mb-3">${Number(h.amount).toLocaleString()} VNĐ</h3>
-                                <div class="text-xs space-y-1 text-gray-300">
-                                    <p>🏦 Ngân hàng: <b class="text-white">${h.bankName || 'N/A'}</b></p>
-                                    <p>💳 STK: <b class="text-white">${h.bankAcc || 'N/A'}</b></p>
-                                    <p>👤 Tên: <b class="text-white">${h.bankOwner || 'N/A'}</b></p>
-                                    <p>⏱️ Đã ra khơi: <b class="${isCheat ? 'text-red-400' : 'text-green-400'}">${sailingTime}</b></p>
-                                </div>
-                                <div class="flex gap-2 mt-5">
-                                    <button onclick="updateStatus('${uid}', ${idx}, '✅ Thành công')" class="flex-1 bg-green-600 py-2 rounded-lg font-bold text-xs">DUYỆT ✅</button>
-                                    <button onclick="refund('${uid}', ${idx}, ${h.amount})" class="flex-1 bg-red-600 py-2 rounded-lg font-bold text-xs text-white">HỦY (HACK) ❌</button>
+                                <div class="flex gap-2">
+                                    <button onclick="updateStatus('${uid}', ${idx}, '✅ Thành công')" class="bg-green-600 px-3 py-1 rounded text-[10px] font-bold">DUYỆT</button>
+                                    <button onclick="refund('${uid}', ${idx}, ${h.amount})" class="bg-red-600 px-3 py-1 rounded text-[10px] font-bold">HỦY (HACK)</button>
                                 </div>
                             </div>`;
                         }
                     });
                 }
             }
-            container.innerHTML = count > 0 ? html : '<p class="text-center py-10 text-gray-500">🎉 Không có lệnh rút nào chờ xử lý.</p>';
-        });
+            container.innerHTML = html || '<p class="text-center py-10 text-gray-500">Không có lệnh chờ.</p>';
+        }
+
+        function renderUsers(users) {
+            const body = document.getElementById('user-table-body');
+            let html = '';
+            for (let uid in users) {
+                const u = users[uid];
+                const mins = u.startTime ? Math.floor((new Date() - new Date(u.startTime)) / 60000) : 0;
+                const invited = u.referrals ? Object.keys(u.referrals).length : 0;
+                
+                // Check nghi vấn hack dựa trên tỉ lệ xu/phút
+                const isSus = u.coins > (mins * 2000) && mins > 5;
+
+                html += `
+                <tr class="border-b border-slate-800 hover:bg-slate-800/50">
+                    <td class="p-3 font-mono text-blue-400">${uid}</td>
+                    <td class="p-3 text-yellow-500">Lv.${u.shipLevel || 1}</td>
+                    <td class="p-3 font-bold">${Number(u.coins || 0).toLocaleString()}</td>
+                    <td class="p-3 text-green-400">${invited} người</td>
+                    <td class="p-3 text-gray-400">${mins} phút</td>
+                    <td class="p-3">
+                        <span class="${isSus ? 'text-red-500 animate-pulse' : 'text-gray-500'} font-bold">
+                            ${isSus ? '⚠️ Nghi vấn' : 'Bình thường'}
+                        </span>
+                    </td>
+                </tr>`;
+            }
+            body.innerHTML = html;
+        }
 
         function updateStatus(uid, idx, status) {
-            if (confirm('Xác nhận lệnh rút này hợp lệ?')) {
+            if (confirm('Xác nhận duyệt lệnh này?')) {
                 db.ref('users/' + uid + '/history/' + idx).update({ status: status });
             }
         }
 
         function refund(uid, idx, amount) {
-            const reason = prompt("Lý do hủy (Số xu không khớp thời gian chơi, gian lận mời bạn bè...):", "Phát hiện gian lận: Thời gian ra khơi không khớp số xu.");
+            const reason = prompt("Lý do hủy (Cheat mời bạn bè / Hack xu):", "Phát hiện gian lận: Thời gian ra khơi không khớp số xu.");
             if (!reason) return;
-
             db.ref('users/' + uid).once('value', (snap) => {
                 const u = snap.val();
-                const updates = {};
-                updates['users/' + uid + '/coins'] = (Number(u.coins) || 0) + Number(amount);
-                updates['users/' + uid + '/history/' + idx + '/status'] = '❌ Bị từ chối: ' + reason;
-                db.ref().update(updates).then(() => alert('Đã hoàn tiền và hủy lệnh!'));
+                db.ref('users/' + uid).update({ coins: (Number(u.coins) || 0) + Number(amount) });
+                db.ref('users/' + uid + '/history/' + idx).update({ status: '❌ Từ chối: ' + reason });
+                alert('Đã hoàn tiền!');
             });
         }
     </script>
