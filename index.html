@@ -147,6 +147,24 @@
             </div>
             
             <div id="tasks-list" class="space-y-4">
+                <!-- Nhiệm vụ xem quảng cáo -->
+                <div class="gradient-border p-5 rounded-2xl card-hover backdrop-blur-sm">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-4">
+                            <span class="text-4xl">📺</span>
+                            <div>
+                                <p class="font-bold text-base">Xem quảng cáo</p>
+                                <p class="text-xs text-gray-400 mt-1">Nhận 10-15 xu ngẫu nhiên</p>
+                                <p class="text-[10px] text-yellow-500 mt-1">⏰ Còn lại: <span id="ads-remaining">5</span>/5 lượt hôm nay</p>
+                            </div>
+                        </div>
+                        <button id="btn-task-ads" class="glow-button px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-sm border-2 border-purple-400/50">
+                            🎁 XEM
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Nhiệm vụ tham gia Channel -->
                 <div class="gradient-border p-5 rounded-2xl card-hover backdrop-blur-sm">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center gap-4">
@@ -154,25 +172,45 @@
                             <div>
                                 <p class="font-bold text-base">Tham gia Channel</p>
                                 <p class="text-xs text-gray-400 mt-1">Theo dõi kênh chính thức</p>
+                                <p id="channel-status" class="text-[10px] text-gray-500 mt-1">⭐ Chưa hoàn thành</p>
                             </div>
                         </div>
-                        <button class="glow-button px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl font-bold text-sm border-2 border-blue-400/50">
-                            +500 💰
+                        <button id="btn-task-channel" class="glow-button px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl font-bold text-sm border-2 border-blue-400/50">
+                            +400 💰
                         </button>
                     </div>
                 </div>
 
+                <!-- Nhiệm vụ mời 5 bạn bè -->
                 <div class="gradient-border p-5 rounded-2xl card-hover backdrop-blur-sm">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center gap-4">
                             <span class="text-4xl">👥</span>
                             <div>
                                 <p class="font-bold text-base">Mời 5 bạn bè</p>
-                                <p class="text-xs text-gray-400 mt-1">Nhận thưởng lớn</p>
+                                <p class="text-xs text-gray-400 mt-1">Mời thành công 5 người</p>
+                                <p class="text-[10px] text-cyan-400 mt-1">📊 Tiến độ: <span id="invite-progress">0</span>/5 người</p>
                             </div>
                         </div>
-                        <button class="glow-button px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl font-bold text-sm border-2 border-green-400/50">
-                            +1000 💰
+                        <button id="btn-task-invite" class="glow-button px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl font-bold text-sm border-2 border-green-400/50" disabled>
+                            +2500 💰
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Nhiệm vụ đăng nhập hàng ngày -->
+                <div class="gradient-border p-5 rounded-2xl card-hover backdrop-blur-sm">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-4">
+                            <span class="text-4xl">📅</span>
+                            <div>
+                                <p class="font-bold text-base">Đăng nhập hàng ngày</p>
+                                <p class="text-xs text-gray-400 mt-1">Quay lại mỗi ngày</p>
+                                <p id="daily-status" class="text-[10px] text-gray-500 mt-1">🔥 Streak: <span id="daily-streak">0</span> ngày</p>
+                            </div>
+                        </div>
+                        <button id="btn-task-daily" class="glow-button px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 rounded-xl font-bold text-sm border-2 border-orange-400/50">
+                            +50 💰
                         </button>
                     </div>
                 </div>
