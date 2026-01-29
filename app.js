@@ -258,9 +258,9 @@ let AdController = null;
 
 function initAdsgram() {
     try {
-        // Block ID của bạn: 21962
-        AdController = window.Adsgram.init({ blockId: "21962" });
-        console.log("✅ Adsgram initialized with blockId: 21962");
+        // Block ID của bạn: 22009
+        AdController = window.Adsgram.init({ blockId: "22009", debug: true });
+        console.log("✅ Adsgram initialized with blockId: 22009");
     } catch (error) {
         console.error("❌ Adsgram init error:", error);
     }
