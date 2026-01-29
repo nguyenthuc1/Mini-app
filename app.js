@@ -199,19 +199,12 @@ let AdController = null;
 
 function initAdsgram() {
     try {
-        // THAY BLOCK ID CỦA BẠN VÀO ĐÂY
         AdController = window.Adsgram.init({ blockId: "21962" });
         console.log("✅ Adsgram initialized");
     } catch (error) {
         console.error("❌ Adsgram init error:", error);
     
 }
-function handleRefuel() {
-    // Kiểm tra đã đầy nhiên liệu chưa
-    if (data.fuel >= 100) {
-        tg.showAlert("⛽ Nhiên liệu đã đầy (100/100)!");
-        return;
-    }
     
     // Kiểm tra Adsgram có sẵn không
     if (!AdController) {
