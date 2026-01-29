@@ -95,28 +95,26 @@ function setupEventListeners() {
         bind(`nav-${tab}`, () => switchTab(tab));
     });
 }
-
-function switchTab(tab) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-    const target = document.getElementById('tab-' + tab);
-    if (target) target.classList.remove('hidden');
-
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('text-blue-400', 'text-purple-400', 'text-pink-400', 'text-yellow-400');
-        btn.classList.add('text-gray-500');
+function showTab(tabId) {
+    // Ẩn tất cả nội dung tab
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
     });
-    
-    const activeBtn = document.getElementById('nav-' + tab);
-    if (activeBtn) {
-        activeBtn.classList.remove('text-gray-500');
-        // Đặt màu theo tab
-        if (tab === 'home') activeBtn.classList.add('text-blue-400');
-        else if (tab === 'tasks') activeBtn.classList.add('text-purple-400');
-        else if (tab === 'friends') activeBtn.classList.add('text-pink-400');
-        else if (tab === 'wallet') activeBtn.classList.add('text-yellow-400');
-    }
+    // Hiện tab được chọn
+    document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+    // Cập nhật màu sắc nút điều hướng (để người dùng biết mình đang ở đâu)
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.replace('text-blue-400', 'text-gray-500');
+    });
+    document.getElementById('nav-' + tabId).classList.replace('text-gray-500', 'text-blue-400');
 }
 
+// Gán sự kiện click cho từng nút
+document.getElementById('nav-home').onclick = () => showTab('home');
+document.getElementById('nav-tasks').onclick = () => showTab('tasks');
+document.getElementById('nav-friends').onclick = () => showTab('friends');
+document.getElementById('nav-wallet').onclick = () => showTab('wallet');
 function handleMine() {
     if (!data.startTime) {
         // Kiểm tra nhiên liệu
