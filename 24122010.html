@@ -7,26 +7,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <style>
-        body { background-color: #0f172a; color: white; font-family: sans-serif; }
-        .card { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; }
-        .warning { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-    </style>
 </head>
-<body class="p-4">
+<body class="bg-[#0f172a] text-white p-4">
     <div class="max-w-4xl mx-auto">
-        <header class="flex justify-between items-center mb-8 bg-slate-800 p-4 rounded-xl">
+        <header class="flex justify-between items-center mb-8 bg-slate-800 p-4 rounded-xl shadow-lg">
             <h1 class="text-xl font-bold text-yellow-500">QUẢN TRỊ VIÊN 🛡️</h1>
-            <button onclick="location.reload()" class="bg-blue-600 px-4 py-2 rounded-lg text-xs">Làm mới dữ liệu</button>
+            <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-xs font-bold transition">Làm mới dữ liệu 🔄</button>
         </header>
 
-        <div id="withdraw-list" class="grid gap-4">
-            <p class="text-center text-gray-500 py-10">Đang quét lệnh rút từ Firebase...</p>
+        <div id="section-withdraw" class="grid gap-4">
+            <p class="text-center text-gray-500 py-20 italic">Đang tải lệnh rút từ hệ thống...</p>
         </div>
     </div>
 
     <script>
-        // Sử dụng đúng Config của bạn
+        // Cấu hình Firebase của bạn
         const firebaseConfig = {
             apiKey: "AIzaSyAc0psT5Up6aEu0VnCz1TZ4sSNTKmif8oA",
             authDomain: "telegram-bot-backup-11c83.firebaseapp.com",
@@ -40,72 +35,78 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // PHẦN QUAN TRỌNG: Lắng nghe dữ liệu từ Firebase
         db.ref('users').on('value', (snapshot) => {
             const users = snapshot.val();
-            const container = document.getElementById('withdraw-list');
+            const container = document.getElementById('section-withdraw');
             let html = '';
+            let count = 0;
+
+            if (!users) {
+                container.innerHTML = '<p class="text-center py-10 text-gray-500">Hệ thống chưa có người dùng nào.</p>';
+                return;
+            }
 
             for (let uid in users) {
                 const user = users[uid];
+                // Kiểm tra lịch sử của từng user
                 if (user.history && Array.isArray(user.history)) {
                     user.history.forEach((h, idx) => {
-                        // Khớp chính xác Status từ app.js
+                        // Chỉ hiện lệnh rút 'Đang xử lý'
                         if (h.status === '🕐 Đang xử lý') {
+                            count++;
                             
-                            // TÍNH TOÁN CHỐNG HACK
-                            let sailingInfo = "Chưa có dữ liệu";
+                            // Đối soát thời gian ra khơi để chống hack [cite: 2026-01-24]
+                            let sailingTime = "Không rõ";
                             let isCheat = false;
                             if (user.startTime) {
                                 const mins = Math.floor((new Date() - new Date(user.startTime)) / 60000);
-                                sailingInfo = mins + " phút";
-                                // Nếu số xu lớn bất thường so với thời gian (Ví dụ 1 phút > 2000 xu)
+                                sailingTime = mins + " phút";
+                                // Logic check hack: Nếu xu quá nhiều mà thời gian chơi ít [cite: 2026-01-24]
                                 if (user.coins > (mins * 2000) && mins > 0) isCheat = true;
                             }
 
                             html += `
-                            <div class="card p-5 ${isCheat ? 'warning' : ''}">
-                                <div class="flex justify-between text-[10px] text-gray-500 mb-2">
-                                    <span>ID: ${uid}</span>
-                                    <span>${h.time}</span>
+                            <div class="bg-[#1e293b] border-2 ${isCheat ? 'border-red-500 bg-red-900/10' : 'border-slate-700'} p-5 rounded-2xl">
+                                <div class="flex justify-between items-start mb-4">
+                                    <span class="text-[10px] font-mono text-blue-400">ID: ${uid}</span>
+                                    ${isCheat ? '<span class="bg-red-600 text-[8px] px-2 py-1 rounded animate-pulse">NGHI VẤN HACK</span>' : ''}
                                 </div>
-                                <div class="text-xl font-bold text-yellow-400 mb-4">${Number(h.amount).toLocaleString()} VNĐ</div>
-                                <div class="grid grid-cols-1 gap-1 text-sm text-gray-300">
+                                <h3 class="text-xl font-bold text-yellow-500 mb-3">${Number(h.amount).toLocaleString()} VNĐ</h3>
+                                <div class="text-xs space-y-1 text-gray-300">
                                     <p>🏦 Ngân hàng: <b class="text-white">${h.bankName || 'N/A'}</b></p>
                                     <p>💳 STK: <b class="text-white">${h.bankAcc || 'N/A'}</b></p>
                                     <p>👤 Tên: <b class="text-white">${h.bankOwner || 'N/A'}</b></p>
-                                    <p>⏱️ Thời gian ra khơi: <b class="${isCheat ? 'text-red-500' : 'text-green-400'}">${sailingInfo}</b></p>
+                                    <p>⏱️ Đã ra khơi: <b class="${isCheat ? 'text-red-400' : 'text-green-400'}">${sailingTime}</b></p>
                                 </div>
-                                <div class="flex gap-2 mt-4">
-                                    <button onclick="updateStatus('${uid}', ${idx}, '✅ Thành công')" class="flex-1 bg-green-600 py-2 rounded-lg font-bold text-xs">DUYỆT</button>
-                                    <button onclick="refund('${uid}', ${idx}, ${h.amount})" class="flex-1 bg-red-600 py-2 rounded-lg font-bold text-xs">HỦY (HACK)</button>
+                                <div class="flex gap-2 mt-5">
+                                    <button onclick="updateStatus('${uid}', ${idx}, '✅ Thành công')" class="flex-1 bg-green-600 py-2 rounded-lg font-bold text-xs">DUYỆT ✅</button>
+                                    <button onclick="refund('${uid}', ${idx}, ${h.amount})" class="flex-1 bg-red-600 py-2 rounded-lg font-bold text-xs text-white">HỦY (HACK) ❌</button>
                                 </div>
                             </div>`;
                         }
                     });
                 }
             }
-            container.innerHTML = html || '<p class="text-center text-gray-500 py-10">Không có lệnh chờ xử lý nào.</p>';
+            container.innerHTML = count > 0 ? html : '<p class="text-center py-10 text-gray-500">🎉 Không có lệnh rút nào chờ xử lý.</p>';
         });
 
         function updateStatus(uid, idx, status) {
-            if (confirm('Xác nhận lệnh này hợp lệ?')) {
-                db.ref(\`users/\${uid}/history/\${idx}\`).update({ status: status });
+            if (confirm('Xác nhận lệnh rút này hợp lệ?')) {
+                db.ref('users/' + uid + '/history/' + idx).update({ status: status });
             }
         }
 
         function refund(uid, idx, amount) {
-            const reason = prompt("Lý do hủy:", "Phát hiện gian lận: Thời gian ra khơi không khớp số xu.");
+            const reason = prompt("Lý do hủy (Số xu không khớp thời gian chơi, gian lận mời bạn bè...):", "Phát hiện gian lận: Thời gian ra khơi không khớp số xu.");
             if (!reason) return;
 
-            db.ref(\`users/\${uid}\`).once('value', (snap) => {
+            db.ref('users/' + uid).once('value', (snap) => {
                 const u = snap.val();
-                db.ref(\`users/\${uid}\`).update({
-                    coins: (Number(u.coins) || 0) + Number(amount)
-                });
-                db.ref(\`users/\${uid}/history/\${idx}\`).update({
-                    status: '❌ Bị từ chối: ' + reason
-                });
-                alert('Đã hoàn tiền và hủy lệnh!');
+                const updates = {};
+                updates['users/' + uid + '/coins'] = (Number(u.coins) || 0) + Number(amount);
+                updates['users/' + uid + '/history/' + idx + '/status'] = '❌ Bị từ chối: ' + reason;
+                db.ref().update(updates).then(() => alert('Đã hoàn tiền và hủy lệnh!'));
             });
         }
     </script>
