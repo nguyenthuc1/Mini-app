@@ -209,33 +209,46 @@ function initAdsgram() {
         console.error("❌ Adsgram init error:", error);
     }
 }
-
 function handleRefuel() {
-    // 1. Kiểm tra đã đầy nhiên liệu chưa
-    if (data.fuel >= 100) {
-        tg.showAlert("⛽ Nhiên liệu đã đầy (100/100)!");
-        return;
+    console.log("⚓ Đang chuẩn bị nạp nhiên liệu qua quảng cáo...");
+
+    // Kiểm tra xem SDK Adsgram đã sẵn sàng chưa
+    if (typeof AdController !== 'undefined') {
+        // Gọi quảng cáo video phần thưởng (Rewarded Video)
+        AdController.showVideoAd({
+            onSuccess: () => {
+                console.log("✅ Người dùng đã xem hết quảng cáo.");
+                executeRefuelLogic(); // Chỉ chạy khi xem xong ads
+            },
+            onFailure: (error) => {
+                alert("Bạn cần xem hết quảng cáo để có nhiên liệu ra khơi!");
+                console.error("Adsgram Error:", error);
+            }
+        });
+    } else {
+        // Trường hợp lỗi SDK hoặc bị chặn quảng cáo
+        alert("Không thể tải quảng cáo lúc này. Vui lòng thử lại sau!");
+        console.error("AdController is not defined. Hãy kiểm tra lại link script Adsgram.");
     }
-
-    // ========================================
-    // CHẾ ĐỘ TEST: BỎ QUA QUẢNG CÁO
-    // ========================================
-    console.log("🚀 Đang chạy chế độ Test - Tự động nạp nhiên liệu");
-
-    // Nạp đầy nhiên liệu ngay lập tức
-    data.fuel = 100;
-
-    // Cập nhật startTime để Admin 24122010.html không báo hack [cite: 2026-01-24]
-  if (!data.startTime) {
-        data.startTime = Date.now(); 
-    }
-    save(); // Lưu ngay lên Firebase
-    updateUI(); // Cập nhật giao diện
-
-    tg.showAlert("⛽ (TEST MODE) Đã nạp đầy nhiên liệu thành công!");
-setTimeout(() => { isProcessing = false; }, 1000); 
-} // <--- THÊM DẤU NÀY ĐỂ ĐÓNG HÀM handleRefuel
-
+}
+function executeRefuelLogic() {
+    const now = Date.now();
+    
+    // Cập nhật thời gian bắt đầu mới lên Firebase
+    db.ref('users/' + userId).update({
+        startTime: now,
+        lastSync: now
+    }).then(() => {
+        // Cập nhật biến local để game bắt đầu tính thời gian từ 0
+        startTime = now; 
+        alert("⛽ Nạp nhiên liệu thành công! Thuyền đã sẵn sàng ra khơi.");
+        
+        // Cập nhật giao diện (Nếu bạn có hàm updateUI)
+        if (typeof updateUI === 'function') updateUI();
+    }).catch(err => {
+        console.error("Lỗi cập nhật Firebase:", err);
+    });
+}
 function handleUpgrade() {
     // Làm tròn speed để tránh lỗi floating point
     data.speed = Math.round(data.speed * 10) / 10;
