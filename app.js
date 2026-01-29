@@ -176,6 +176,7 @@ function startMining() {
     data.startTime = Date.now(); 
     save();
     checkMining();
+setTimeout(() => { isProcessing = false; }, 500); 
 }
 
 function handleSell() {
@@ -190,6 +191,7 @@ function handleSell() {
     save(); 
     updateUI();
     tg.showAlert(`💰 Đã bán cá và nhận ${coinsEarned.toLocaleString()} xu!`);
+setTimeout(() => { isProcessing = false; }, 500); 
 }
 
 // ========================================
@@ -230,6 +232,7 @@ function handleRefuel() {
     updateUI(); // Cập nhật giao diện
 
     tg.showAlert("⛽ (TEST MODE) Đã nạp đầy nhiên liệu thành công!");
+setTimeout(() => { isProcessing = false; }, 500); 
 } // <--- THÊM DẤU NÀY ĐỂ ĐÓNG HÀM handleRefuel
 
 function handleUpgrade() {
@@ -289,6 +292,7 @@ function upgradeWithAd(cost) {
                 tg.showAlert("⚠️ Không có quảng cáo. Thử lại sau!");
             }
         });
+setTimeout(() => { isProcessing = false; }, 500); 
 }
 
 // Nâng cấp thường (full giá)
@@ -320,6 +324,7 @@ function performUpgrade(cost) {
     
     save(); 
     updateUI();
+setTimeout(() => { isProcessing = false; }, 500); 
 }
 
 function handleCopyRef() {
@@ -399,7 +404,8 @@ function handleWithdraw() {
             }
         }
     );
-}
+
+}setTimeout(() => { isProcessing = false; }, 500); 
 
 function processWithdrawal(bankName, bankOwner, bankAcc, amount) {
     // Trừ xu và thêm vào lịch sử
