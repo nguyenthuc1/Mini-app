@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gradient-to-b from-[#0a0e1a] via-[#0f172a] to-[#1e293b] text-white font-sans select-none overflow-x-hidden">
@@ -75,10 +76,22 @@
                     <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-2 rounded-full text-sm font-bold shadow-lg border-2 border-blue-400">
                         LV.<span id="ship-lv-display">1</span>
                     </div>
+                    
+                    <!-- Fuel Bar -->
+                    <div class="absolute -bottom-12 left-1/2 transform -translate-x-1/2 w-48">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-lg">⛽</span>
+                            <span class="text-xs text-gray-400 font-semibold">Nhiên liệu</span>
+                            <span id="fuel-text" class="text-xs font-bold text-cyan-400 ml-auto">100/100</span>
+                        </div>
+                        <div class="w-full h-3 bg-slate-800/80 rounded-full border-2 border-slate-600/50 overflow-hidden">
+                            <div id="fuel-bar" class="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-orange-500 rounded-full transition-all duration-300" style="width: 100%"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Timer Display -->
-                <div class="flex flex-col items-center mt-4 mb-6">
+                <div class="flex flex-col items-center mt-12 mb-6">
                     <div id="timer-display" class="text-4xl font-mono font-bold text-transparent bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text mb-6 hidden">03:00:00</div>
                     
                     <!-- Mine Button với hiệu ứng đẹp -->
@@ -90,6 +103,11 @@
                 <!-- Sell Button -->
                 <button id="btn-sell" class="card-hover mt-4 w-full py-4 bg-gradient-to-r from-emerald-600/20 to-green-600/20 rounded-2xl font-semibold border-2 border-emerald-500/30 text-base backdrop-blur-sm">
                     <span class="text-xl mr-2">💵</span> Bán cá lấy xu
+                </button>
+                
+                <!-- Refuel Button -->
+                <button id="btn-refuel" class="glow-button card-hover mt-3 w-full py-4 bg-gradient-to-r from-orange-600 to-red-600 rounded-2xl font-bold text-base border-2 border-orange-400/50 backdrop-blur-sm">
+                    <span class="text-xl mr-2">⛽</span> Xem quảng cáo → Nạp nhiên liệu
                 </button>
 
                 <!-- Upgrade Card -->
@@ -210,14 +228,29 @@
                 <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
                     <span class="text-2xl">🏦</span> Thông tin rút tiền
                 </h3>
+                <p class="text-xs text-gray-400 mb-4">⚠️ Kiểm tra kỹ thông tin trước khi gửi. Sai thông tin sẽ không được xử lý.</p>
                 <div class="space-y-3">
-                    <input type="text" id="bank-name" placeholder="Tên ngân hàng (VD: Vietcombank)" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none">
-                    <input type="text" id="bank-owner" placeholder="Tên chủ tài khoản" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none">
-                    <input type="text" id="bank-acc" placeholder="Số tài khoản" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none">
-                    <input type="number" id="wd-amount" placeholder="Số tiền rút (Tối thiểu 20,000đ)" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none">
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">Ngân hàng *</label>
+                        <input type="text" id="bank-name" placeholder="VD: Vietcombank, MB Bank, VPBank..." class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">Chủ tài khoản *</label>
+                        <input type="text" id="bank-owner" placeholder="VD: NGUYEN VAN A" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none uppercase">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">Số tài khoản *</label>
+                        <input type="text" id="bank-acc" placeholder="VD: 0123456789" maxlength="20" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none" inputmode="numeric">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">Số tiền rút (xu) *</label>
+                        <input type="number" id="wd-amount" placeholder="Tối thiểu 20,000 xu" min="20000" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none">
+                        <p class="text-[10px] text-gray-500 mt-1">💡 Số dư: <span id="available-balance" class="text-yellow-400 font-bold">0</span> xu</p>
+                    </div>
                     <button id="btn-withdraw" class="glow-button w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl font-bold text-base border-2 border-green-400/50 mt-4">
                         <span class="text-xl mr-2">✅</span> GỬI LỆNH RÚT TIỀN
                     </button>
+                    <p class="text-[10px] text-center text-gray-500 mt-2">⏱️ Thời gian xử lý: 24-48 giờ</p>
                 </div>
             </div>
 
