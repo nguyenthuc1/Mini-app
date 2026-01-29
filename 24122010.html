@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Trị Hệ Thống - Fish Mining</title>
+    <title>Hệ Thống Quản Trị - Fish Mining</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -11,6 +11,7 @@
         body { background-color: #0f172a; color: white; font-family: sans-serif; }
         .tab-active { border-bottom: 2px solid #eab308; color: #eab308; }
         .card { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; }
+        .bg-hack { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
     </style>
 </head>
 <body class="p-4">
@@ -25,8 +26,8 @@
             <button id="tab-user-btn" onclick="showTab('user')" class="pb-2 text-sm font-bold text-gray-400">Thống kê User</button>
         </div>
 
-        <div id="tab-withdraw" class="grid gap-4">
-            <p class="text-center text-gray-500 py-10">Đang tải dữ liệu lệnh rút...</p>
+        <div id="tab-withdraw" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <p class="text-center text-gray-500 py-10 col-span-full">Đang quét dữ liệu lệnh rút...</p>
         </div>
 
         <div id="tab-user" class="hidden overflow-x-auto card p-4">
@@ -41,13 +42,13 @@
                         <th class="p-3">Trạng thái</th>
                     </tr>
                 </thead>
-                <tbody id="user-table-body">
-                    </tbody>
+                <tbody id="user-table-body"></tbody>
             </table>
         </div>
     </div>
 
     <script>
+        // 1. CẤU HÌNH FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyAc0psT5Up6aEu0VnCz1TZ4sSNTKmif8oA",
             authDomain: "telegram-bot-backup-11c83.firebaseapp.com",
@@ -57,20 +58,28 @@
             messagingSenderId: "363675104532",
             appId: "1:363675104532:web:6c51d1c7318b765e897e01"
         };
-
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        function showTab(tab) {
-            document.getElementById('tab-withdraw').classList.add('hidden');
-            document.getElementById('tab-user').classList.add('hidden');
-            document.getElementById('tab-withdraw-btn').classList.remove('tab-active', 'text-yellow-500');
-            document.getElementById('tab-user-btn').classList.remove('tab-active', 'text-yellow-500');
+        // 2. HÀM KIỂM TRA HACK (CHECK HACK STATUS)
+        function checkHackStatus(user) {
+            const mins = user.startTime ? Math.floor((new Date() - new Date(user.startTime)) / 60000) : 0;
+            const invited = user.referrals ? Object.keys(user.referrals).length : 0;
+            const currentCoins = Number(user.coins || 0);
             
-            document.getElementById('tab-' + tab).classList.remove('hidden');
-            document.getElementById('tab-' + tab + '-btn').classList.add('tab-active');
+            // Logic: 1 phút max 1000 xu + 1 người mời max 5000 xu
+            const totalMaxAllowed = (mins * 1000) + (invited * 5000) + 15000;
+
+            if (currentCoins > totalMaxAllowed && mins > 2) {
+                return { isSus: true, reason: "Xu vượt định mức" };
+            }
+            if (invited > 50 && mins < 20) {
+                return { isSus: true, reason: "Cheat mời bạn bè" };
+            }
+            return { isSus: false, reason: "Bình thường" };
         }
 
+        // 3. HIỂN THỊ DỮ LIỆU
         db.ref('users').on('value', (snapshot) => {
             const users = snapshot.val();
             renderWithdrawals(users);
@@ -85,23 +94,28 @@
                 if (u.history) {
                     u.history.forEach((h, idx) => {
                         if (h.status === '🕐 Đang xử lý') {
+                            const status = checkHackStatus(u); // Kiểm tra hack tại đây [cite: 2026-01-24]
                             html += `
-                            <div class="card p-4 flex justify-between items-center">
-                                <div>
-                                    <p class="text-[10px] text-blue-400">ID: ${uid}</p>
-                                    <p class="text-lg font-bold text-yellow-500">${Number(h.amount).toLocaleString()} VNĐ</p>
-                                    <p class="text-[10px] text-gray-400">🏦 ${h.bankName} - ${h.bankAcc} (${h.bankOwner})</p>
+                            <div class="card p-4 ${status.isSus ? 'bg-hack' : ''}">
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-[10px] text-blue-400">ID: ${uid}</span>
+                                    ${status.isSus ? '<span class="text-red-500 text-[10px] font-bold animate-pulse">⚠️ NGHI VẤN</span>' : ''}
                                 </div>
-                                <div class="flex gap-2">
-                                    <button onclick="updateStatus('${uid}', ${idx}, '✅ Thành công')" class="bg-green-600 px-3 py-1 rounded text-[10px] font-bold">DUYỆT</button>
-                                    <button onclick="refund('${uid}', ${idx}, ${h.amount})" class="bg-red-600 px-3 py-1 rounded text-[10px] font-bold">HỦY (HACK)</button>
+                                <h3 class="text-xl font-bold text-yellow-500">${Number(h.amount).toLocaleString()} VNĐ</h3>
+                                <div class="text-[11px] text-gray-400 mt-2">
+                                    <p>🏦 ${h.bankName} | 👤 ${h.bankOwner}</p>
+                                    <p>💳 STK: ${h.bankAcc}</p>
+                                </div>
+                                <div class="flex gap-2 mt-4">
+                                    <button onclick="approve('${uid}', ${idx})" class="flex-1 bg-green-600 py-1 rounded font-bold text-xs">DUYỆT</button>
+                                    <button onclick="refund('${uid}', ${idx}, ${h.amount})" class="flex-1 bg-red-600 py-1 rounded font-bold text-xs">HỦY/HOÀN TIỀN</button>
                                 </div>
                             </div>`;
                         }
                     });
                 }
             }
-            container.innerHTML = html || '<p class="text-center py-10 text-gray-500">Không có lệnh chờ.</p>';
+            container.innerHTML = html || '<p class="text-center py-10 text-gray-500 col-span-full">🎉 Không có lệnh chờ.</p>';
         }
 
         function renderUsers(users) {
@@ -109,43 +123,43 @@
             let html = '';
             for (let uid in users) {
                 const u = users[uid];
+                const status = checkHackStatus(u); // Kiểm tra hack tại đây [cite: 2026-01-24]
                 const mins = u.startTime ? Math.floor((new Date() - new Date(u.startTime)) / 60000) : 0;
                 const invited = u.referrals ? Object.keys(u.referrals).length : 0;
-                
-                // Check nghi vấn hack dựa trên tỉ lệ xu/phút
-                const isSus = u.coins > (mins * 2000) && mins > 5;
 
                 html += `
-                <tr class="border-b border-slate-800 hover:bg-slate-800/50">
+                <tr class="border-b border-slate-800 ${status.isSus ? 'bg-red-900/10' : ''}">
                     <td class="p-3 font-mono text-blue-400">${uid}</td>
                     <td class="p-3 text-yellow-500">Lv.${u.shipLevel || 1}</td>
                     <td class="p-3 font-bold">${Number(u.coins || 0).toLocaleString()}</td>
-                    <td class="p-3 text-green-400">${invited} người</td>
+                    <td class="p-3">${invited} người</td>
                     <td class="p-3 text-gray-400">${mins} phút</td>
-                    <td class="p-3">
-                        <span class="${isSus ? 'text-red-500 animate-pulse' : 'text-gray-500'} font-bold">
-                            ${isSus ? '⚠️ Nghi vấn' : 'Bình thường'}
-                        </span>
-                    </td>
+                    <td class="p-3 font-bold ${status.isSus ? 'text-red-500' : 'text-green-500'}">${status.isSus ? '⚠️ ' + status.reason : '✅ OK'}</td>
                 </tr>`;
             }
             body.innerHTML = html;
         }
 
-        function updateStatus(uid, idx, status) {
-            if (confirm('Xác nhận duyệt lệnh này?')) {
-                db.ref('users/' + uid + '/history/' + idx).update({ status: status });
-            }
+        function showTab(tab) {
+            document.getElementById('tab-withdraw').classList.toggle('hidden', tab !== 'withdraw');
+            document.getElementById('tab-user').classList.toggle('hidden', tab !== 'user');
+            document.getElementById('tab-withdraw-btn').classList.toggle('tab-active', tab === 'withdraw');
+            document.getElementById('tab-user-btn').classList.toggle('tab-active', tab === 'user');
+        }
+
+        function approve(uid, idx) {
+            if(confirm('Duyệt lệnh rút này?')) db.ref(`users/${uid}/history/${idx}`).update({ status: '✅ Thành công' });
         }
 
         function refund(uid, idx, amount) {
-            const reason = prompt("Lý do hủy (Cheat mời bạn bè / Hack xu):", "Phát hiện gian lận: Thời gian ra khơi không khớp số xu.");
+            const reason = prompt("Lý do hủy:", "Phát hiện gian lận: Thông số xu không hợp lệ.");
             if (!reason) return;
-            db.ref('users/' + uid).once('value', (snap) => {
+            db.ref(`users/${uid}`).once('value', (snap) => {
                 const u = snap.val();
-                db.ref('users/' + uid).update({ coins: (Number(u.coins) || 0) + Number(amount) });
-                db.ref('users/' + uid + '/history/' + idx).update({ status: '❌ Từ chối: ' + reason });
-                alert('Đã hoàn tiền!');
+                const updates = {};
+                updates[`users/${uid}/coins`] = (Number(u.coins) || 0) + Number(amount);
+                updates[`users/${uid}/history/${idx}/status`] = '❌ Bị từ chối: ' + reason;
+                db.ref().update(updates).then(() => alert('Đã hủy và hoàn tiền!'));
             });
         }
     </script>
