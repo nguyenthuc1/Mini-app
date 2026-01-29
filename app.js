@@ -200,7 +200,7 @@ let AdController = null;
 function initAdsgram() {
     try {
         // Sử dụng mã test 2777 nếu mã 21962 chưa Active
-        AdController = window.Adsgram.init({ blockId: "2777" }); 
+        AdController = window.Adsgram.init({ blockId: "21962" }); 
         console.log("✅ Adsgram initialized");
     } catch (error) {
         console.error("❌ Adsgram init error:", error);
