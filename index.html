@@ -174,92 +174,78 @@
         </div>
     </div>
 </div>
+<!-----------------------------------!<
+   <div id="tab-wallet" class="tab-content hidden">
+    <div class="text-center mb-6">
+        <h2 class="text-xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">Ví Tài Khoản</h2>
+    </div>
 
-        <!-- TAB FRIENDS -->
-        <div id="tab-friends" class="tab-content hidden text-center">
-            <div class="py-8">
-                <span class="text-7xl inline-block animate-float">👥</span>
-                <h2 class="text-2xl font-bold mt-6 bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">Mời bạn bè</h2>
-                <p class="text-sm text-gray-400 mt-2">Nhận 10% hoa hồng từ bạn bè</p>
-                
-                <div class="mt-10 p-6 gradient-border rounded-3xl backdrop-blur-sm">
-                    <p class="text-xs text-gray-400 mb-3 uppercase font-semibold">Link giới thiệu của bạn</p>
-                    <div class="bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl mb-4 border border-slate-600/30">
-                        <p id="ref-link" class="text-xs text-blue-400 break-all font-mono">Đang tạo link...</p>
-                    </div>
-                    <button id="btn-copy-ref" class="glow-button w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl font-bold text-base border-2 border-purple-400/50">
-                        <span class="text-xl mr-2">📋</span> Sao chép Link
-                    </button>
-                </div>
-
-                <div class="mt-8 grid grid-cols-3 gap-4 text-center">
-                    <div class="gradient-border p-4 rounded-2xl backdrop-blur-sm">
-                        <p class="text-2xl font-bold text-yellow-400">0</p>
-                        <p class="text-[10px] text-gray-400 mt-1">Bạn bè</p>
-                    </div>
-                    <div class="gradient-border p-4 rounded-2xl backdrop-blur-sm">
-                        <p class="text-2xl font-bold text-green-400">0</p>
-                        <p class="text-[10px] text-gray-400 mt-1">Hoa hồng</p>
-                    </div>
-                    <div class="gradient-border p-4 rounded-2xl backdrop-blur-sm">
-                        <p class="text-2xl font-bold text-purple-400">0</p>
-                        <p class="text-[10px] text-gray-400 mt-1">Tổng thu</p>
-                    </div>
-                </div>
-            </div>
+    <div class="bg-gradient-to-br from-indigo-900/40 to-black p-6 rounded-3xl border border-indigo-500/30 mb-6 text-center shadow-xl">
+        <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Số dư khả dụng</p>
+        <p id="wallet-balance" class="text-4xl font-bold text-yellow-400">0</p>
+        <div class="mt-2 inline-block px-3 py-1 bg-yellow-500/10 rounded-full border border-yellow-500/20">
+            <p class="text-[10px] text-yellow-500">≈ <span id="cash-value">0</span> VNĐ</p>
         </div>
+    </div>
+
+    <div class="bg-white/5 p-5 rounded-3xl border border-white/10 mb-6">
+        <h3 class="font-bold text-sm mb-4 flex items-center gap-2">🏦 Rút Tiền</h3>
+        <div class="space-y-3">
+            <input type="text" id="bank-name" placeholder="Ngân hàng (VD: MB Bank)" class="w-full bg-black/30 p-3 rounded-xl text-xs border border-white/10 outline-none focus:border-blue-500">
+            <input type="text" id="bank-owner" placeholder="Tên chủ thẻ (Viết hoa)" class="w-full bg-black/30 p-3 rounded-xl text-xs border border-white/10 outline-none uppercase">
+            <input type="text" id="bank-acc" placeholder="Số tài khoản" class="w-full bg-black/30 p-3 rounded-xl text-xs border border-white/10 outline-none">
+            <input type="number" id="wd-amount" placeholder="Số xu muốn rút (Min: 20,000)" class="w-full bg-black/30 p-3 rounded-xl text-xs border border-white/10 outline-none">
+            
+            <button id="btn-withdraw" class="w-full py-4 bg-green-600 hover:bg-green-500 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-green-900/20">
+                GỬI YÊU CẦU RÚT TIỀN
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white/5 p-5 rounded-3xl border border-white/10">
+        <p class="text-[10px] font-bold text-gray-400 uppercase mb-3">Lịch sử giao dịch</p>
+        <div id="history-list" class="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+            <p class="text-[10px] text-gray-500 text-center py-4">Chưa có giao dịch nào</p>
+        </div>
+    </div>
+</div>
 
         <!-- TAB WALLET -->
-        <div id="tab-wallet" class="tab-content hidden">
-            <div class="text-center mb-8">
-                <span class="text-6xl">💰</span>
-                <h2 class="text-2xl font-bold mt-4 bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">Ví tiền</h2>
-            </div>
+           <div id="tab-wallet" class="tab-content hidden">
+    <div class="text-center mb-6">
+        <h2 class="text-xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">Ví Tài Khoản</h2>
+    </div>
 
-            <div class="bg-gradient-to-br from-indigo-900/50 via-purple-900/50 to-pink-900/50 p-8 rounded-3xl border-2 border-indigo-500/30 mb-8 text-center backdrop-blur-sm shadow-2xl">
-                <p class="text-sm text-gray-300 mb-2 uppercase font-semibold">Số dư khả dụng</p>
-                <p id="wallet-balance" class="text-5xl font-bold bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 bg-clip-text text-transparent">0</p>
-                <p class="text-xs text-gray-400 uppercase mt-2">Xu tích lũy</p>
-            </div>
-
-            <div class="gradient-border p-6 rounded-3xl backdrop-blur-sm mb-6">
-                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
-                    <span class="text-2xl">🏦</span> Thông tin rút tiền
-                </h3>
-                <p class="text-xs text-gray-400 mb-4">⚠️ Kiểm tra kỹ thông tin trước khi gửi. Sai thông tin sẽ không được xử lý.</p>
-                <div class="space-y-3">
-                    <div>
-                        <label class="text-xs text-gray-400 mb-1 block">Ngân hàng *</label>
-                        <input type="text" id="bank-name" placeholder="VD: Vietcombank, MB Bank, VPBank..." class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-400 mb-1 block">Chủ tài khoản *</label>
-                        <input type="text" id="bank-owner" placeholder="VD: NGUYEN VAN A" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none uppercase">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-400 mb-1 block">Số tài khoản *</label>
-                        <input type="text" id="bank-acc" placeholder="VD: 0123456789" maxlength="20" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none" inputmode="numeric">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-400 mb-1 block">Số tiền rút (xu) *</label>
-                        <input type="number" id="wd-amount" placeholder="Tối thiểu 20,000 xu" min="20000" class="w-full bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl text-sm border-2 border-slate-600/30 focus:border-blue-500/50 transition-all outline-none">
-                        <p class="text-[10px] text-gray-500 mt-1">💡 Số dư: <span id="available-balance" class="text-yellow-400 font-bold">0</span> xu</p>
-                    </div>
-                    <button id="btn-withdraw" class="glow-button w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl font-bold text-base border-2 border-green-400/50 mt-4">
-                        <span class="text-xl mr-2">✅</span> GỬI LỆNH RÚT TIỀN
-                    </button>
-                    <p class="text-[10px] text-center text-gray-500 mt-2">⏱️ Thời gian xử lý: 24-48 giờ</p>
-                </div>
-            </div>
-
-            <div class="gradient-border p-6 rounded-3xl backdrop-blur-sm">
-                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
-                    <span class="text-2xl">📜</span> Lịch sử giao dịch
-                </h3>
-                <div id="history-list" class="space-y-3 max-h-96 overflow-y-auto"></div>
-            </div>
+    <div class="bg-gradient-to-br from-indigo-900/40 to-black p-6 rounded-3xl border border-indigo-500/30 mb-6 text-center shadow-xl">
+        <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Số dư khả dụng</p>
+        <p id="wallet-balance" class="text-4xl font-bold text-yellow-400">0</p>
+        <div class="mt-2 inline-block px-3 py-1 bg-yellow-500/10 rounded-full border border-yellow-500/20">
+            <p class="text-[10px] text-yellow-500">≈ <span id="cash-value">0</span> VNĐ</p>
         </div>
-    </main>
+    </div>
+
+    <div class="bg-white/5 p-5 rounded-3xl border border-white/10 mb-6">
+        <h3 class="font-bold text-sm mb-4 flex items-center gap-2">🏦 Rút Tiền</h3>
+        <div class="space-y-3">
+            <input type="text" id="bank-name" placeholder="Ngân hàng (VD: MB Bank)" class="w-full bg-black/30 p-3 rounded-xl text-xs border border-white/10 outline-none focus:border-blue-500">
+            <input type="text" id="bank-owner" placeholder="Tên chủ thẻ (Viết hoa)" class="w-full bg-black/30 p-3 rounded-xl text-xs border border-white/10 outline-none uppercase">
+            <input type="text" id="bank-acc" placeholder="Số tài khoản" class="w-full bg-black/30 p-3 rounded-xl text-xs border border-white/10 outline-none">
+            <input type="number" id="wd-amount" placeholder="Số xu muốn rút (Min: 20,000)" class="w-full bg-black/30 p-3 rounded-xl text-xs border border-white/10 outline-none">
+            
+            <button id="btn-withdraw" class="w-full py-4 bg-green-600 hover:bg-green-500 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-green-900/20">
+                GỬI YÊU CẦU RÚT TIỀN
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white/5 p-5 rounded-3xl border border-white/10">
+        <p class="text-[10px] font-bold text-gray-400 uppercase mb-3">Lịch sử giao dịch</p>
+        <div id="history-list" class="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+            <p class="text-[10px] text-gray-500 text-center py-4">Chưa có giao dịch nào</p>
+        </div>
+    </div>
+</div>
+
 
     <!-- Navigation với gradient và hiệu ứng -->
     <nav class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#1e293b]/95 via-[#334155]/95 to-[#1e293b]/95 backdrop-blur-xl border-t-2 border-blue-500/20 flex justify-around p-3 pb-8 z-50 shadow-2xl">
