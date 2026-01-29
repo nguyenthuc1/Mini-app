@@ -86,9 +86,7 @@ function checkHackStatus(user) {
     const invited = user.referrals ? Object.keys(user.referrals).length : 0;
     const inviteCoins = invited * 2000;
 
-    // Ngưỡng tối đa cho phép (Cộng 100 xu đệm)
-    const totalMaxAllowed = sailingCoins + inviteCoins + 100;
-
+  
     if (currentCoins > totalMaxAllowed && mins > 0) {
         return { 
             isSus: true, 
