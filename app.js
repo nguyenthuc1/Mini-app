@@ -173,7 +173,7 @@ function handleMine() {
 
 // Hàm phụ để bắt đầu đào
 function startMining() {
-    data.startTime = Date.now();
+    data.startTime = Date.now(); 
     save();
     checkMining();
 }
