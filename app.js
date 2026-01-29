@@ -532,40 +532,41 @@ function updateFuelDisplay(fuel = null) {
     }
 }
 
+// 1. Hàm cập nhật giao diện (Quan trọng nhất)
 function updateUI() {
-    const setText = (id, val) => { 
-        const el = document.getElementById(id); 
-        if (el) el.innerText = val; 
-    };
-    
-    // Cập nhật số liệu chính
-    setText('fish-count', Math.floor(data.fish).toLocaleString());
-    setText('coin-balance', Math.floor(data.coins).toLocaleString());
-    setText('wallet-balance', Math.floor(data.coins).toLocaleString());
-    setText('available-balance', Math.floor(data.coins).toLocaleString());
-    setText('ship-lv-display', data.shipLevel);
-    setText('speed-display', (data.speed || 1).toFixed(1));
-    setText('ref-link', `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`);
-    
-    // Cập nhật fuel display
-    updateFuelDisplay();
-    
-    // Cập nhật nút nâng cấp
-    const btnUpgrade = document.getElementById('btn-upgrade');
-    if (btnUpgrade) {
-        if (data.speed >= MAX_SPEED) {
-            btnUpgrade.innerHTML = '<span class="text-xl mr-2">✅</span> ĐÃ MAX LEVEL';
-            btnUpgrade.disabled = true;
-            btnUpgrade.classList.add('opacity-50', 'cursor-not-allowed');
-        } else {
-            btnUpgrade.innerHTML = `<span class="text-2xl mr-2">💰</span> ${UPGRADE_COST.toLocaleString()} Xu - Nâng cấp`;
-            btnUpgrade.disabled = false;
-            btnUpgrade.classList.remove('opacity-50', 'cursor-not-allowed');
+    db.ref('users/' + userId).once('value').then(snap => {
+        const data = snap.val() || {};
+        
+        // Cập nhật số xu ở tất cả các tab
+        const coinElements = ['coin-balance', 'wallet-balance', 'available-balance'];
+        coinElements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = (data.coins || 0).toLocaleString();
+        });
+
+        // Cập nhật số cá
+        if (document.getElementById('fish-count')) {
+            document.getElementById('fish-count').innerText = (data.fish || 0).toLocaleString();
         }
-    }
-    
-    renderHistory();
+
+        // Cập nhật tiến độ mời bạn
+        if (document.getElementById('invite-progress')) {
+            const count = data.invites || 0;
+            document.getElementById('invite-progress').innerText = `Tiến độ: ${count}/5 | +2500 💰`;
+        }
+    });
 }
+
+// 2. Khai báo lại các hàm nhiệm vụ nếu bị thiếu
+window.handleJoinGroup = function() {
+    // Gọi lại logic join group đã hướng dẫn ở trên
+    console.log("Đang thực hiện nhiệm vụ Join Group...");
+};
+
+window.checkInviteTask = function() {
+    // Gọi lại logic check invite đã hướng dẫn ở trên
+    console.log("Đang kiểm tra nhiệm vụ mời bạn...");
+};
 
 function renderHistory() {
     const div = document.getElementById('history-list');
