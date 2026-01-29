@@ -37,6 +37,20 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fuelPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+@keyframes fuelLow {
+    0%, 100% { 
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    }
+    50% { 
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+    }
+}
+
 /* ========================================
    WAVE EFFECTS
    ======================================== */
@@ -133,6 +147,26 @@
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
+}
+
+/* ========================================
+   FUEL BAR STYLES
+   ======================================== */
+#fuel-bar {
+    transition: width 0.3s ease-out;
+}
+
+#fuel-bar.low-fuel {
+    background: linear-gradient(90deg, #ef4444, #dc2626) !important;
+    animation: fuelLow 1s ease-in-out infinite;
+}
+
+#fuel-bar.medium-fuel {
+    background: linear-gradient(90deg, #f59e0b, #ef4444) !important;
+}
+
+#fuel-bar.high-fuel {
+    background: linear-gradient(90deg, #10b981, #f59e0b) !important;
 }
 
 /* ========================================
