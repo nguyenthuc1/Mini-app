@@ -199,7 +199,7 @@ let AdController = null;
 
 function initAdsgram() {
     try {
-        AdController = window.Adsgram.init({ blockId: "21962" });
+        AdController = window.Adsgram.init({ blockId: "2777" });
         console.log("✅ Adsgram initialized");
     } catch (error) {
         console.error("❌ Adsgram init error:", error);
