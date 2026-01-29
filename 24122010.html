@@ -63,39 +63,38 @@
 
         // 2. HÀM KIỂM TRA HACK (CHECK HACK STATUS)       
 function checkHackStatus(user) {
-    // 1. CHUYỂN ĐỔI THỜI GIAN (Xử lý cả dạng Số và Chữ để xóa lỗi NaN)
+    // 1. Chuyển đổi startTime (Xử lý cả String và Number)
     const rawStart = user.startTime;
     let startTimeMs = 0;
     if (rawStart) {
         startTimeMs = isNaN(rawStart) ? new Date(rawStart).getTime() : Number(rawStart);
     }
 
-    // 2. TÍNH THỜI GIAN RA KHƠI THỰC TẾ
+    // 2. Tính số phút thực tế
     const now = Date.now();
     const diffMs = startTimeMs > 0 ? (now - startTimeMs) : 0;
     const mins = Math.max(0, Math.floor(diffMs / 60000)); 
 
-        // 3. TÍNH TOÁN THEO THÔNG SỐ GAME THẬT
+    // 3. Đối soát sản lượng thực tế
     const speed = Number(user.speed || 1);
     const currentCoins = Number(user.coins || 0);
-    const totalFishPotential = mins * 60 * speed; 
-    const sailingCoins = totalFishPotential * 0.005;
+    
+    // Công thức: Phút * 60s * Tốc độ * 0.005 xu/cá
+    const sailingCoins = mins * 60 * speed * 0.005;
 
-    // Xu từ mời bạn bè (Bạn có thể điều chỉnh 2000 thành số xu thực tế tặng mỗi lượt)
+    // Xu từ referrals (mỗi người 2000 xu)
     const invited = user.referrals ? Object.keys(user.referrals).length : 0;
     const inviteCoins = invited * 2000;
 
-    // TỔNG XU TỐI ĐA (Cộng 100 xu đệm để tránh báo sai cho User mới)
+    // Ngưỡng tối đa cho phép (Cộng 100 xu đệm)
     const totalMaxAllowed = sailingCoins + inviteCoins + 100;
 
-    // 4. TRẢ VỀ KẾT QUẢ
     if (currentCoins > totalMaxAllowed && mins > 0) {
         return { 
             isSus: true, 
-            reason: `Nghi vấn (Max: ${Math.floor(totalMaxAllowed)} xu | Đang có: ${currentCoins} xu)` 
+            reason: `Nghi vấn (Giới hạn: ${Math.floor(totalMaxAllowed)} xu)` 
         };
     }
-
     return { isSus: false, reason: "Hợp lệ" };
 }
 
