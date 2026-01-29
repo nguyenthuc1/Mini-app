@@ -80,10 +80,9 @@ function checkHackStatus(user) {
     const currentCoins = Number(user.coins || 0);
     
     // Sản lượng: Số phút * 60 giây * Tốc độ (cá/s)
-    const totalFishPotential = mins * (user.speed || 1) * 60; [cite: 2026-01-24].
+    const totalFishPotential = mins * (user.speed || 1) * 60;
+const sailingCoins = totalFishPotential * 0.005;
 
-    // Quy đổi Xu: Tổng cá * 0.005 [cite: 2026-01-24]
-    const sailingCoins = totalFishPotential * 0.005;
 
     // Xu từ mời bạn bè (Bạn có thể điều chỉnh 2000 thành số xu thực tế tặng mỗi lượt)
     const invited = user.referrals ? Object.keys(user.referrals).length : 0;
