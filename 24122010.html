@@ -3,31 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản trị Lệnh Rút - Fish Mining</title>
+    <title>Hệ thống Quản trị - Fish Mining</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; }
-        .admin-card { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; transition: 0.3s; }
-        .admin-card:hover { border-color: #3b82f6; }
+        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .hack-warning { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-5xl mx-auto">
-        <div class="flex justify-between items-center mb-10">
-            <h1 class="text-3xl font-bold text-blue-400">HỆ THỐNG QUẢN TRỊ 🚀</h1>
-            <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-full font-bold">Làm mới 🔄</button>
-        </div>
-
-        <div id="loading" class="text-center py-20 text-gray-500">Đang quét lệnh rút từ hệ thống...</div>
-        
-        <div id="section-withdraw" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<body class="p-4">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-8 bg-slate-800 p-6 rounded-2xl shadow-2xl">
+            <div>
+                <h1 class="text-2xl font-bold text-yellow-500">QUẢN TRỊ VIÊN 🛡️</h1>
+                <p class="text-xs text-gray-400">Đối soát thời gian & Chống Cheat [cite: 2026-01-24]</p>
             </div>
+            <button onclick="location.reload()" class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold">Làm mới dữ liệu</button>
+        </header>
+
+        <div id="admin-content" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="col-span-full text-center py-20 text-gray-500">Đang kiểm tra dữ liệu từ Firebase...</div>
+        </div>
     </div>
 
     <script>
-        // CẤU HÌNH FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyAc0psT5Up6aEu0VnCz1TZ4sSNTKmif8oA",
             authDomain: "telegram-bot-backup-11c83.firebaseapp.com",
@@ -41,74 +42,83 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // HÀM QUÉT TOÀN BỘ USER ĐỂ TÌM LỆNH RÚT
         db.ref('users').on('value', (snapshot) => {
-            document.getElementById('loading').style.display = 'none';
             const users = snapshot.val();
-            const container = document.getElementById('section-withdraw');
+            const container = document.getElementById('admin-content');
             let html = '';
-            let count = 0;
-
-            if (!users) {
-                container.innerHTML = '<p class="col-span-full text-center py-10">Hệ thống chưa có người dùng nào.</p>';
-                return;
-            }
 
             for (let uid in users) {
                 const user = users[uid];
-                // Chỉ duyệt qua những user có lịch sử
-                if (user.history && Array.isArray(user.history)) {
+                if (user.history) {
                     user.history.forEach((item, index) => {
-                        // Chỉ hiện lệnh "Đang xử lý"
                         if (item.status === '🕐 Đang xử lý') {
-                            count++;
+                            // 1. TÍNH TOÁN ĐỐI SOÁT CHỐNG HACK
+                            let sailingTime = "Không rõ";
+                            let isSuspicious = false;
+                            
+                            if (user.startTime) {
+                                const start = new Date(user.startTime);
+                                const now = new Date();
+                                const diffInMinutes = Math.floor((now - start) / 60000);
+                                sailingTime = diffInMinutes + " phút";
+
+                                // Nếu thời gian ra khơi quá ngắn nhưng số tiền quá lớn -> Nghi vấn hack
+                                // Giả sử speed tối đa 10/s, 1 phút max được 600 xu.
+                                const maxExpected = diffInMinutes * (user.speed * 60) * 1.5; 
+                                if (user.coins > maxExpected && diffInMinutes > 0) isSuspicious = true;
+                            }
+
                             html += `
-                            <div class="admin-card p-6 shadow-xl">
-                                <div class="flex justify-between mb-4">
-                                    <span class="text-xs text-blue-500 font-mono">ID: ${uid}</span>
-                                    <span class="text-xs text-gray-500">${item.time}</span>
+                            <div class="glass p-6 rounded-2xl ${isSuspicious ? 'hack-warning' : ''}">
+                                <div class="flex justify-between items-start mb-4">
+                                    <span class="text-[10px] font-mono text-blue-400">ID: ${uid}</span>
+                                    ${isSuspicious ? '<span class="bg-red-600 text-[10px] px-2 py-1 rounded animate-pulse">NGHI VẤN HACK</span>' : ''}
                                 </div>
-                                <div class="text-2xl font-bold text-yellow-500 mb-4">${Number(item.amount).toLocaleString()} VNĐ</div>
-                                <div class="space-y-2 text-sm">
-                                    <p>👤 <span class="text-gray-400">Chủ TK:</span> <b>${item.bankOwner || 'N/A'}</b></p>
-                                    <p>🏦 <span class="text-gray-400">Ngân hàng:</span> <b>${item.bankName || 'N/A'}</b></p>
-                                    <p>💳 <span class="text-gray-400">Số TK:</span> <b>${item.bankAcc || 'N/A'}</b></p>
+                                
+                                <div class="mb-4">
+                                    <p class="text-xs text-gray-400 uppercase">Số tiền rút</p>
+                                    <h2 class="text-2xl font-bold text-yellow-400">${Number(item.amount).toLocaleString()} VNĐ</h2>
                                 </div>
-                                <div class="flex gap-3 mt-6">
-                                    <button onclick="updateStatus('${uid}', ${index}, '✅ Thành công')" class="flex-1 bg-green-600 py-2 rounded-lg font-bold text-xs">DUYỆT</button>
-                                    <button onclick="refundPrompt('${uid}', ${index}, ${item.amount})" class="flex-1 bg-red-600 py-2 rounded-lg font-bold text-xs">HỦY (CHEAT)</button>
+
+                                <div class="grid grid-cols-2 gap-4 text-xs mb-6 bg-slate-900/50 p-3 rounded-lg">
+                                    <p>🏦 Ngân hàng: <b class="block text-white">${item.bankName || 'N/A'}</b></p>
+                                    <p>💳 Số tài khoản: <b class="block text-white">${item.bankAcc || 'N/A'}</b></p>
+                                    <p>👤 Chủ TK: <b class="block text-white">${item.bankOwner || 'N/A'}</b></p>
+                                    <p>⏱️ Đã ra khơi: <b class="block text-green-400">${sailingTime}</b></p>
+                                </div>
+
+                                <div class="flex gap-2">
+                                    <button onclick="approve('${uid}', ${index})" class="flex-1 bg-green-600 py-2 rounded-lg font-bold text-sm">DUYỆT ✅</button>
+                                    <button onclick="reject('${uid}', ${index}, ${item.amount})" class="flex-1 bg-red-600 py-2 rounded-lg font-bold text-sm">HỦY (HACK) ❌</button>
                                 </div>
                             </div>`;
                         }
                     });
                 }
             }
-
-            container.innerHTML = count > 0 ? html : '<div class="col-span-full text-center py-10 text-gray-500">🎉 Tuyệt vời! Không còn lệnh rút nào đang chờ xử lý.</div>';
+            container.innerHTML = html || '<div class="col-span-full text-center py-10 text-gray-500">Chưa có lệnh rút tiền nào cần xử lý.</div>';
         });
 
-        // HÀM DUYỆT LỆNH
-        function updateStatus(uid, idx, status) {
-            if(confirm(`Xác nhận lệnh rút của người dùng ${uid} đã hoàn tất?`)) {
-                db.ref(\`users/\${uid}/history/\${idx}\`).update({ status: status });
+        function approve(uid, idx) {
+            if(confirm('Xác nhận lệnh rút này hợp lệ?')) {
+                db.ref(\`users/\${uid}/history/\${idx}\`).update({ status: '✅ Thành công' });
             }
         }
 
-        // HÀM HỦY & HOÀN TIỀN (CHỐNG HACK MỜI BẠN BÈ)
-        function refundPrompt(uid, idx, amount) {
-            const reason = "Hủy do check mời bạn bè ảo / cheat hệ thống.";
-            if(confirm(`Hủy lệnh này? Tiền sẽ được trả lại cho user.\nLý do: \${reason}`)) {
-                db.ref(\`users/\${uid}\`).once('value', (snap) => {
-                    const data = snap.val();
-                    const newBalance = (Number(data.coins) || 0) + Number(amount);
-                    
-                    const updates = {};
-                    updates[\`users/\${uid}/coins\`] = newBalance;
-                    updates[\`users/\${uid}/history/\${idx}/status\`] = "❌ Hủy: " + reason;
-                    
-                    db.ref().update(updates).then(() => alert("Đã hủy và hoàn tiền!"));
-                });
-            }
+        function reject(uid, idx, amount) {
+            const reason = prompt("Lý do hủy (Số xu không khớp thời gian ra khơi, cheat mời bạn bè...):", "Phát hiện gian lận: Thời gian ra khơi không đủ để tích lũy số xu này.");
+            if (!reason) return;
+
+            db.ref(\`users/\${uid}\`).once('value', (snap) => {
+                const data = snap.val();
+                const newCoins = (Number(data.coins) || 0) + Number(amount);
+                
+                const updates = {};
+                updates[\`users/\${uid}/coins\`] = newCoins;
+                updates[\`users/\${uid}/history/\${idx}/status\`] = "❌ Từ chối: " + reason;
+
+                db.ref().update(updates).then(() => alert("Đã hủy lệnh và hoàn tiền cho người dùng!"));
+            });
         }
     </script>
 </body>
