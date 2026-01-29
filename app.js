@@ -176,13 +176,14 @@ function startMining() {
     data.startTime = Date.now(); 
     save();
     checkMining();
-setTimeout(() => { isProcessing = false; }, 500); 
+setTimeout(() => { isProcessing = false; }, 1000); 
 }
 
 function handleSell() {
     if (data.fish < 100) {
         tg.showAlert("❌ Cần tối thiểu 100 con cá để bán!");
         return;
+setTimeout(() => { isProcessing = false; }, 1000); 
     }
     
     const coinsEarned = Math.floor(data.fish * 0.005);
@@ -232,7 +233,7 @@ function handleRefuel() {
     updateUI(); // Cập nhật giao diện
 
     tg.showAlert("⛽ (TEST MODE) Đã nạp đầy nhiên liệu thành công!");
-setTimeout(() => { isProcessing = false; }, 500); 
+setTimeout(() => { isProcessing = false; }, 1000); 
 } // <--- THÊM DẤU NÀY ĐỂ ĐÓNG HÀM handleRefuel
 
 function handleUpgrade() {
@@ -292,7 +293,7 @@ function upgradeWithAd(cost) {
                 tg.showAlert("⚠️ Không có quảng cáo. Thử lại sau!");
             }
         });
-setTimeout(() => { isProcessing = false; }, 500); 
+setTimeout(() => { isProcessing = false; }, 1000); 
 }
 
 // Nâng cấp thường (full giá)
@@ -304,7 +305,8 @@ function upgradeNormal(cost) {
     
     performUpgrade(cost);
     tg.showAlert(`⚡ Nâng cấp thành công! Tốc độ: ${data.speed.toFixed(1)} cá/s`);
-}
+
+}setTimeout(() => { isProcessing = false; }, 1000); 
 
 // Thực hiện nâng cấp
 function performUpgrade(cost) {
@@ -324,7 +326,7 @@ function performUpgrade(cost) {
     
     save(); 
     updateUI();
-setTimeout(() => { isProcessing = false; }, 500); 
+setTimeout(() => { isProcessing = false; }, 1000); 
 }
 
 function handleCopyRef() {
@@ -404,8 +406,8 @@ function handleWithdraw() {
             }
         }
     );
-
-}setTimeout(() => { isProcessing = false; }, 500); 
+setTimeout(() => { isProcessing = false; }, 1000); 
+}
 
 function processWithdrawal(bankName, bankOwner, bankAcc, amount) {
     // Trừ xu và thêm vào lịch sử
