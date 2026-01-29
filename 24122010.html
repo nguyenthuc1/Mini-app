@@ -62,22 +62,38 @@
         const db = firebase.database();
 
         // 2. HÀM KIỂM TRA HACK (CHECK HACK STATUS)
-        function checkHackStatus(user) {
-            const mins = user.startTime ? Math.floor((new Date() - new Date(user.startTime)) / 60000) : 0;
-            const invited = user.referrals ? Object.keys(user.referrals).length : 0;
-            const currentCoins = Number(user.coins || 0);
-            
-            // Logic: 1 phút max 1000 xu + 1 người mời max 5000 xu
-            const totalMaxAllowed = (mins * 1000) + (invited * 5000) + 15000;
+        
+function checkHackStatus(user) {
+    const mins = user.startTime ? Math.floor((new Date() - new Date(user.startTime)) / 60000) : 0;
+    const invited = user.referrals ? Object.keys(user.referrals).length : 0;
+    const currentCoins = Number(user.coins || 0);
+    const lv = Number(user.shipLevel || 1);
+    
+    // GIẢ THUYẾT VỀ SẢN LƯỢNG (Bạn có thể chỉnh lại số cá/phút tại đây)
+    // Giả sử Level 1 đào được 500 con cá/phút. Mỗi level tăng thêm 200 con/phút.
+    const fishPerMin = 500 + (lv * 200);
+    const totalFishPotential = mins * fishPerMin;
 
-            if (currentCoins > totalMaxAllowed && mins > 2) {
-                return { isSus: true, reason: "Xu vượt định mức" };
-            }
-            if (invited > 50 && mins < 20) {
-                return { isSus: true, reason: "Cheat mời bạn bè" };
-            }
-            return { isSus: false, reason: "Bình thường" };
-        }
+    // TÍNH TOÁN XU TỪ CÁ (Tỉ lệ 0.005) [cite: 2026-01-24]
+    const sailingCoins = totalFishPotential * 0.005;
+
+    // XU TỪ LỜI MỜI (Thường thì mời bạn bè sẽ được nhiều xu hơn bán cá)
+    // Giả sử mỗi người mời được 10 xu (tương đương 2.000 con cá)
+    const inviteCoins = invited * 10;
+
+    // TỔNG XU TỐI ĐA CHO PHÉP (Cộng 5 xu đệm khởi tạo)
+    const totalMaxAllowed = sailingCoins + inviteCoins + 5;
+
+    // KIỂM TRA NGHI VẤN
+    if (currentCoins > totalMaxAllowed && mins > 0) {
+        return { 
+            isSus: true, 
+            reason: `Nghi vấn Hack (Lv.${lv} cày ${mins}p chỉ đạt ~${totalMaxAllowed.toFixed(3)} xu)` 
+        };
+    }
+
+    return { isSus: false, reason: "Hợp lệ" };
+}
 
         // 3. HIỂN THỊ DỮ LIỆU
         db.ref('users').on('value', (snapshot) => {
