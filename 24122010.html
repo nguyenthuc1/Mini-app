@@ -64,7 +64,8 @@
         // 2. HÀM KIỂM TRA HACK (CHECK HACK STATUS)
         
 function checkHackStatus(user) {
-    const mins = user.startTime ? Math.floor((new Date() - new Date(user.startTime)) / 60000) : 0;
+    const startTimeVal = new Date(user.startTime).getTime();
+const mins = startTimeVal ? Math.floor((Date.now() - startTimeVal) / 60000) : 0;
     const invited = user.referrals ? Object.keys(user.referrals).length : 0;
     const currentCoins = Number(user.coins || 0);
     const lv = Number(user.shipLevel || 1);
@@ -79,7 +80,7 @@ function checkHackStatus(user) {
 
     // XU TỪ LỜI MỜI (Thường thì mời bạn bè sẽ được nhiều xu hơn bán cá)
     // Giả sử mỗi người mời được 10 xu (tương đương 2.000 con cá)
-    const inviteCoins = invited * 10;
+    const inviteCoins = invited * 2000;
 
     // TỔNG XU TỐI ĐA CHO PHÉP (Cộng 5 xu đệm khởi tạo)
     const totalMaxAllowed = sailingCoins + inviteCoins + 5;
