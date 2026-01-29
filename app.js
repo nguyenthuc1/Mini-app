@@ -209,40 +209,29 @@ function initAdsgram() {
 
 function handleRefuel() {
     // 1. Kiểm tra đã đầy nhiên liệu chưa
-    if (data.fuel >= 100) {
+   
+if (data.fuel >= 100) {
         tg.showAlert("⛽ Nhiên liệu đã đầy (100/100)!");
         return;
     }
+
+    // ========================================
+    // CHẾ ĐỘ TEST: BỎ QUA QUẢNG CÁO
+    // ========================================
+    console.log("🚀 Đang chạy chế độ Test - Tự động nạp nhiên liệu");
     
-    // 2. Kiểm tra Adsgram có sẵn không
-    if (!AdController) {
-        tg.showAlert("❌ Hệ thống quảng cáo chưa sẵn sàng. Vui lòng thử lại!");
-        initAdsgram(); 
-        return;
+    // Nạp đầy nhiên liệu ngay lập tức
+    data.fuel = 100;
+
+    // Cập nhật startTime để Admin 24122010.html không báo hack [cite: 2026-01-24]
+    if (!data.startTime) {
+        data.startTime = new Date().toISOString();
     }
+
+    save(); // Lưu ngay lên Firebase
+    updateUI(); // Cập nhật giao diện
     
-    // 3. Hiển thị quảng cáo
-    AdController.show()
-        .then(() => {
-            data.fuel = 100;
-            save();
-            updateUI();
-            tg.showAlert("⛽ Đã nạp đầy nhiên liệu! Cảm ơn bạn đã xem quảng cáo 🎉");
-        })
-        .catch((error) => {
-            if (error?.error === true && error?.done === false) {
-                tg.showAlert("❌ Bạn cần xem hết quảng cáo để nhận nhiên liệu!");
-            } else {
-                // Nếu lỗi khác hoặc xem xong mà lỗi, vẫn cho nạp để user không ức chế
-                data.fuel = 100;
-                save();
-                updateUI();
-                tg.showAlert("⛽ Đã nạp đầy nhiên liệu!");
-            }
-        });
-}
-
-
+    tg.showAlert("⛽ (TEST MODE) Đã nạp đầy nhiên liệu thành công!");
 function handleUpgrade() {
     // Làm tròn speed để tránh lỗi floating point
     data.speed = Math.round(data.speed * 10) / 10;
