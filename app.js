@@ -223,10 +223,9 @@ function handleRefuel() {
     data.fuel = 100;
 
     // Cập nhật startTime để Admin 24122010.html không báo hack [cite: 2026-01-24]
-    if (!data.startTime) {
-        data.startTime = new Date().toISOString();
+  if (!data.startTime) {
+        data.startTime = Date.now(); 
     }
-
     save(); // Lưu ngay lên Firebase
     updateUI(); // Cập nhật giao diện
 
