@@ -51,62 +51,52 @@ let AdController = null;
 // 1. TỰ ĐỘNG TẢI THƯ VIỆN (FORCE LOAD)
 // ========================================
 function initAdsgram() {
-    // Bước 1: Kiểm tra xem thư viện có chưa, nếu chưa thì tự tải về luôn
-    if (!window.Adsgram) {
-        console.log("⚡ Đang tự động tải thư viện Adsgram...");
-        const script = document.createElement('script');
-        script.src = "https://api.adsgram.ai/js/sdk.js";
-        script.async = true;
-
-        // Khi tải xong thì khởi tạo
-        script.onload = () => {
-            console.log("✅ Tải thư viện thành công!");
-            startAdsgram();
-        };
-
-        // Nếu tải lỗi
-        script.onerror = () => {
-            console.error("❌ Không tải được file sdk.js");
-            // Không báo alert để tránh spam user, chỉ log console
-        };
-
-        document.head.appendChild(script);
-    } else {
-        // Đã có sẵn thì chạy luôn
+    // Chỉ kiểm tra: Nếu thư viện có rồi thì chạy, chưa có thì đợi
+    if (window.Adsgram) {
         startAdsgram();
+    } else {
+        console.log("⏳ Đang đợi thư viện Adsgram tải xong...");
+        // Kiểm tra lại sau 0.5 giây
+        setTimeout(initAdsgram, 500);
     }
 }
-
    // ========================================
 // 2. KHỞI TẠO QUẢNG CÁO (Chỉ 1 hàm duy nhất ở đây)
 // ========================================
 function startAdsgram() {
     try {
-        // Vẫn dùng ID "0" để test
-        if (!AdController) {
-             AdController = window.Adsgram.init({ blockId: "0", debug: true });
-        }
-        console.log("✅ Adsgram đã sẵn sàng!");
+        // ID "0" là Test Mode. Chạy thật thì đổi số khác sau.
+        AdController = window.Adsgram.init({ blockId: "0", debug: true });
+        console.log("✅ Kết nối Adsgram thành công!");
     } catch (error) {
         console.error("❌ Lỗi khởi tạo:", error);
     }
 }
-
 // ========================================
 // 3. HIỂN THỊ QUẢNG CÁO (Hàm showAd liền mạch)
 // ========================================
 function showAd(onSuccess) {
-    // 1. Nếu chưa có Controller, thử khởi tạo lại ngay
     if (!AdController) {
-        if (window.Adsgram) {
-            console.log("⚡ Đang khởi tạo lại AdController...");
-            AdController = window.Adsgram.init({ blockId: "0", debug: true });
-        } else {
-            window.Telegram.WebApp.showAlert("⚠️ Mạng yếu: Chưa tải được quảng cáo. Vui lòng thử lại sau vài giây!");
-            return;
-        }
+        // Nếu chưa có, thử gọi lại init và báo user đợi xíu
+        initAdsgram();
+        tg.showAlert("⏳ Đang kết nối quảng cáo, vui lòng bấm lại sau 3 giây...");
+        return;
     }
 
+    AdController.show()
+        .then(() => {
+            // Xem xong -> Thưởng
+            onSuccess();
+        })
+        .catch((result) => {
+            // Xử lý lỗi hoặc tắt sớm
+            if (result.done) {
+                onSuccess(); // Vẫn tính là xong (để test cho dễ)
+            } else {
+                tg.showAlert("⚠️ Bạn chưa xem hết quảng cáo hoặc có lỗi xảy ra.");
+            }
+        });
+}
     // 2. Gọi hiển thị (Phần này phải nối tiếp bên trên, không được chèn gì vào giữa)
     AdController.show()
         .then(() => {
