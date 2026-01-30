@@ -41,57 +41,75 @@ let data = {
     }
 };
 // ========================================
-// HỆ THỐNG QUẢNG CÁO (BẢN CHUẨN)
+// HỆ THỐNG QUẢNG CÁO "SMART LOAD"
 // ========================================
 let AdController = null;
+let loadAttempts = 0;
 
-// 1. Hàm khởi tạo (Chỉ kiểm tra và kết nối)
 function initAdsgram() {
-    // Nếu thư viện đã được tải từ index.html
+    // 1. Nếu đã có thư viện -> Khởi tạo ngay
     if (window.Adsgram) {
         startAdsgram();
-    } else {
-        // Nếu chưa thấy, đợi 0.5 giây rồi kiểm tra lại
-        console.log("⏳ Đang đợi thư viện Adsgram...");
-        setTimeout(initAdsgram, 500);
-    }
-}
-
-// 2. Kết nối tới Adsgram
-function startAdsgram() {
-    try {
-        // ID "0" để test. Khi chạy thật nhớ đổi ID của bạn.
-        AdController = window.Adsgram.init({ blockId: "0", debug: true });
-        console.log("✅ Adsgram đã sẵn sàng!");
-    } catch (error) {
-        console.error("❌ Lỗi khởi tạo:", error);
-    }
-}
-
-// 3. Hiển thị quảng cáo
-function showAd(onSuccess) {
-    // Nếu chưa kết nối được, thử kết nối lại
-    if (!AdController) {
-        initAdsgram();
-        tg.showAlert("⏳ Đang tải quảng cáo, vui lòng bấm lại sau 2 giây...");
         return;
     }
 
-    // Gọi hiển thị
+    // 2. Nếu chưa có, đợi tối đa 3 giây (6 lần check)
+    if (loadAttempts < 6) {
+        loadAttempts++;
+        console.log(`⏳ Đang đợi thư viện... (${loadAttempts}/6)`);
+        setTimeout(initAdsgram, 500);
+    } else {
+        // 3. Quá 3 giây vẫn chưa có -> ÉP TẢI (Force Load)
+        forceLoadScript();
+    }
+}
+
+function forceLoadScript() {
+    if (document.getElementById('adsgram-force')) return; // Đang tải rồi thì thôi
+    
+    console.log("⚡ Đang ép tải lại thư viện...");
+    const script = document.createElement('script');
+    script.id = 'adsgram-force';
+    script.src = "https://api.adsgram.ai/js/sdk.js?v=" + Date.now(); // Chống Cache
+    script.async = true;
+    
+    script.onload = () => {
+        console.log("✅ Ép tải thành công!");
+        startAdsgram();
+    };
+    
+    script.onerror = () => {
+        console.error("❌ TẢI THẤT BẠI");
+        // Báo lỗi rõ ràng cho User biết
+        tg.showAlert("❌ LỖI MẠNG: Wifi/4G của bạn đang chặn Adsgram.\nHãy tắt 'DNS Riêng Tư' hoặc đổi mạng!");
+    };
+    
+    document.body.appendChild(script);
+}
+
+function startAdsgram() {
+    try {
+        if (!AdController) {
+            AdController = window.Adsgram.init({ blockId: "0", debug: true });
+            console.log("✅ Adsgram Ready!");
+        }
+    } catch (e) { console.error(e); }
+}
+
+function showAd(onSuccess) {
+    if (!AdController) {
+        initAdsgram();
+        tg.showAlert("⏳ Đang tải lại dữ liệu quảng cáo...");
+        return;
+    }
     AdController.show()
-        .then(() => {
-            // Xem xong -> Thưởng
-            onSuccess();
-        })
+        .then(() => onSuccess())
         .catch((result) => {
-            // Xử lý kết quả
-            if (result.done) {
-                onSuccess(); // Vẫn tính là xong (để test)
-            } else {
-                tg.showAlert("⚠️ Bạn chưa xem hết hoặc có lỗi xảy ra.");
-            }
+            if (result.done) onSuccess();
+            else tg.showAlert("⚠️ Chưa xem hết hoặc có lỗi!");
         });
 }
+
 // ========================================
 // LOGIC GAME & APP
 // ========================================
