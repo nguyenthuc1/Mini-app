@@ -48,13 +48,42 @@ let AdController = null
 // ========================================
 // 1. TỰ ĐỘNG TẢI THƯ VIỆN
 // ========================================
+// ========================================
+// 1. HÀM ÉP TẢI THƯ VIỆN (MẠNH MẼ HƠN)
+// ========================================
 function initAdsgram() {
+    // Nếu có rồi thì chạy luôn
     if (window.Adsgram) {
         startAdsgram();
-    } else {
-        console.log("⏳ Đang đợi thư viện Adsgram tải xong...");
-        setTimeout(initAdsgram, 500);
+        return;
     }
+
+    // Nếu chưa có, kiểm tra xem đã ra lệnh tải chưa
+    if (document.getElementById('adsgram-lib')) {
+        console.log("⏳ Đang đợi tải...");
+        setTimeout(initAdsgram, 500);
+        return;
+    }
+
+    // Lệnh ÉP TẢI (Force Load)
+    console.log("⚡ Bắt đầu tải nóng thư viện...");
+    const script = document.createElement('script');
+    script.id = 'adsgram-lib';
+    // Thêm số ngẫu nhiên để tránh Cache cũ
+    script.src = "https://api.adsgram.ai/js/sdk.js?v=" + Date.now();
+    script.async = true;
+
+    script.onload = () => {
+        console.log("✅ Đã tải xong thư viện!");
+        startAdsgram();
+    };
+
+    script.onerror = () => {
+        console.error("❌ Mạng chặn file quảng cáo!");
+        tg.showAlert("❌ Lỗi mạng: Điện thoại chặn quảng cáo. Hãy tắt DNS hoặc đổi Wifi.");
+    };
+
+    document.head.appendChild(script);
 }
 
 // ========================================
