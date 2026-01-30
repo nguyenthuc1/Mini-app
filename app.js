@@ -441,14 +441,49 @@ function startAdsgram() {
         window.Telegram.WebApp.showAlert("❌ Lỗi khởi tạo ID: " + JSON.stringify(error));
     }
 }
-
+function showAd(onSuccess) {
+    // 1. Nếu chưa có Controller, thử khởi tạo lại ngay lập tức
+    if (!AdController) {
+        if (window.Adsgram) {
+            console.log("⚡ Đang khởi tạo lại AdController khi bấm nút...");
+            // Vẫn dùng ID "0" để test
+            AdController = window.Adsgram.init({ blockId: "0", debug: true });
+        } else {
+            window.Telegram.WebApp.showAlert("⚠️ Mạng quá yếu, chưa tải được thư viện quảng cáo.");
+            return;
+        }
+    }
+  AdController.show()
+        .then(() => {
+            // Xem thành công -> Gọi hàm thưởng
+            onSuccess(); 
+        })
+        .catch((result) => {
+            // Xử lý lỗi
+            console.error("Ad error:", result);
+            if (result.done) {
+                // Trường hợp lạ: Có lỗi nhưng vẫn tính là xem xong
+                onSuccess();
+            } else if (result.error) {
+                window.Telegram.WebApp.showAlert("❌ Bạn đã tắt quảng cáo hoặc gặp lỗi!");
+            } else {
+                window.Telegram.WebApp.showAlert("⚠️ Không có quảng cáo phù hợp lúc này.");
+            }
+        });
+}
 function handleRefuel() {
     // Kiểm tra đã đầy nhiên liệu chưa
     if (data.fuel >= 100) {
         tg.showAlert("⛽ Nhiên liệu đã đầy (100/100)!");
         return;
     }
-
+    showAd(() => {
+        data.fuel = 100;
+        save();
+        updateUI();
+        tg.showAlert("⛽ Đã nạp đầy nhiên liệu! Cảm ơn bạn 🎉");
+    });
+}
     // Kiểm tra Adsgram có sẵn không
     if (!AdController) {
         tg.showAlert("❌ Hệ thống quảng cáo chưa sẵn sàng. Vui lòng thử lại!");
