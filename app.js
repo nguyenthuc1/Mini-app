@@ -256,20 +256,34 @@ function handleSell() {
 // ========================================
 let AdController = null;
 function initAdsgram() {
-    // Kiểm tra 1: Xem thư viện Adsgram đã tải được chưa
-    if (typeof window.Adsgram === 'undefined') {
-        window.Telegram.WebApp.showAlert("⚠️ LỖI: Không tải được thư viện Adsgram!\n\n👉 Hãy kiểm tra mạng hoặc tắt chặn quảng cáo (AdBlock/VPN).");
-        return;
-    }
+    let attempts = 0;
+    const maxAttempts = 20; // Thử tối đa 20 lần (khoảng 10 giây)
 
-    try {
-        // Kiểm tra 2: Thử khởi tạo
-        AdController = window.Adsgram.init({ blockId: "22009", debug: true });
-        window.Telegram.WebApp.showAlert("✅ Đã kết nối Adsgram thành công!\nBlock ID: 22009");
-    } catch (error) {
-        window.Telegram.WebApp.showAlert("❌ Lỗi khởi tạo: " + JSON.stringify(error));
-        console.error("Adsgram Init Error:", error);
-    }
+    // Tạo bộ đếm thời gian: Cứ 0.5 giây kiểm tra 1 lần
+    const interval = setInterval(() => {
+        attempts++;
+        
+        // Kiểm tra xem thư viện đã tải về chưa?
+        if (window.Adsgram) {
+            clearInterval(interval); // Đã thấy! Dừng kiểm tra.
+            try {
+                // Khởi tạo quảng cáo
+                AdController = window.Adsgram.init({ blockId: "22009", debug: true });
+                console.log("✅ Đã kết nối Adsgram thành công!");
+                
+                // (Tùy chọn) Hiện thông báo nhỏ để bạn biết là đã chạy
+                // window.Telegram.WebApp.showAlert("✅ Đã tải xong quảng cáo!"); 
+            } catch (error) {
+                console.error("❌ Lỗi khởi tạo:", error);
+            }
+        } 
+        // Nếu chưa thấy, và đã thử quá 20 lần (10 giây)
+        else if (attempts >= maxAttempts) {
+            clearInterval(interval);
+            // Lúc này mới thực sự báo lỗi
+            window.Telegram.WebApp.showAlert("⚠️ Mạng chậm: Không tải được quảng cáo sau 10 giây.");
+        }
+    }, 500); // 500ms = 0.5 giây
 }
 
 function handleRefuel() {
