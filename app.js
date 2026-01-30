@@ -470,11 +470,15 @@ function showAd(onSuccess) {
 
   // Hàm xử lý nút Nạp nhiên liệu (Chỉ ngắn gọn thế này là HẾT)
 function handleRefuel() {
+    // 1. Kiểm tra đầy nhiên liệu chưa
     if (data.fuel >= 100) {
         tg.showAlert("⛽ Nhiên liệu đã đầy (100/100)!");
         return;
     }
+
+    // 2. Gọi hàm xem quảng cáo (PHẢI CÓ ĐOẠN NÀY)
     showAd(() => {
+        // Code chạy khi xem xong
         data.fuel = 100;
         save();
         updateUI();
