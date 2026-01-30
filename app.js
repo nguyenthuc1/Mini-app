@@ -47,23 +47,54 @@ let data = {
 let AdController = null;
 
 // Hàm khởi tạo quảng cáo
+   // ========================================
+// 1. TỰ ĐỘNG TẢI THƯ VIỆN (FORCE LOAD)
+// ========================================
 function initAdsgram() {
-    // Nếu trong HTML chưa có script sdk.js thì thôi, đợi nó load
+    // Bước 1: Kiểm tra xem thư viện có chưa, nếu chưa thì tự tải về luôn
     if (!window.Adsgram) {
-        return; 
-    }
-    // Đã có thư viện -> Khởi tạo với ID "0" để test
-    try {
-        if (!AdController) {
-            // LƯU Ý: Đang để ID "0" để test. Khi nào chạy thật thì sửa lại sau.
-            AdController = window.Adsgram.init({ blockId: "0", debug: true });
-        }
-    } catch (e) {
-        console.error("Adsgram init error:", e);
+        console.log("⚡ Đang tự động tải thư viện Adsgram...");
+        const script = document.createElement('script');
+        script.src = "https://api.adsgram.ai/js/sdk.js";
+        script.async = true;
+
+        // Khi tải xong thì khởi tạo
+        script.onload = () => {
+            console.log("✅ Tải thư viện thành công!");
+            startAdsgram();
+        };
+
+        // Nếu tải lỗi
+        script.onerror = () => {
+            console.error("❌ Không tải được file sdk.js");
+            // Không báo alert để tránh spam user, chỉ log console
+        };
+
+        document.head.appendChild(script);
+    } else {
+        // Đã có sẵn thì chạy luôn
+        startAdsgram();
     }
 }
 
-// Hàm hiển thị quảng cáo thông minh (Tự kết nối lại nếu mất mạng)
+   // ========================================
+// 2. KHỞI TẠO QUẢNG CÁO (Chỉ 1 hàm duy nhất ở đây)
+// ========================================
+function startAdsgram() {
+    try {
+        // Vẫn dùng ID "0" để test
+        if (!AdController) {
+             AdController = window.Adsgram.init({ blockId: "0", debug: true });
+        }
+        console.log("✅ Adsgram đã sẵn sàng!");
+    } catch (error) {
+        console.error("❌ Lỗi khởi tạo:", error);
+    }
+}
+
+// ========================================
+// 3. HIỂN THỊ QUẢNG CÁO (Hàm showAd liền mạch)
+// ========================================
 function showAd(onSuccess) {
     // 1. Nếu chưa có Controller, thử khởi tạo lại ngay
     if (!AdController) {
@@ -76,7 +107,7 @@ function showAd(onSuccess) {
         }
     }
 
-    // 2. Gọi hiển thị
+    // 2. Gọi hiển thị (Phần này phải nối tiếp bên trên, không được chèn gì vào giữa)
     AdController.show()
         .then(() => {
             // Xem thành công
