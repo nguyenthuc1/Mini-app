@@ -431,7 +431,7 @@ function initAdsgram() {
 // Hàm phụ để khởi tạo (Tách ra cho gọn)
 function startAdsgram() {
     try {
-        AdController = window.Adsgram.init({ blockId: "22009", debug: true });
+        AdController = window.Adsgram.init({ blockId: "0", debug: true });
         console.log("✅ Đã kết nối Adsgram thành công!");
         // Hiện thông báo nhỏ để bạn yên tâm
         window.Telegram.WebApp.showAlert("✅ Đã tải xong quảng cáo! Sẵn sàng kiếm tiền.");
