@@ -255,14 +255,18 @@ function handleSell() {
 // ADSGRAM INTEGRATION
 // ========================================
 let AdController = null;
-
 function initAdsgram() {
+    // Kiểm tra xem thư viện đã tải xong chưa
+    if (!window.Adsgram) {
+        console.error("❌ Thư viện Adsgram chưa tải được! Kiểm tra mạng hoặc AdBlock.");
+        return;
+    }
+
     try {
-        // Block ID của bạn: 22009
         AdController = window.Adsgram.init({ blockId: "22009", debug: true });
-        console.log("✅ Adsgram initialized with blockId: 22009");
+        console.log("✅ Adsgram đã khởi tạo thành công!");
     } catch (error) {
-        console.error("❌ Adsgram init error:", error);
+        console.error("❌ Lỗi khởi tạo Adsgram:", error);
     }
 }
 
