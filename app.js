@@ -44,75 +44,53 @@ let data = {
 // ========================================
 // HỆ THỐNG QUẢNG CÁO (ADSGRAM) - ĐÃ SỬA LỖI
 // ========================================
-let AdController = null;
-
-// Hàm khởi tạo quảng cáo
-   // ========================================
-// 1. TỰ ĐỘNG TẢI THƯ VIỆN (FORCE LOAD)
+let AdController = null
+// ========================================
+// 1. TỰ ĐỘNG TẢI THƯ VIỆN
 // ========================================
 function initAdsgram() {
-    // Chỉ kiểm tra: Nếu thư viện có rồi thì chạy, chưa có thì đợi
     if (window.Adsgram) {
         startAdsgram();
     } else {
         console.log("⏳ Đang đợi thư viện Adsgram tải xong...");
-        // Kiểm tra lại sau 0.5 giây
         setTimeout(initAdsgram, 500);
     }
 }
-   // ========================================
-// 2. KHỞI TẠO QUẢNG CÁO (Chỉ 1 hàm duy nhất ở đây)
+
+// ========================================
+// 2. KHỞI TẠO QUẢNG CÁO
 // ========================================
 function startAdsgram() {
     try {
-        // ID "0" là Test Mode. Chạy thật thì đổi số khác sau.
+        // ID "0" là Test Mode.
         AdController = window.Adsgram.init({ blockId: "0", debug: true });
         console.log("✅ Kết nối Adsgram thành công!");
     } catch (error) {
         console.error("❌ Lỗi khởi tạo:", error);
     }
 }
+
 // ========================================
-// 3. HIỂN THỊ QUẢNG CÁO (Hàm showAd liền mạch)
+// 3. HIỂN THỊ QUẢNG CÁO
 // ========================================
 function showAd(onSuccess) {
     if (!AdController) {
-        // Nếu chưa có, thử gọi lại init và báo user đợi xíu
         initAdsgram();
         tg.showAlert("⏳ Đang kết nối quảng cáo, vui lòng bấm lại sau 3 giây...");
         return;
     }
 
+    // Chỉ gọi show() MỘT LẦN duy nhất ở đây
     AdController.show()
         .then(() => {
             // Xem xong -> Thưởng
             onSuccess();
         })
         .catch((result) => {
-            // Xử lý lỗi hoặc tắt sớm
             if (result.done) {
-                onSuccess(); // Vẫn tính là xong (để test cho dễ)
+                onSuccess(); // Vẫn tính là xong (để test)
             } else {
                 tg.showAlert("⚠️ Bạn chưa xem hết quảng cáo hoặc có lỗi xảy ra.");
-            }
-        });
-}
-    // 2. Gọi hiển thị (Phần này phải nối tiếp bên trên, không được chèn gì vào giữa)
-    AdController.show()
-        .then(() => {
-            // Xem thành công
-            onSuccess(); 
-        })
-        .catch((result) => {
-            // Xử lý các kiểu lỗi
-            console.error("Ad error:", result);
-            if (result.done) {
-                // Trường hợp lạ: Có lỗi nhưng vẫn tính là xem xong
-                onSuccess();
-            } else if (result.error) {
-                window.Telegram.WebApp.showAlert("❌ Bạn đã tắt quảng cáo hoặc gặp lỗi!");
-            } else {
-                window.Telegram.WebApp.showAlert("⚠️ Không có quảng cáo phù hợp lúc này.");
             }
         });
 }
