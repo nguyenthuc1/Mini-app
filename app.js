@@ -27,6 +27,9 @@ let data = {
     startTime: null, 
     fuel: 100, 
     history: [],
+    refBy: null, // ID người giới thiệu
+    friends: {}, // Danh sách bạn bè đã mời: {friendId: true}
+    totalRefEarnings: 0, // Tổng hoa hồng kiếm được
     tasks: {
         adsWatchedToday: 0,
         adsLastReset: null,
@@ -49,18 +52,18 @@ async function init() {
             const snap = await db.ref('users/' + userId).once('value');
             if (snap.exists()) {
                 data = Object.assign(data, snap.val());
-                
+
                 // Đảm bảo speed không vượt quá giới hạn và làm tròn
                 data.speed = Math.round((data.speed || 1) * 10) / 10;
                 if (data.speed > MAX_SPEED) {
                     data.speed = MAX_SPEED;
                 }
-                
+
                 // Đảm bảo fuel luôn có giá trị
                 if (typeof data.fuel !== 'number') {
                     data.fuel = 100;
                 }
-                
+
                 // Đảm bảo tasks object tồn tại
                 if (!data.tasks) {
                     data.tasks = {
@@ -74,32 +77,14 @@ async function init() {
                     };
                 }
             } else {
-                // User mới - Khởi tạo
-                await db.ref('users/' + userId).set(data);
-                
-                // Check referral
-                const startParam = tg.initDataUnsafe?.start_param;
-                if (startParam && startParam !== userId) {
-                    // User được mời bởi startParam
-                    const referrerRef = db.ref('users/' + startParam);
-                    const referrerSnap = await referrerRef.once('value');
-                    
-                    if (referrerSnap.exists()) {
-                        const referrerData = referrerSnap.val();
-                        if (!referrerData.tasks) referrerData.tasks = {};
-                        
-                        // Tăng invite count cho người giới thiệu
-                        referrerData.tasks.inviteCount = (referrerData.tasks.inviteCount || 0) + 1;
-                        
-                        // Thưởng ngay 100 xu cho người giới thiệu
-                        referrerData.coins = (referrerData.coins || 0) + 100;
-                        
-                        await referrerRef.set(referrerData);
-                        
-                        console.log(`✅ Referral tracked: ${startParam} invited ${userId}`);
-                    }
-                }
+                // User mới - Khởi tạo và xử lý referral
+                await initReferral();
             }
+            
+            // Đảm bảo friends object tồn tại
+            if (!data.friends) data.friends = {};
+            if (!data.refBy) data.refBy = null;
+            if (typeof data.totalRefEarnings !== 'number') data.totalRefEarnings = 0;
 
             // KÍCH HOẠT CÁC NÚT BẤM NGAY SAU KHI CÓ DATA
             setupEventListeners();
@@ -112,6 +97,169 @@ async function init() {
             if (loader) loader.style.display = 'none';
         }
     });
+}
+
+// ========================================
+// REFERRAL SYSTEM - HỆ THỐNG MỜI BẠN BÈ
+// ========================================
+
+/**
+ * Khởi tạo referral cho user mới
+ * Xử lý khi user vào app lần đầu từ link giới thiệu
+ */
+async function initReferral() {
+    // Lưu data user mới trước
+    await db.ref('users/' + userId).set(data);
+    
+    // Lấy start_param từ Telegram (chính là ID người mời)
+    const startParam = tg.initDataUnsafe?.start_param;
+    
+    if (!startParam || startParam === userId) {
+        // Không có người mời hoặc tự mời chính mình → bỏ qua
+        console.log('ℹ️ No referrer or self-referral');
+        return;
+    }
+    
+    // Xử lý referral
+    await processReferral(startParam);
+}
+
+/**
+ * Xử lý logic referral
+ * @param {string} inviterId - ID người giới thiệu
+ */
+async function processReferral(inviterId) {
+    try {
+        const inviterRef = db.ref('users/' + inviterId);
+        const inviterSnap = await inviterRef.once('value');
+        
+        if (!inviterSnap.exists()) {
+            console.log('❌ Inviter not found:', inviterId);
+            return;
+        }
+        
+        const inviterData = inviterSnap.val();
+        
+        // 1. Lưu người giới thiệu vào user mới
+        data.refBy = inviterId;
+        await db.ref('users/' + userId).update({ refBy: inviterId });
+        
+        // 2. Thêm user mới vào danh sách bạn bè của người mời
+        if (!inviterData.friends) inviterData.friends = {};
+        inviterData.friends[userId] = true;
+        
+        // 3. Tăng invite count
+        if (!inviterData.tasks) inviterData.tasks = {};
+        inviterData.tasks.inviteCount = (inviterData.tasks.inviteCount || 0) + 1;
+        
+        // 4. Thưởng ngay 100 xu cho người mời
+        inviterData.coins = (inviterData.coins || 0) + 100;
+        if (!inviterData.totalRefEarnings) inviterData.totalRefEarnings = 0;
+        inviterData.totalRefEarnings += 100;
+        
+        // Lưu lại data người mời
+        await inviterRef.set(inviterData);
+        
+        console.log(`✅ Referral success: ${inviterId} → ${userId}`);
+        console.log(`💰 ${inviterId} earned 100 coins (welcome bonus)`);
+        
+    } catch (error) {
+        console.error('❌ Process referral error:', error);
+    }
+}
+
+/**
+ * Cộng xu và tự động cộng 10% hoa hồng cho người giới thiệu
+ * @param {number} amount - Số xu cộng cho user
+ * @param {string} source - Nguồn: 'mining', 'ads', 'task', 'sell', etc.
+ */
+async function addCoins(amount, source = 'unknown') {
+    if (!amount || amount <= 0) return;
+    
+    // Cộng xu cho user hiện tại
+    data.coins += amount;
+    console.log(`💰 +${amount} coins from ${source}`);
+    
+    // Kiểm tra có người giới thiệu không
+    if (data.refBy) {
+        await updateRefBonus(data.refBy, amount, source);
+    }
+    
+    // Lưu data
+    save();
+    updateUI();
+}
+
+/**
+ * Cập nhật hoa hồng 10% cho người giới thiệu
+ * @param {string} inviterId - ID người giới thiệu
+ * @param {number} baseAmount - Số xu gốc user nhận được
+ * @param {string} source - Nguồn thu nhập
+ */
+async function updateRefBonus(inviterId, baseAmount, source) {
+    try {
+        const bonus = Math.floor(baseAmount * 0.1); // 10% hoa hồng
+        
+        if (bonus <= 0) return;
+        
+        const inviterRef = db.ref('users/' + inviterId);
+        const inviterSnap = await inviterRef.once('value');
+        
+        if (!inviterSnap.exists()) {
+            console.log('⚠️ Inviter not found for bonus');
+            return;
+        }
+        
+        const inviterData = inviterSnap.val();
+        
+        // Cộng 10% vào tài khoản người mời
+        inviterData.coins = (inviterData.coins || 0) + bonus;
+        
+        // Track tổng hoa hồng
+        if (!inviterData.totalRefEarnings) inviterData.totalRefEarnings = 0;
+        inviterData.totalRefEarnings += bonus;
+        
+        await inviterRef.set(inviterData);
+        
+        console.log(`💸 Ref bonus: ${inviterId} earned ${bonus} coins (10% of ${baseAmount} from ${source})`);
+        
+    } catch (error) {
+        console.error('❌ Update ref bonus error:', error);
+    }
+}
+
+/**
+ * Tạo link giới thiệu
+ * @returns {string} - Link giới thiệu
+ */
+function generateRefLink() {
+    // ⚠️ QUAN TRỌNG: Thay "Supermoneymine_bot" bằng username bot của bạn
+    // Format: https://t.me/BOT_USERNAME/app?startapp=USER_ID
+    return `https://t.me/${BOT_USERNAME}/app?startapp=${userId}`;
+}
+
+/**
+ * Cập nhật hiển thị referral trên UI
+ */
+function updateReferralUI() {
+    // Cập nhật link giới thiệu
+    const refLinkEl = document.getElementById('ref-link');
+    if (refLinkEl) {
+        refLinkEl.innerText = generateRefLink();
+    }
+    
+    // Cập nhật số lượng bạn bè
+    const friendCount = data.friends ? Object.keys(data.friends).length : 0;
+    const friendCountEl = document.getElementById('friend-count');
+    if (friendCountEl) {
+        friendCountEl.innerText = friendCount;
+    }
+    
+    // Cập nhật tổng hoa hồng
+    const refEarningsEl = document.getElementById('ref-earnings');
+    if (refEarningsEl) {
+        refEarningsEl.innerText = Math.floor(data.totalRefEarnings || 0).toLocaleString();
+    }
 }
 
 // HÀM GÁN SỰ KIỆN
@@ -127,7 +275,7 @@ function setupEventListeners() {
     bind('btn-upgrade', handleUpgrade);
     bind('btn-withdraw', handleWithdraw);
     bind('btn-copy-ref', handleCopyRef);
-    
+
     // Task buttons
     bind('btn-task-ads', handleTaskAds);
     bind('btn-task-channel', handleTaskChannel);
@@ -141,7 +289,7 @@ function setupEventListeners() {
             e.target.value = e.target.value.toUpperCase();
         });
     }
-    
+
     // Chỉ cho phép số trong số tài khoản
     const bankAccInput = document.getElementById('bank-acc');
     if (bankAccInput) {
@@ -164,7 +312,7 @@ function switchTab(tab) {
         btn.classList.remove('text-blue-400', 'text-purple-400', 'text-pink-400', 'text-yellow-400');
         btn.classList.add('text-gray-500');
     });
-    
+
     const activeBtn = document.getElementById('nav-' + tab);
     if (activeBtn) {
         activeBtn.classList.remove('text-gray-500');
@@ -183,14 +331,14 @@ function handleMine() {
             tg.showAlert(`⛽ Không đủ nhiên liệu! Hiện có: ${data.fuel}/100. Cần 100 để ra khơi.`);
             return;
         }
-        
+
         // Hiển thị quảng cáo TRƯỚC KHI ra khơi
         if (!AdController) {
             // Nếu ads không có, vẫn cho ra khơi
             startMining();
             return;
         }
-        
+
         AdController.show()
             .then(() => {
                 // Xem xong ads → Ra khơi
@@ -242,12 +390,13 @@ function handleSell() {
         tg.showAlert("❌ Cần tối thiểu 100 con cá để bán!");
         return;
     }
-    
+
     const coinsEarned = Math.floor(data.fish * 0.005);
-    data.coins += coinsEarned;
     data.fish = 0;
-    save(); 
-    updateUI();
+    
+    // Sử dụng addCoins để tự động cộng 10% hoa hồng
+    addCoins(coinsEarned, 'sell');
+    
     tg.showAlert(`💰 Đã bán cá và nhận ${coinsEarned.toLocaleString()} xu!`);
 }
 
@@ -262,17 +411,17 @@ function initAdsgram() {
         const script = document.createElement('script');
         script.src = "https://api.adsgram.ai/js/sdk.js";
         script.async = true;
-        
+
         // Khi tải xong thì khởi tạo
         script.onload = () => {
             startAdsgram();
         };
-        
+
         // Nếu tải lỗi
         script.onerror = () => {
             window.Telegram.WebApp.showAlert("⚠️ Lỗi mạng: Không thể tải được quảng cáo (Force Load Failed).");
         };
-        
+
         document.head.appendChild(script);
     } else {
         startAdsgram();
@@ -298,14 +447,14 @@ function handleRefuel() {
         tg.showAlert("⛽ Nhiên liệu đã đầy (100/100)!");
         return;
     }
-    
+
     // Kiểm tra Adsgram có sẵn không
     if (!AdController) {
         tg.showAlert("❌ Hệ thống quảng cáo chưa sẵn sàng. Vui lòng thử lại!");
         initAdsgram(); // Thử init lại
         return;
     }
-    
+
     // Hiển thị quảng cáo
     AdController.show()
         .then(() => {
@@ -351,30 +500,31 @@ function checkAndResetAds() {
 // Nhiệm vụ xem quảng cáo (10-15 xu random)
 function handleTaskAds() {
     checkAndResetAds();
-    
+
     const MAX_ADS_PER_DAY = 5;
-    
+
     if (data.tasks.adsWatchedToday >= MAX_ADS_PER_DAY) {
         tg.showAlert("❌ Bạn đã xem hết 5 quảng cáo hôm nay! Quay lại vào ngày mai 🌅");
         return;
     }
-    
+
     if (!AdController) {
         tg.showAlert("❌ Hệ thống quảng cáo chưa sẵn sàng!");
         initAdsgram();
         return;
     }
-    
+
     AdController.show()
         .then(() => {
             // Random 10-15 xu
             const reward = Math.floor(Math.random() * 6) + 10; // 10-15
-            data.coins += reward;
             data.tasks.adsWatchedToday += 1;
-            save();
-            updateUI();
-            updateTasksUI();
             
+            // Sử dụng addCoins để tự động cộng 10% hoa hồng
+            addCoins(reward, 'ads_task');
+            
+            updateTasksUI();
+
             const remaining = MAX_ADS_PER_DAY - data.tasks.adsWatchedToday;
             tg.showAlert(`🎉 Chúc mừng! Bạn nhận được ${reward} xu!\n\n⏰ Còn lại ${remaining} lượt xem hôm nay.`);
         })
@@ -384,10 +534,11 @@ function handleTaskAds() {
             } else if (error?.error === true && error?.done === true) {
                 // Vẫn cho thưởng nếu xem xong
                 const reward = Math.floor(Math.random() * 6) + 10;
-                data.coins += reward;
                 data.tasks.adsWatchedToday += 1;
-                save();
-                updateUI();
+                
+                // Sử dụng addCoins
+                addCoins(reward, 'ads_task');
+                
                 updateTasksUI();
                 tg.showAlert(`🎉 Nhận được ${reward} xu!`);
             } else {
@@ -402,14 +553,14 @@ function handleTaskChannel() {
         tg.showAlert("✅ Bạn đã hoàn thành nhiệm vụ này rồi!");
         return;
     }
-    
-    // Thay YOUR_CHANNEL_USERNAME bằng username channel của bạn
+
+    // ⚠️ QUAN TRỌNG: Thay YOUR_CHANNEL_USERNAME bằng username channel của bạn
     const CHANNEL_USERNAME = "YOUR_CHANNEL_USERNAME"; // VD: "FishMiningOfficial"
     const channelUrl = `https://t.me/${CHANNEL_USERNAME}`;
-    
+
     // Mở channel
     tg.openTelegramLink(channelUrl);
-    
+
     // Delay 2 giây rồi confirm
     setTimeout(() => {
         tg.showConfirm(
@@ -417,11 +568,11 @@ function handleTaskChannel() {
             (confirmed) => {
                 if (confirmed) {
                     // Trong production, nên check thật qua bot API
-                    // Ở đây đơn giản hóa
                     data.tasks.channelJoined = true;
-                    data.coins += 400;
-                    save();
-                    updateUI();
+                    
+                    // Sử dụng addCoins
+                    addCoins(400, 'channel_join');
+                    
                     updateTasksUI();
                     tg.showAlert("🎉 Đã nhận 400 xu! Cảm ơn bạn đã tham gia! 🚀");
                 }
@@ -436,35 +587,39 @@ function handleTaskInvite() {
         tg.showAlert("✅ Bạn đã nhận thưởng nhiệm vụ này rồi!");
         return;
     }
-    
+
     if (data.tasks.inviteCount < 5) {
         tg.showAlert(`📊 Bạn mới mời được ${data.tasks.inviteCount}/5 người.\n\n👉 Chia sẻ link ở tab FRIENDS để mời thêm bạn bè!`);
         return;
     }
-    
+
     // Đủ 5 người
     data.tasks.invite5Claimed = true;
+    
+    // Sử dụng addCoins - KHÔNG cộng hoa hồng cho nhiệm vụ này vì đã là bonus rồi
+    // Tạm thời cộng trực tiếp
     data.coins += 2500;
     save();
     updateUI();
     updateTasksUI();
+    
     tg.showAlert("🎉🎉🎉 Chúc mừng!\n\nBạn đã nhận 2,500 xu cho việc mời 5 bạn bè! 🎁");
 }
 
 // Nhiệm vụ đăng nhập hàng ngày
 function handleTaskDaily() {
     const today = new Date().toDateString();
-    
+
     if (data.tasks.dailyLastClaim === today) {
         tg.showAlert("✅ Bạn đã nhận thưởng hôm nay rồi!\n\n🌅 Quay lại vào ngày mai nhé!");
         return;
     }
-    
+
     // Check streak
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toDateString();
-    
+
     if (data.tasks.dailyLastClaim === yesterdayStr) {
         // Streak tiếp tục
         data.tasks.dailyStreak += 1;
@@ -475,36 +630,36 @@ function handleTaskDaily() {
         // Bị gián đoạn
         data.tasks.dailyStreak = 1;
     }
-    
+
     data.tasks.dailyLastClaim = today;
-    
+
     // Thưởng tăng theo streak (50 + 10 per day, max 200)
     const bonus = Math.min(10 * (data.tasks.dailyStreak - 1), 150);
     const totalReward = 50 + bonus;
+
+    // Sử dụng addCoins
+    addCoins(totalReward, 'daily_login');
     
-    data.coins += totalReward;
-    save();
-    updateUI();
     updateTasksUI();
-    
+
     tg.showAlert(`🎁 Nhận ${totalReward} xu!\n\n🔥 Streak: ${data.tasks.dailyStreak} ngày liên tiếp!\n\n${data.tasks.dailyStreak >= 7 ? '🏆 Xuất sắc! Giữ vững phong độ!' : '💪 Tiếp tục đăng nhập để nhận thưởng nhiều hơn!'}`);
 }
 
 function handleUpgrade() {
     // Làm tròn speed để tránh lỗi floating point
     data.speed = Math.round(data.speed * 10) / 10;
-    
+
     // Kiểm tra đã đạt max level chưa
     if (data.speed >= MAX_SPEED) {
         tg.showAlert(`⚠️ Đã đạt tốc độ tối đa ${MAX_SPEED} cá/giây!`);
         return;
     }
-    
+
     // Hiển thị dialog chọn: Xem ads (giảm 50%) hoặc trả full
     if (AdController) {
         const normalCost = UPGRADE_COST;
         const discountCost = Math.floor(UPGRADE_COST * 0.5);
-        
+
         tg.showConfirm(
             `💡 Chọn cách nâng cấp:\n\n` +
             `⭐ Xem quảng cáo: ${discountCost} xu (Giảm 50%)\n` +
@@ -531,7 +686,7 @@ function upgradeWithAd(cost) {
         tg.showAlert(`❌ Cần ${cost.toLocaleString()} xu để nâng cấp!`);
         return;
     }
-    
+
     AdController.show()
         .then(() => {
             // Xem xong ads → Nâng cấp với giá ưu đãi
@@ -555,7 +710,7 @@ function upgradeNormal(cost) {
         tg.showAlert(`❌ Cần ${cost.toLocaleString()} xu để nâng cấp!`);
         return;
     }
-    
+
     performUpgrade(cost);
     tg.showAlert(`⚡ Nâng cấp thành công! Tốc độ: ${data.speed.toFixed(1)} cá/s`);
 }
@@ -565,17 +720,17 @@ function performUpgrade(cost) {
     // Tính tốc độ mới
     let newSpeed = data.speed + SPEED_INCREMENT;
     newSpeed = Math.round(newSpeed * 10) / 10;
-    
+
     // Kiểm tra không vượt quá MAX
     if (newSpeed > MAX_SPEED) {
         newSpeed = MAX_SPEED;
     }
-    
+
     // Nâng cấp
     data.coins -= cost;
     data.speed = newSpeed;
     data.shipLevel += 1;
-    
+
     save(); 
     updateUI();
 }
@@ -594,55 +749,55 @@ function handleWithdraw() {
     const bankOwner = document.getElementById('bank-owner').value.trim().toUpperCase();
     const bankAcc = document.getElementById('bank-acc').value.trim().replace(/\s/g, ''); // Xóa khoảng trắng
     const amount = parseInt(document.getElementById('wd-amount').value);
-    
+
     // Validate đầy đủ
     if (!bankName) {
         tg.showAlert("❌ Vui lòng nhập tên ngân hàng!");
         document.getElementById('bank-name').focus();
         return;
     }
-    
+
     if (!bankOwner) {
         tg.showAlert("❌ Vui lòng nhập tên chủ tài khoản!");
         document.getElementById('bank-owner').focus();
         return;
     }
-    
+
     if (bankOwner.length < 3) {
         tg.showAlert("❌ Tên chủ tài khoản quá ngắn!");
         document.getElementById('bank-owner').focus();
         return;
     }
-    
+
     if (!bankAcc) {
         tg.showAlert("❌ Vui lòng nhập số tài khoản!");
         document.getElementById('bank-acc').focus();
         return;
     }
-    
+
     if (bankAcc.length < 6) {
         tg.showAlert("❌ Số tài khoản không hợp lệ (tối thiểu 6 chữ số)!");
         document.getElementById('bank-acc').focus();
         return;
     }
-    
+
     if (!amount || isNaN(amount)) {
         tg.showAlert("❌ Vui lòng nhập số tiền rút!");
         document.getElementById('wd-amount').focus();
         return;
     }
-    
+
     if (amount < 20000) {
         tg.showAlert("❌ Số tiền rút tối thiểu là 20,000 xu!");
         document.getElementById('wd-amount').focus();
         return;
     }
-    
+
     if (data.coins < amount) {
         tg.showAlert(`❌ Số dư không đủ! Bạn chỉ có ${data.coins.toLocaleString()} xu.`);
         return;
     }
-    
+
     // Confirm trước khi rút
     tg.showConfirm(
         `📋 XÁC NHẬN RÚT TIỀN\n\n` +
@@ -663,7 +818,7 @@ function processWithdrawal(bankName, bankOwner, bankAcc, amount) {
     // Trừ xu và thêm vào lịch sử
     data.coins -= amount;
     if (!data.history) data.history = [];
-    
+
     data.history.unshift({
         amount: amount,
         status: '🕐 Đang xử lý',
@@ -672,21 +827,21 @@ function processWithdrawal(bankName, bankOwner, bankAcc, amount) {
         bankOwner: bankOwner,
         bankAcc: bankAcc
     });
-    
+
     // Giới hạn lịch sử tối đa 50 giao dịch
     if (data.history.length > 50) {
         data.history = data.history.slice(0, 50);
     }
-    
+
     save(); 
     updateUI();
-    
+
     // Clear form
     document.getElementById('bank-name').value = '';
     document.getElementById('bank-owner').value = '';
     document.getElementById('bank-acc').value = '';
     document.getElementById('wd-amount').value = '';
-    
+
     tg.showAlert("✅ Đã gửi yêu cầu rút tiền thành công!\n\n⏱️ Chúng tôi sẽ xử lý trong 24-48 giờ.\n📱 Vui lòng kiểm tra ngân hàng thường xuyên.");
 }
 
@@ -694,7 +849,7 @@ function checkMining() {
     const btn = document.getElementById('btn-mine');
     const timer = document.getElementById('timer-display');
     if (!btn) return;
-    
+
     if (!data.startTime) {
         btn.innerHTML = '<span class="relative z-10">⛵ RA KHƠI</span>';
         if (timer) timer.classList.add('hidden');
@@ -703,7 +858,7 @@ function checkMining() {
         const interval = setInterval(() => {
             const elapsed = Date.now() - data.startTime;
             const duration = 3 * 3600 * 1000; // 3 giờ
-            
+
             if (elapsed >= duration) {
                 clearInterval(interval);
                 btn.innerHTML = '<span class="relative z-10">🎁 NHẬN CÁ</span>';
@@ -711,12 +866,12 @@ function checkMining() {
                 updateFuelDisplay(0); // Nhiên liệu = 0 khi hoàn thành
             } else {
                 btn.innerHTML = '<span class="relative z-10">⏳ ĐANG ĐÀO...</span>';
-                
+
                 // Tính fuel giảm dần theo thời gian
                 const fuelUsed = (elapsed / duration) * 100;
                 const currentFuel = Math.max(0, 100 - fuelUsed);
                 updateFuelDisplay(currentFuel);
-                
+
                 if (timer) {
                     timer.classList.remove('hidden');
                     const remaining = Math.floor((duration - elapsed) / 1000);
@@ -735,18 +890,18 @@ function updateFuelDisplay(fuel = null) {
     if (fuel === null) {
         fuel = data.fuel;
     }
-    
+
     fuel = Math.max(0, Math.min(100, fuel)); // Giới hạn 0-100
-    
+
     const fuelBar = document.getElementById('fuel-bar');
     const fuelText = document.getElementById('fuel-text');
-    
+
     if (fuelBar) {
         fuelBar.style.width = fuel + '%';
-        
+
         // Xóa tất cả class cũ
         fuelBar.classList.remove('low-fuel', 'medium-fuel', 'high-fuel');
-        
+
         // Thêm class tùy theo mức nhiên liệu
         if (fuel <= 20) {
             fuelBar.classList.add('low-fuel');
@@ -756,10 +911,10 @@ function updateFuelDisplay(fuel = null) {
             fuelBar.classList.add('high-fuel');
         }
     }
-    
+
     if (fuelText) {
         fuelText.innerText = Math.floor(fuel) + '/100';
-        
+
         // Đổi màu text
         if (fuel <= 20) {
             fuelText.className = 'text-xs font-bold text-red-400 ml-auto';
@@ -776,7 +931,7 @@ function updateUI() {
         const el = document.getElementById(id); 
         if (el) el.innerText = val; 
     };
-    
+
     // Cập nhật số liệu chính
     setText('fish-count', Math.floor(data.fish).toLocaleString());
     setText('coin-balance', Math.floor(data.coins).toLocaleString());
@@ -785,10 +940,10 @@ function updateUI() {
     setText('ship-lv-display', data.shipLevel);
     setText('speed-display', (data.speed || 1).toFixed(1));
     setText('ref-link', `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`);
-    
+
     // Cập nhật fuel display
     updateFuelDisplay();
-    
+
     // Cập nhật nút nâng cấp
     const btnUpgrade = document.getElementById('btn-upgrade');
     if (btnUpgrade) {
@@ -802,9 +957,10 @@ function updateUI() {
             btnUpgrade.classList.remove('opacity-50', 'cursor-not-allowed');
         }
     }
-    
+
     renderHistory();
     updateTasksUI(); // Cập nhật tasks UI
+    updateReferralUI(); // Cập nhật referral UI
 }
 
 function updateTasksUI() {
@@ -820,19 +976,19 @@ function updateTasksUI() {
             dailyStreak: 0
         };
     }
-    
+
     checkAndResetAds();
-    
+
     const setText = (id, val) => { 
         const el = document.getElementById(id); 
         if (el) el.innerText = val; 
     };
-    
+
     // Ads remaining
     const MAX_ADS = 5;
     const remaining = MAX_ADS - (data.tasks.adsWatchedToday || 0);
     setText('ads-remaining', remaining);
-    
+
     const btnAds = document.getElementById('btn-task-ads');
     if (btnAds) {
         if (remaining <= 0) {
@@ -845,7 +1001,7 @@ function updateTasksUI() {
             btnAds.innerHTML = '🎁 XEM';
         }
     }
-    
+
     // Channel status
     const channelStatus = document.getElementById('channel-status');
     const btnChannel = document.getElementById('btn-task-channel');
@@ -859,7 +1015,7 @@ function updateTasksUI() {
     } else {
         if (channelStatus) channelStatus.innerHTML = '⭐ Chưa hoàn thành';
     }
-    
+
     // Invite progress
     setText('invite-progress', data.tasks.inviteCount || 0);
     const btnInvite = document.getElementById('btn-task-invite');
@@ -877,15 +1033,15 @@ function updateTasksUI() {
             btnInvite.classList.add('opacity-50', 'cursor-not-allowed');
         }
     }
-    
+
     // Daily streak
     setText('daily-streak', data.tasks.dailyStreak || 0);
     const dailyStatus = document.getElementById('daily-status');
     const btnDaily = document.getElementById('btn-task-daily');
-    
+
     const today = new Date().toDateString();
     const claimedToday = data.tasks.dailyLastClaim === today;
-    
+
     if (claimedToday) {
         if (dailyStatus) dailyStatus.innerHTML = `✅ Đã nhận hôm nay - Streak: <span id="daily-streak">${data.tasks.dailyStreak || 0}</span> ngày`;
         if (btnDaily) {
@@ -906,12 +1062,12 @@ function updateTasksUI() {
 function renderHistory() {
     const div = document.getElementById('history-list');
     if (!div) return;
-    
+
     if (!data.history || data.history.length === 0) {
         div.innerHTML = '<p class="text-center text-gray-500 py-8 text-sm">📭 Chưa có giao dịch nào</p>';
         return;
     }
-    
+
     div.innerHTML = data.history.map(h => {
         // Icon theo status
         let statusIcon = '🕐';
@@ -923,7 +1079,7 @@ function renderHistory() {
             statusIcon = '❌';
             statusColor = 'text-red-400';
         }
-        
+
         return `
         <div class="p-4 bg-gradient-to-r from-slate-800/50 to-slate-700/50 rounded-xl border border-slate-600/30 text-xs animate-fade-in">
             <div class="flex justify-between items-start mb-3">
