@@ -442,27 +442,23 @@ function startAdsgram() {
     }
 }
 function showAd(onSuccess) {
-    // 1. Nếu chưa có Controller, thử khởi tạo lại ngay lập tức
     if (!AdController) {
         if (window.Adsgram) {
             console.log("⚡ Đang khởi tạo lại AdController khi bấm nút...");
-            // Vẫn dùng ID "0" để test
             AdController = window.Adsgram.init({ blockId: "0", debug: true });
         } else {
             window.Telegram.WebApp.showAlert("⚠️ Mạng quá yếu, chưa tải được thư viện quảng cáo.");
             return;
         }
     }
-  AdController.show()
+
+    AdController.show()
         .then(() => {
-            // Xem thành công -> Gọi hàm thưởng
             onSuccess(); 
         })
         .catch((result) => {
-            // Xử lý lỗi
             console.error("Ad error:", result);
             if (result.done) {
-                // Trường hợp lạ: Có lỗi nhưng vẫn tính là xem xong
                 onSuccess();
             } else if (result.error) {
                 window.Telegram.WebApp.showAlert("❌ Bạn đã tắt quảng cáo hoặc gặp lỗi!");
@@ -471,8 +467,9 @@ function showAd(onSuccess) {
             }
         });
 }
+
+  // Hàm xử lý nút Nạp nhiên liệu (Chỉ ngắn gọn thế này là HẾT)
 function handleRefuel() {
-    // Kiểm tra đã đầy nhiên liệu chưa
     if (data.fuel >= 100) {
         tg.showAlert("⛽ Nhiên liệu đã đầy (100/100)!");
         return;
@@ -484,41 +481,6 @@ function handleRefuel() {
         tg.showAlert("⛽ Đã nạp đầy nhiên liệu! Cảm ơn bạn 🎉");
     });
 }
-    // Kiểm tra Adsgram có sẵn không
-    if (!AdController) {
-        tg.showAlert("❌ Hệ thống quảng cáo chưa sẵn sàng. Vui lòng thử lại!");
-        initAdsgram(); // Thử init lại
-        return;
-    }
-
-    // Hiển thị quảng cáo
-    AdController.show()
-        .then(() => {
-            // Thành công - User xem xong quảng cáo
-            data.fuel = 100;
-            save();
-            updateUI();
-            tg.showAlert("⛽ Đã nạp đầy nhiên liệu! Cảm ơn bạn đã xem quảng cáo 🎉");
-        })
-        .catch((error) => {
-            // Lỗi hoặc user skip
-            if (error?.error === true && error?.done === false) {
-                // User đóng quảng cáo trước khi hoàn thành
-                tg.showAlert("❌ Bạn cần xem hết quảng cáo để nhận nhiên liệu!");
-            } else if (error?.error === true && error?.done === true) {
-                // Đã xem hết quảng cáo nhưng có lỗi
-                data.fuel = 100;
-                save();
-                updateUI();
-                tg.showAlert("⛽ Đã nạp đầy nhiên liệu!");
-            } else {
-                // Lỗi khác (không có quảng cáo, lỗi mạng...)
-                console.error("Ad error:", error);
-                tg.showAlert("⚠️ Không có quảng cáo. Vui lòng thử lại sau!");
-            }
-        });
-}
-
 // ========================================
 // TASKS SYSTEM
 // ========================================
