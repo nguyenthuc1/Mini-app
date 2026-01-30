@@ -40,90 +40,58 @@ let data = {
         dailyStreak: 0
     }
 };
+// ========================================
+// HỆ THỐNG QUẢNG CÁO (BẢN CHUẨN)
+// ========================================
+let AdController = null;
 
-// ========================================
-// HỆ THỐNG QUẢNG CÁO (ADSGRAM) - ĐÃ SỬA LỖI
-// ========================================
-let AdController = null
-// ========================================
-// 1. TỰ ĐỘNG TẢI THƯ VIỆN
-// ========================================
-// ========================================
-// 1. HÀM ÉP TẢI THƯ VIỆN (MẠNH MẼ HƠN)
-// ========================================
+// 1. Hàm khởi tạo (Chỉ kiểm tra và kết nối)
 function initAdsgram() {
-    // Nếu có rồi thì chạy luôn
+    // Nếu thư viện đã được tải từ index.html
     if (window.Adsgram) {
         startAdsgram();
-        return;
-    }
-
-    // Nếu chưa có, kiểm tra xem đã ra lệnh tải chưa
-    if (document.getElementById('adsgram-lib')) {
-        console.log("⏳ Đang đợi tải...");
+    } else {
+        // Nếu chưa thấy, đợi 0.5 giây rồi kiểm tra lại
+        console.log("⏳ Đang đợi thư viện Adsgram...");
         setTimeout(initAdsgram, 500);
-        return;
     }
-
-    // Lệnh ÉP TẢI (Force Load)
-    console.log("⚡ Bắt đầu tải nóng thư viện...");
-    const script = document.createElement('script');
-    script.id = 'adsgram-lib';
-    // Thêm số ngẫu nhiên để tránh Cache cũ
-    script.src = "https://api.adsgram.ai/js/sdk.js?v=" + Date.now();
-    script.async = true;
-
-    script.onload = () => {
-        console.log("✅ Đã tải xong thư viện!");
-        startAdsgram();
-    };
-
-    script.onerror = () => {
-        console.error("❌ Mạng chặn file quảng cáo!");
-        tg.showAlert("❌ Lỗi mạng: Điện thoại chặn quảng cáo. Hãy tắt DNS hoặc đổi Wifi.");
-    };
-
-    document.head.appendChild(script);
 }
 
-// ========================================
-// 2. KHỞI TẠO QUẢNG CÁO
-// ========================================
+// 2. Kết nối tới Adsgram
 function startAdsgram() {
     try {
-        // ID "0" là Test Mode.
+        // ID "0" để test. Khi chạy thật nhớ đổi ID của bạn.
         AdController = window.Adsgram.init({ blockId: "0", debug: true });
-        console.log("✅ Kết nối Adsgram thành công!");
+        console.log("✅ Adsgram đã sẵn sàng!");
     } catch (error) {
         console.error("❌ Lỗi khởi tạo:", error);
     }
 }
 
-// ========================================
-// 3. HIỂN THỊ QUẢNG CÁO
-// ========================================
+// 3. Hiển thị quảng cáo
 function showAd(onSuccess) {
+    // Nếu chưa kết nối được, thử kết nối lại
     if (!AdController) {
         initAdsgram();
-        tg.showAlert("⏳ Đang kết nối quảng cáo, vui lòng bấm lại sau 3 giây...");
+        tg.showAlert("⏳ Đang tải quảng cáo, vui lòng bấm lại sau 2 giây...");
         return;
     }
 
-    // Chỉ gọi show() MỘT LẦN duy nhất ở đây
+    // Gọi hiển thị
     AdController.show()
         .then(() => {
             // Xem xong -> Thưởng
             onSuccess();
         })
         .catch((result) => {
+            // Xử lý kết quả
             if (result.done) {
                 onSuccess(); // Vẫn tính là xong (để test)
             } else {
-                tg.showAlert("⚠️ Bạn chưa xem hết quảng cáo hoặc có lỗi xảy ra.");
+                tg.showAlert("⚠️ Bạn chưa xem hết hoặc có lỗi xảy ra.");
             }
         });
 }
-
 // ========================================
 // LOGIC GAME & APP
 // ========================================
