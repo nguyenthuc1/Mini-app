@@ -506,47 +506,24 @@ function handleTaskAds() {
     const MAX_ADS_PER_DAY = 5;
 
     if (data.tasks.adsWatchedToday >= MAX_ADS_PER_DAY) {
-        tg.showAlert("❌ Bạn đã xem hết 5 quảng cáo hôm nay! Quay lại vào ngày mai 🌅");
+        tg.showAlert("❌ Bạn đã xem hết 5 lượt hôm nay! Quay lại vào ngày mai 🌅");
         return;
     }
 
-    if (!AdController) {
-        tg.showAlert("❌ Hệ thống quảng cáo chưa sẵn sàng!");
-        initAdsgram();
-        return;
-    }
+    // Dùng hàm showAd mới thay cho code cũ
+    showAd(() => {
+        // Random 10-15 xu
+        const reward = Math.floor(Math.random() * 6) + 10;
+        data.tasks.adsWatchedToday += 1;
 
-    AdController.show()
-        .then(() => {
-            // Random 10-15 xu
-            const reward = Math.floor(Math.random() * 6) + 10; // 10-15
-            data.tasks.adsWatchedToday += 1;
-            
-            // Sử dụng addCoins để tự động cộng 10% hoa hồng
-            addCoins(reward, 'ads_task');
-            
-            updateTasksUI();
+        // Cộng xu và hoa hồng
+        addCoins(reward, 'ads_task');
 
-            const remaining = MAX_ADS_PER_DAY - data.tasks.adsWatchedToday;
-            tg.showAlert(`🎉 Chúc mừng! Bạn nhận được ${reward} xu!\n\n⏰ Còn lại ${remaining} lượt xem hôm nay.`);
-        })
-        .catch((error) => {
-            if (error?.error === true && error?.done === false) {
-                tg.showAlert("❌ Bạn cần xem hết quảng cáo để nhận xu!");
-            } else if (error?.error === true && error?.done === true) {
-                // Vẫn cho thưởng nếu xem xong
-                const reward = Math.floor(Math.random() * 6) + 10;
-                data.tasks.adsWatchedToday += 1;
-                
-                // Sử dụng addCoins
-                addCoins(reward, 'ads_task');
-                
-                updateTasksUI();
-                tg.showAlert(`🎉 Nhận được ${reward} xu!`);
-            } else {
-                tg.showAlert("⚠️ Không có quảng cáo. Thử lại sau!");
-            }
-        });
+        updateTasksUI();
+
+        const remaining = MAX_ADS_PER_DAY - data.tasks.adsWatchedToday;
+        tg.showAlert(`🎉 Chúc mừng! Bạn nhận được ${reward} xu!\n\n⏰ Còn lại ${remaining} lượt xem hôm nay.`);
+    });
 }
 
 // Nhiệm vụ tham gia Channel
@@ -689,23 +666,12 @@ function upgradeWithAd(cost) {
         return;
     }
 
-    AdController.show()
-        .then(() => {
-            // Xem xong ads → Nâng cấp với giá ưu đãi
-            performUpgrade(cost);
-            tg.showAlert(`⚡ Nâng cấp thành công với giá ưu đãi! Tốc độ: ${data.speed.toFixed(1)} cá/s`);
-        })
-        .catch((error) => {
-            if (error?.error === true && error?.done === false) {
-                tg.showAlert("❌ Bạn cần xem hết quảng cáo để nhận ưu đãi!");
-            } else if (error?.error === true && error?.done === true) {
-                performUpgrade(cost);
-            } else {
-                tg.showAlert("⚠️ Không có quảng cáo. Thử lại sau!");
-            }
-        });
+    // Dùng hàm showAd mới
+    showAd(() => {
+        performUpgrade(cost);
+        tg.showAlert(`⚡ Nâng cấp thành công với giá ưu đãi! Tốc độ: ${data.speed.toFixed(1)} cá/s`);
+    });
 }
-
 // Nâng cấp thường (full giá)
 function upgradeNormal(cost) {
     if (data.coins < cost) {
