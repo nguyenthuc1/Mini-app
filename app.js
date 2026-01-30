@@ -256,17 +256,19 @@ function handleSell() {
 // ========================================
 let AdController = null;
 function initAdsgram() {
-    // Kiểm tra xem thư viện đã tải xong chưa
-    if (!window.Adsgram) {
-        console.error("❌ Thư viện Adsgram chưa tải được! Kiểm tra mạng hoặc AdBlock.");
+    // Kiểm tra 1: Xem thư viện Adsgram đã tải được chưa
+    if (typeof window.Adsgram === 'undefined') {
+        window.Telegram.WebApp.showAlert("⚠️ LỖI: Không tải được thư viện Adsgram!\n\n👉 Hãy kiểm tra mạng hoặc tắt chặn quảng cáo (AdBlock/VPN).");
         return;
     }
 
     try {
+        // Kiểm tra 2: Thử khởi tạo
         AdController = window.Adsgram.init({ blockId: "22009", debug: true });
-        console.log("✅ Adsgram đã khởi tạo thành công!");
+        window.Telegram.WebApp.showAlert("✅ Đã kết nối Adsgram thành công!\nBlock ID: 22009");
     } catch (error) {
-        console.error("❌ Lỗi khởi tạo Adsgram:", error);
+        window.Telegram.WebApp.showAlert("❌ Lỗi khởi tạo: " + JSON.stringify(error));
+        console.error("Adsgram Init Error:", error);
     }
 }
 
