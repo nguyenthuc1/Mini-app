@@ -221,38 +221,49 @@
         </div>
 
         <!-- TAB FRIENDS -->
-        <div id="tab-friends" class="tab-content hidden text-center">
-            <div class="py-8">
-                <span class="text-7xl inline-block animate-float">👥</span>
-                <h2 class="text-2xl font-bold mt-6 bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">Mời bạn bè</h2>
-                <p class="text-sm text-gray-400 mt-2">Nhận 10% hoa hồng từ bạn bè</p>
-                
-                <div class="mt-10 p-6 gradient-border rounded-3xl backdrop-blur-sm">
-                    <p class="text-xs text-gray-400 mb-3 uppercase font-semibold">Link giới thiệu của bạn</p>
-                    <div class="bg-gradient-to-r from-slate-800/80 to-slate-700/80 p-4 rounded-xl mb-4 border border-slate-600/30">
-                        <p id="ref-link" class="text-xs text-blue-400 break-all font-mono">Đang tạo link...</p>
-                    </div>
-                    <button id="btn-copy-ref" class="glow-button w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl font-bold text-base border-2 border-purple-400/50">
-                        <span class="text-xl mr-2">📋</span> Sao chép Link
-                    </button>
-                </div>
+        <div id="tab-friends" class="tab-content hidden animate-fade-in pb-24">
+    <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-600/30 mb-4">
+        <h3 class="text-lg font-bold text-center mb-2 text-pink-400">Mời bạn bè & Kiếm tiền</h3>
+        <p class="text-sm text-gray-300 text-center mb-4">
+            Nhận ngay <span class="text-yellow-400 font-bold">10%</span> doanh thu từ bạn bè trọn đời!
+        </p>
 
-                <div class="mt-8 grid grid-cols-3 gap-4 text-center">
-                    <div class="gradient-border p-4 rounded-2xl backdrop-blur-sm">
-                        <p class="text-2xl font-bold text-yellow-400">0</p>
-                        <p class="text-[10px] text-gray-400 mt-1">Bạn bè</p>
-                    </div>
-                    <div class="gradient-border p-4 rounded-2xl backdrop-blur-sm">
-                        <p class="text-2xl font-bold text-green-400">0</p>
-                        <p class="text-[10px] text-gray-400 mt-1">Hoa hồng</p>
-                    </div>
-                    <div class="gradient-border p-4 rounded-2xl backdrop-blur-sm">
-                        <p class="text-2xl font-bold text-purple-400">0</p>
-                        <p class="text-[10px] text-gray-400 mt-1">Tổng thu</p>
-                    </div>
-                </div>
+        <div class="bg-slate-900/80 p-3 rounded-lg flex items-center justify-between mb-4 border border-slate-700">
+            <div id="ref-link" class="text-xs text-gray-400 truncate mr-2 font-mono">
+                Đang tải link...
+            </div>
+            <button id="btn-copy-ref" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap active:scale-95 transition-transform">
+                COPY
+            </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-center">
+            <div class="bg-slate-700/30 p-2 rounded-lg">
+                <p class="text-[10px] text-gray-400 uppercase">Bạn bè</p>
+                <p id="friend-count" class="text-xl font-bold text-white">0</p>
+            </div>
+            <div class="bg-slate-700/30 p-2 rounded-lg">
+                <p class="text-[10px] text-gray-400 uppercase">Hoa hồng (Xu)</p>
+                <p id="ref-earnings" class="text-xl font-bold text-yellow-400">0</p>
             </div>
         </div>
+    </div>
+
+    <div class="space-y-2">
+        <div class="p-3 bg-slate-800/30 rounded-lg flex items-center gap-3">
+            <span class="text-2xl">1️⃣</span>
+            <p class="text-xs text-gray-300">Gửi link mời cho bạn bè</p>
+        </div>
+        <div class="p-3 bg-slate-800/30 rounded-lg flex items-center gap-3">
+            <span class="text-2xl">2️⃣</span>
+            <p class="text-xs text-gray-300">Bạn bè tham gia đào coin & xem quảng cáo</p>
+        </div>
+        <div class="p-3 bg-slate-800/30 rounded-lg flex items-center gap-3">
+            <span class="text-2xl">3️⃣</span>
+            <p class="text-xs text-gray-300">Bạn nhận <b class="text-yellow-400">10%</b> số xu họ kiếm được (Tự động)</p>
+        </div>
+    </div>
+</div>
 
         <!-- TAB WALLET -->
         <div id="tab-wallet" class="tab-content hidden">
