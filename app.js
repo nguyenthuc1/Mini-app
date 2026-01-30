@@ -256,34 +256,40 @@ function handleSell() {
 // ========================================
 let AdController = null;
 function initAdsgram() {
-    let attempts = 0;
-    const maxAttempts = 20; // Thử tối đa 20 lần (khoảng 10 giây)
-
-    // Tạo bộ đếm thời gian: Cứ 0.5 giây kiểm tra 1 lần
-    const interval = setInterval(() => {
-        attempts++;
+    // Bước 1: Kiểm tra xem thư viện có chưa, nếu chưa thì tự tải về luôn
+    if (!window.Adsgram) {
+        console.log("⚡ Đang tự động tải thư viện Adsgram...");
+        const script = document.createElement('script');
+        script.src = "https://api.adsgram.ai/js/sdk.js";
+        script.async = true;
         
-        // Kiểm tra xem thư viện đã tải về chưa?
-        if (window.Adsgram) {
-            clearInterval(interval); // Đã thấy! Dừng kiểm tra.
-            try {
-                // Khởi tạo quảng cáo
-                AdController = window.Adsgram.init({ blockId: "22009", debug: true });
-                console.log("✅ Đã kết nối Adsgram thành công!");
-                
-                // (Tùy chọn) Hiện thông báo nhỏ để bạn biết là đã chạy
-                // window.Telegram.WebApp.showAlert("✅ Đã tải xong quảng cáo!"); 
-            } catch (error) {
-                console.error("❌ Lỗi khởi tạo:", error);
-            }
-        } 
-        // Nếu chưa thấy, và đã thử quá 20 lần (10 giây)
-        else if (attempts >= maxAttempts) {
-            clearInterval(interval);
-            // Lúc này mới thực sự báo lỗi
-            window.Telegram.WebApp.showAlert("⚠️ Mạng chậm: Không tải được quảng cáo sau 10 giây.");
-        }
-    }, 500); // 500ms = 0.5 giây
+        // Khi tải xong thì khởi tạo
+        script.onload = () => {
+            startAdsgram();
+        };
+        
+        // Nếu tải lỗi
+        script.onerror = () => {
+            window.Telegram.WebApp.showAlert("⚠️ Lỗi mạng: Không thể tải được quảng cáo (Force Load Failed).");
+        };
+        
+        document.head.appendChild(script);
+    } else {
+        startAdsgram();
+    }
+}
+
+// Hàm phụ để khởi tạo (Tách ra cho gọn)
+function startAdsgram() {
+    try {
+        AdController = window.Adsgram.init({ blockId: "22009", debug: true });
+        console.log("✅ Đã kết nối Adsgram thành công!");
+        // Hiện thông báo nhỏ để bạn yên tâm
+        window.Telegram.WebApp.showAlert("✅ Đã tải xong quảng cáo! Sẵn sàng kiếm tiền.");
+    } catch (error) {
+        console.error("❌ Lỗi khởi tạo:", error);
+        window.Telegram.WebApp.showAlert("❌ Lỗi khởi tạo ID: " + JSON.stringify(error));
+    }
 }
 
 function handleRefuel() {
