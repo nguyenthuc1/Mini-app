@@ -405,29 +405,30 @@ function handleSell() {
 // ========================================
 let AdController = null;
 function initAdsgram() {
-    // Bước 1: Kiểm tra xem thư viện có chưa, nếu chưa thì tự tải về luôn
-    if (!window.Adsgram) {
-        console.log("⚡ Đang tự động tải thư viện Adsgram...");
-        const script = document.createElement('script');
-        script.src = "https://api.adsgram.ai/js/sdk.js";
-        script.async = true;
-
-        // Khi tải xong thì khởi tạo
-        script.onload = () => {
-            startAdsgram();
-        };
-
-        // Nếu tải lỗi
-        script.onerror = () => {
-            window.Telegram.WebApp.showAlert("⚠️ Lỗi mạng: Không thể tải được quảng cáo (Force Load Failed).");
-        };
-
-        document.head.appendChild(script);
-    } else {
+    // Cách mới: Kiểm tra xem thư viện từ HTML đã tải xong chưa
+    if (window.Adsgram) {
         startAdsgram();
+    } else {
+        // Nếu mạng lag chưa tải xong -> Đợi 1 chút
+        console.log("⏳ Đang đợi thư viện Adsgram...");
+        let attempts = 0;
+        
+        const checkInterval = setInterval(() => {
+            attempts++;
+            if (window.Adsgram) {
+                clearInterval(checkInterval);
+                startAdsgram();
+            }
+            
+            // Nếu đợi 10 giây (20 lần check) mà vẫn không thấy -> Báo lỗi
+            if (attempts > 20) {
+                clearInterval(checkInterval);
+                console.error("❌ Không tìm thấy thư viện Adsgram (Kiểm tra lại mạng hoặc file HTML)");
+                // Không hiện popup lỗi ở đây để tránh làm phiền user lúc mới vào
+            }
+        }, 500); // Check mỗi 0.5 giây
     }
 }
-
 // Hàm phụ để khởi tạo (Tách ra cho gọn)
 function startAdsgram() {
     try {
