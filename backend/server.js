@@ -1,51 +1,59 @@
 const express = require('express');
 const cors = require('cors');
-const db = require('./db'); // Gọi cái file db.js bạn đã sửa
+const db = require('./db');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// API: Nhận thưởng (An toàn tuyệt đối)
 app.post('/api/claim', async (req, res) => {
+    // [LOG] Báo cáo có người gọi
+    console.log("📩 Có yêu cầu mới!");
+
     try {
         const { userId } = req.body;
-        if (!userId) return res.status(400).json({ message: "Thiếu ID người chơi" });
+        console.log("👤 User ID: " + userId); // Xem ai đang gọi
+
+        if (!userId) return res.status(400).json({ message: "Thiếu ID" });
 
         const userRef = db.ref('users/' + userId);
-        const snapshot = await userRef.once('value');
+        
+        console.log("⏳ Đang đọc dữ liệu từ Firebase...");
+        const snapshot = await userRef.once('value'); // <-- Thường bị treo ở đây
         const data = snapshot.val();
+        console.log("✅ Đã đọc xong dữ liệu!");
 
         if (!data || !data.startTime) {
-            return res.status(400).json({ message: "Bạn chưa ra khơi mà?" });
+            return res.status(400).json({ message: "Chưa ra khơi!" });
         }
 
-        // Kiểm tra thời gian trên Server (Khách không hack được)
+        // Check thời gian
         const now = Date.now();
         const elapsed = now - data.startTime;
-        const MIN_TIME = 3 * 3600 * 1000; // 3 tiếng
+        console.log(`⏱️ Thời gian đã đào: ${elapsed/1000}s`);
 
-        if (elapsed < (MIN_TIME - 60000)) { // Cho phép sai số 1 phút
-            return res.status(400).json({ message: "Chưa đủ giờ! Hãy kiên nhẫn." });
+        if (elapsed < (10800000 - 60000)) { 
+            return res.status(400).json({ message: "Chưa đủ giờ!" });
         }
 
-        // Tính thưởng và Cộng tiền
+        // Cộng tiền
         const fishEarned = Math.floor(3 * 3600 * (data.speed || 1));
-        
         await userRef.update({
             fish: (data.fish || 0) + fishEarned,
             fuel: 0,
             startTime: null
         });
 
+        console.log("🎉 Đã cộng tiền thành công!");
         res.json({ success: true, fish: fishEarned });
 
     } catch (error) {
+        console.error("❌ LỖI SERVER: " + error.message);
         res.status(500).json({ message: "Lỗi Server: " + error.message });
     }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server đang chạy tại port ${PORT}`);
+    console.log(`🚀 Server đang chạy tại port ${PORT}`);
 });
