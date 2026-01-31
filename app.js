@@ -90,7 +90,7 @@ function forceLoadScript() {
 function startAdsgram() {
     try {
         if (!AdController) {
-            AdController = window.Adsgram.init({ blockId: "0", debug: true });
+            AdController = window.Adsgram.init({ blockId: "22040", debug: true });
             console.log("✅ Adsgram Ready!");
         }
     } catch (e) { console.error(e); }
