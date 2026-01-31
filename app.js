@@ -62,7 +62,7 @@ function initAdsgram() {
 function startAdsgram() {
     try {
         // ID "0" để test. Khi chạy thật nhớ đổi ID của bạn.
-        AdController = window.Adsgram.init({ blockId: "0", debug: true });
+        AdController = window.Adsgram.init({ blockId: "22040", debug: true });
         console.log("✅ Adsgram (Sad) Ready!");
     } catch (error) {
         console.error("Adsgram error:", error);
