@@ -12,12 +12,12 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const tg = window.Telegram.WebApp;
 const userId = String(tg.initDataUnsafe?.user?.id || '88888888');
-const BOT_USERNAME = "Supermoneymine_bot"; // Đảm bảo đúng tên bot của bạn
+const BOT_USERNAME = "Supermoneymine_bot";
 
 // Cấu hình giới hạn
-const MAX_SPEED = 5.0; 
-const UPGRADE_COST = 200; 
-const SPEED_INCREMENT = 0.2; 
+const MAX_SPEED = 5.0; // Tốc độ tối đa
+const UPGRADE_COST = 200; // Chi phí nâng cấp
+const SPEED_INCREMENT = 0.2; // Tăng tốc mỗi lần
 
 let data = { 
     fish: 0, 
@@ -27,9 +27,9 @@ let data = {
     startTime: null, 
     fuel: 100, 
     history: [],
-    refBy: null, 
-    friends: {}, 
-    totalRefEarnings: 0, 
+    refBy: null,
+    friends: {},
+    totalRefEarnings: 0,
     tasks: {
         adsWatchedToday: 0,
         adsLastReset: null,
@@ -40,78 +40,48 @@ let data = {
         dailyStreak: 0
     }
 };
+
 // ========================================
-// HỆ THỐNG QUẢNG CÁO "SMART LOAD"
+// HỆ THỐNG QUẢNG CÁO (ADSGRAM) - BẢN CHUẨN
 // ========================================
 let AdController = null;
-let loadAttempts = 0;
 
 function initAdsgram() {
-    // 1. Nếu đã có thư viện -> Khởi tạo ngay
     if (window.Adsgram) {
         startAdsgram();
-        return;
-    }
-
-    // 2. Nếu chưa có, đợi tối đa 3 giây (6 lần check)
-    if (loadAttempts < 6) {
-        loadAttempts++;
-        console.log(`⏳ Đang đợi thư viện... (${loadAttempts}/6)`);
-        setTimeout(initAdsgram, 500);
     } else {
-        // 3. Quá 3 giây vẫn chưa có -> ÉP TẢI (Force Load)
-        forceLoadScript();
+        console.log("⏳ Đang đợi thư viện Adsgram...");
+        setTimeout(initAdsgram, 500);
     }
-}
-
-function forceLoadScript() {
-    if (document.getElementById('adsgram-force')) return; // Đang tải rồi thì thôi
-
-    console.log("⚡ Đang ép tải lại thư viện...");
-    const script = document.createElement('script');
-    script.id = 'adsgram-force';
-    script.src = "https://api.adsgram.ai/js/sdk.js?v=" + Date.now(); // Chống Cache
-    script.async = true;
-
-    script.onload = () => {
-        console.log("✅ Ép tải thành công!");
-        startAdsgram();
-    };
-
-    script.onerror = () => {
-        console.error("❌ TẢI THẤT BẠI");
-        // Báo lỗi rõ ràng cho User biết
-        tg.showAlert("❌ LỖI MẠNG: Wifi/4G của bạn đang chặn Adsgram.\nHãy tắt 'DNS Riêng Tư' hoặc đổi mạng!");
-    };
-
-    document.body.appendChild(script);
 }
 
 function startAdsgram() {
     try {
-        if (!AdController) {
-            AdController = window.Adsgram.init({ blockId: "22040", debug: true });
-            console.log("✅ Adsgram Ready!");
-        }
-    } catch (e) { console.error(e); }
+        // ID "0" là Test Mode. Khi chạy thật đổi ID sau.
+        AdController = window.Adsgram.init({ blockId: "22040", debug: true });
+        console.log("✅ Adsgram Ready!");
+    } catch (error) {
+        console.error("❌ Lỗi Adsgram:", error);
+    }
 }
 
 function showAd(onSuccess) {
     if (!AdController) {
         initAdsgram();
-        tg.showAlert("⏳ Đang tải lại dữ liệu quảng cáo...");
+        tg.showAlert("⏳ Đang tải quảng cáo, vui lòng bấm lại sau 2 giây...");
         return;
     }
+
     AdController.show()
-        .then(() => onSuccess())
+        .then(() => { onSuccess(); })
         .catch((result) => {
-            if (result.done) onSuccess();
-            else tg.showAlert("⚠️ Chưa xem hết hoặc có lỗi!");
+            if (result.done) onSuccess(); // Vẫn tính là xong (để test)
+            else tg.showAlert("⚠️ Bạn chưa xem hết hoặc có lỗi xảy ra.");
         });
 }
 
 // ========================================
-// LOGIC GAME & APP
+// LOGIC GAME
 // ========================================
 
 async function init() {
@@ -125,11 +95,15 @@ async function init() {
             const snap = await db.ref('users/' + userId).once('value');
             if (snap.exists()) {
                 data = Object.assign(data, snap.val());
-                // Fix lỗi dữ liệu cũ
                 data.speed = Math.round((data.speed || 1) * 10) / 10;
                 if (data.speed > MAX_SPEED) data.speed = MAX_SPEED;
                 if (typeof data.fuel !== 'number') data.fuel = 100;
-                if (!data.tasks) data.tasks = { adsWatchedToday: 0, adsLastReset: null, channelJoined: false, inviteCount: 0, invite5Claimed: false, dailyLastClaim: null, dailyStreak: 0 };
+                if (!data.tasks) {
+                    data.tasks = {
+                        adsWatchedToday: 0, adsLastReset: null, channelJoined: false,
+                        inviteCount: 0, invite5Claimed: false, dailyLastClaim: null, dailyStreak: 0
+                    };
+                }
             } else {
                 await initReferral();
             }
@@ -141,7 +115,7 @@ async function init() {
             setupEventListeners();
             updateUI();
             checkMining();
-            initAdsgram(); // Khởi tạo quảng cáo ngay khi vào
+            initAdsgram(); 
 
             if (loader) loader.style.display = 'none';
         } catch (e) {
@@ -170,6 +144,7 @@ async function processReferral(inviterId) {
 
         if (!inviterData.friends) inviterData.friends = {};
         inviterData.friends[userId] = true;
+        
         if (!inviterData.tasks) inviterData.tasks = {};
         inviterData.tasks.inviteCount = (inviterData.tasks.inviteCount || 0) + 1;
 
@@ -196,10 +171,12 @@ async function updateRefBonus(inviterId, baseAmount, source) {
         const inviterRef = db.ref('users/' + inviterId);
         const inviterSnap = await inviterRef.once('value');
         if (!inviterSnap.exists()) return;
+        
         const inviterData = inviterSnap.val();
         inviterData.coins = (inviterData.coins || 0) + bonus;
         if (!inviterData.totalRefEarnings) inviterData.totalRefEarnings = 0;
         inviterData.totalRefEarnings += bonus;
+        
         await inviterRef.set(inviterData);
     } catch (error) { console.error(error); }
 }
@@ -211,9 +188,11 @@ function generateRefLink() {
 function updateReferralUI() {
     const refLinkEl = document.getElementById('ref-link');
     if (refLinkEl) refLinkEl.innerText = generateRefLink();
+    
     const friendCount = data.friends ? Object.keys(data.friends).length : 0;
     const friendCountEl = document.getElementById('friend-count');
     if (friendCountEl) friendCountEl.innerText = friendCount;
+    
     const refEarningsEl = document.getElementById('ref-earnings');
     if (refEarningsEl) refEarningsEl.innerText = Math.floor(data.totalRefEarnings || 0).toLocaleString();
 }
@@ -243,10 +222,12 @@ function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
     const target = document.getElementById('tab-' + tab);
     if (target) target.classList.remove('hidden');
+
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('text-blue-400', 'text-purple-400', 'text-pink-400', 'text-yellow-400');
         btn.classList.add('text-gray-500');
     });
+
     const activeBtn = document.getElementById('nav-' + tab);
     if (activeBtn) {
         activeBtn.classList.remove('text-gray-500');
@@ -257,28 +238,33 @@ function switchTab(tab) {
     }
 }
 
+// ----------------------------------------------------
+// ĐÃ SỬA: BỎ QUẢNG CÁO Ở NÚT RA KHƠI
+// ----------------------------------------------------
 function handleMine() {
     if (!data.startTime) {
         // Kiểm tra nhiên liệu
         if (data.fuel < 100) {
-            tg.showAlert(`⛽ Không đủ nhiên liệu! Hiện có: ${data.fuel}/100.`);
+            tg.showAlert(`⛽ Không đủ nhiên liệu! Hiện có: ${data.fuel}/100. Cần 100 để ra khơi.`);
             return;
         }
-        
-        // Ra khơi trực tiếp - KHÔNG CÓ QUẢNG CÁO
+
+        // KHÔNG CẦN XEM QUẢNG CÁO NỮA -> RA KHƠI LUÔN
         startMining();
-        tg.showAlert("⛵ Đã ra khơi! Quay lại sau 3 giờ để nhận cá.");
+        tg.showAlert("⛵ Đã ra khơi! Chúc bạn may mắn 🍀");
+
     } else {
+        // Logic thu hoạch (giữ nguyên)
         const elapsed = Date.now() - data.startTime;
         if (elapsed >= 3 * 3600 * 1000) {
             const fishEarned = Math.floor(3 * 3600 * data.speed);
             data.fish += fishEarned;
             data.startTime = null;
-            data.fuel = 0;
+            data.fuel = 0; 
             save(); 
             updateUI(); 
             checkMining();
-            tg.showAlert(`🎉 Đã nhận ${fishEarned.toLocaleString()} con cá!`);
+            tg.showAlert(`🎉 Đã nhận ${fishEarned.toLocaleString()} con cá! Nhiên liệu đã cạn.`);
         } else {
             const remainingMin = Math.ceil(((3 * 3600 * 1000) - elapsed) / 60000);
             tg.showAlert(`⏳ Còn ${remainingMin} phút nữa!`);
@@ -288,7 +274,8 @@ function handleMine() {
 
 function startMining() {
     data.startTime = Date.now();
-    save(); checkMining();
+    save();
+    checkMining();
 }
 
 function handleSell() {
@@ -299,9 +286,6 @@ function handleSell() {
     tg.showAlert(`💰 Đã bán cá và nhận ${coinsEarned.toLocaleString()} xu!`);
 }
 
-// === CÁC NÚT BẤM DÙNG QUẢNG CÁO ===
-
-// 1. Nạp nhiên liệu (Đã sửa sạch sẽ)
 function handleRefuel() {
     if (data.fuel >= 100) { tg.showAlert("⛽ Nhiên liệu đã đầy (100/100)!"); return; }
     showAd(() => {
@@ -311,60 +295,7 @@ function handleRefuel() {
     });
 }
 
-// 2. Nhiệm vụ xem quảng cáo
-function handleTaskAds() {
-    checkAndResetAds();
-    const MAX_ADS = 5;
-    if (data.tasks.adsWatchedToday >= MAX_ADS) { tg.showAlert("❌ Đã hết lượt xem hôm nay!"); return; }
-    showAd(() => {
-        const reward = Math.floor(Math.random() * 6) + 10;
-        data.tasks.adsWatchedToday += 1;
-        addCoins(reward, 'ads_task');
-        updateTasksUI();
-        tg.showAlert(`🎉 Nhận được ${reward} xu!`);
-    });
-}
-
-// 3. Nâng cấp giảm giá
-function handleUpgrade() {
-    if (data.speed >= MAX_SPEED) { tg.showAlert(`⚠️ Đã đạt tốc độ tối đa!`); return; }
-
-    // Nếu có quảng cáo -> Cho chọn giảm giá
-    const normalCost = UPGRADE_COST;
-    const discountCost = Math.floor(UPGRADE_COST * 0.5);
-
-    tg.showConfirm(
-        `💡 Chọn cách nâng cấp:\n\n⭐ Xem quảng cáo: ${discountCost} xu (Giảm 50%)\n💰 Trả thường: ${normalCost} xu`,
-        (confirmed) => {
-            if (confirmed) {
-                // Xem quảng cáo để giảm giá
-                if (data.coins < discountCost) { tg.showAlert("❌ Không đủ xu!"); return; }
-                showAd(() => {
-                    performUpgrade(discountCost);
-                    tg.showAlert(`⚡ Nâng cấp thành công (Giá ưu đãi)!`);
-                });
-            } else {
-                // Trả full giá
-                if (data.coins < normalCost) { tg.showAlert("❌ Không đủ xu!"); return; }
-                performUpgrade(normalCost);
-                tg.showAlert(`⚡ Nâng cấp thành công!`);
-            }
-        }
-    );
-}
-
-function performUpgrade(cost) {
-    let newSpeed = data.speed + SPEED_INCREMENT;
-    newSpeed = Math.round(newSpeed * 10) / 10;
-    if (newSpeed > MAX_SPEED) newSpeed = MAX_SPEED;
-    data.coins -= cost;
-    data.speed = newSpeed;
-    data.shipLevel += 1;
-    save(); updateUI();
-}
-
-// === CÁC NHIỆM VỤ KHÁC ===
-
+// TASKS
 function checkAndResetAds() {
     const today = new Date().toDateString();
     if (!data.tasks.adsLastReset || data.tasks.adsLastReset !== today) {
@@ -374,12 +305,26 @@ function checkAndResetAds() {
     }
 }
 
+function handleTaskAds() {
+    checkAndResetAds();
+    const MAX_ADS = 5;
+    if (data.tasks.adsWatchedToday >= MAX_ADS) { tg.showAlert("❌ Hết lượt hôm nay!"); return; }
+    
+    showAd(() => {
+        const reward = Math.floor(Math.random() * 6) + 10;
+        data.tasks.adsWatchedToday += 1;
+        addCoins(reward, 'ads_task');
+        updateTasksUI();
+        tg.showAlert(`🎉 Nhận ${reward} xu!`);
+    });
+}
+
 function handleTaskChannel() {
     if (data.tasks.channelJoined) { tg.showAlert("✅ Đã hoàn thành!"); return; }
-    const CHANNEL_USERNAME = "YOUR_CHANNEL_USERNAME"; // Thay bằng kênh của bạn
+    const CHANNEL_USERNAME = "YOUR_CHANNEL_USERNAME"; 
     tg.openTelegramLink(`https://t.me/${CHANNEL_USERNAME}`);
     setTimeout(() => {
-        tg.showConfirm("📢 Đã tham gia Channel chưa?", (confirmed) => {
+        tg.showConfirm("📢 Đã tham gia chưa?", (confirmed) => {
             if (confirmed) {
                 data.tasks.channelJoined = true;
                 addCoins(400, 'channel_join');
@@ -393,58 +338,94 @@ function handleTaskChannel() {
 function handleTaskInvite() {
     if (data.tasks.invite5Claimed) { tg.showAlert("✅ Đã nhận thưởng!"); return; }
     if (data.tasks.inviteCount < 5) { tg.showAlert(`📊 Bạn mới mời được ${data.tasks.inviteCount}/5 người.`); return; }
+    
     data.tasks.invite5Claimed = true;
-    data.coins += 2500;
+    data.coins += 2500; // Bonus trực tiếp
     save(); updateUI(); updateTasksUI();
     tg.showAlert("🎉 Nhận 2,500 xu thành công!");
 }
 
+// ----------------------------------------------------
+// ĐÃ SỬA: ĐIỂM DANH GIẢM TỪ 50 -> 25 XU
+// ----------------------------------------------------
 function handleTaskDaily() {
     const today = new Date().toDateString();
-    if (data.tasks.dailyLastClaim === today) { 
-        tg.showAlert("✅ Đã điểm danh hôm nay!"); 
-        return; 
+
+    if (data.tasks.dailyLastClaim === today) {
+        tg.showAlert("✅ Đã điểm danh hôm nay!");
+        return;
     }
-    
-    const yesterday = new Date(); 
-    yesterday.setDate(yesterday.getDate() - 1);
-    
+
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
     if (data.tasks.dailyLastClaim === yesterday.toDateString()) {
         data.tasks.dailyStreak += 1;
     } else {
         data.tasks.dailyStreak = 1;
     }
-    
+
     data.tasks.dailyLastClaim = today;
-    
-    // Thưởng: 25 xu cơ bản + 5 xu/ngày streak (max 75 xu bonus)
-    const bonus = Math.min(5 * (data.tasks.dailyStreak - 1), 75);
-    const totalReward = 25 + bonus; // ĐỔI TỪ 50 → 25
-    
+
+    // Thưởng 25 + (10 * (streak-1)), tối đa cộng thêm 150
+    const bonus = Math.min(10 * (data.tasks.dailyStreak - 1), 150);
+    const totalReward = 25 + bonus; // SỬA: Đổi 50 thành 25
+
     addCoins(totalReward, 'daily_login');
     updateTasksUI();
+
     tg.showAlert(`🎁 Điểm danh ngày ${data.tasks.dailyStreak}: Nhận ${totalReward} xu!`);
+}
+
+function handleUpgrade() {
+    if (data.speed >= MAX_SPEED) { tg.showAlert(`⚠️ Đã Max Level!`); return; }
+    const normalCost = UPGRADE_COST;
+    const discountCost = Math.floor(UPGRADE_COST * 0.5);
+
+    tg.showConfirm(
+        `💡 Nâng cấp:\n\n⭐ Xem quảng cáo: ${discountCost} xu (Giảm 50%)\n💰 Trả thường: ${normalCost} xu`,
+        (confirmed) => {
+            if (confirmed) {
+                if (data.coins < discountCost) { tg.showAlert("❌ Không đủ xu!"); return; }
+                showAd(() => {
+                    performUpgrade(discountCost);
+                    tg.showAlert(`⚡ Nâng cấp thành công!`);
+                });
+            } else {
+                if (data.coins < normalCost) { tg.showAlert("❌ Không đủ xu!"); return; }
+                performUpgrade(normalCost);
+                tg.showAlert(`⚡ Nâng cấp thành công!`);
+            }
+        }
+    );
+}
+
+function performUpgrade(cost) {
+    let newSpeed = data.speed + SPEED_INCREMENT;
+    newSpeed = Math.round(newSpeed * 10) / 10;
+    if (newSpeed > MAX_SPEED) newSpeed = MAX_SPEED;
+    
+    data.coins -= cost;
+    data.speed = newSpeed;
+    data.shipLevel += 1;
+    save(); updateUI();
 }
 
 function handleCopyRef() {
     const link = `https://t.me/${BOT_USERNAME}/start?startapp=${userId}`;
-    navigator.clipboard.writeText(link).then(() => tg.showAlert("✅ Đã sao chép link!")).catch(() => tg.showAlert("❌ Lỗi sao chép!"));
+    navigator.clipboard.writeText(link).then(() => tg.showAlert("✅ Đã sao chép!")).catch(() => tg.showAlert("❌ Lỗi sao chép!"));
 }
 
 function handleWithdraw() {
-    // Logic rút tiền (giữ nguyên logic cũ của bạn hoặc thêm sau)
-    // Để code gọn mình tạm để thông báo
     const bankName = document.getElementById('bank-name').value.trim();
     if(!bankName) { tg.showAlert("Chức năng đang bảo trì!"); return; }
     tg.showAlert("Đã gửi yêu cầu rút tiền!");
 }
 
-// === UI UPDATES ===
-
+// UI UPDATES
 function checkMining() {
     const btn = document.getElementById('btn-mine');
     const timer = document.getElementById('timer-display');
     if (!btn) return;
+
     if (!data.startTime) {
         btn.innerHTML = '<span class="relative z-10">⛵ RA KHƠI</span>';
         if (timer) timer.classList.add('hidden');
@@ -500,6 +481,57 @@ function updateTasksUI() {
     const remaining = 5 - (data.tasks.adsWatchedToday || 0);
     const elAds = document.getElementById('ads-remaining');
     if (elAds) elAds.innerText = remaining;
+    
+    // Cập nhật nút Task Ads
+    const btnAds = document.getElementById('btn-task-ads');
+    if (btnAds) {
+        if (remaining <= 0) {
+             btnAds.disabled = true;
+             btnAds.innerHTML = 'HẾT LƯỢT';
+        } else {
+             btnAds.disabled = false;
+             btnAds.innerHTML = '🎁 XEM';
+        }
+    }
+
+    // Cập nhật nút Daily (Đã sửa hiển thị +25)
+    const today = new Date().toDateString();
+    const claimedToday = data.tasks.dailyLastClaim === today;
+    const btnDaily = document.getElementById('btn-task-daily');
+    const dailyStatus = document.getElementById('daily-status');
+    
+    if (claimedToday) {
+        if (dailyStatus) dailyStatus.innerHTML = `✅ Đã nhận - Streak: ${data.tasks.dailyStreak}`;
+        if (btnDaily) {
+            btnDaily.disabled = true;
+            btnDaily.innerHTML = '✅ ĐÃ NHẬN';
+        }
+    } else {
+        if (dailyStatus) dailyStatus.innerHTML = `🔥 Streak: ${data.tasks.dailyStreak} ngày`;
+        if (btnDaily) {
+            btnDaily.disabled = false;
+            // SỬA: Hiển thị +25 thay vì +50
+            btnDaily.innerHTML = '+25 💰';
+        }
+    }
+}
+
+function renderHistory() {
+    const div = document.getElementById('history-list');
+    if (!div) return;
+    if (!data.history || data.history.length === 0) {
+        div.innerHTML = '<p class="text-center text-gray-500 py-8 text-sm">📭 Chưa có giao dịch nào</p>';
+        return;
+    }
+    div.innerHTML = data.history.map(h => `
+        <div class="p-3 bg-slate-800 rounded mb-2 text-xs">
+            <div class="flex justify-between">
+                <span>${h.status}</span>
+                <span class="text-yellow-400 font-bold">${h.amount} xu</span>
+            </div>
+            <div class="text-gray-500">${h.time}</div>
+        </div>
+    `).join('');
 }
 
 function save() { 
@@ -509,7 +541,6 @@ function save() {
 // KHỞI CHẠY
 window.onload = () => {
     init();
-    // Chắc chắn gọi initAdsgram lần nữa cho chắc
     setTimeout(initAdsgram, 1000); 
 };
 if (tg) { tg.ready(); tg.expand(); }
