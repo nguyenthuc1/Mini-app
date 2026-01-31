@@ -222,59 +222,55 @@ function switchTab(tab) {
         else if (tab === 'friends') activeBtn.classList.add('text-pink-400');
         else if (tab === 'wallet') activeBtn.classList.add('text-yellow-400');
     }
-}
 async function handleMine() {
-    // 1. Logic kiểm tra xem đã bấm "Bắt đầu" chưa (Giữ nguyên)
+    // TRƯỜNG HỢP 1: CHƯA RA KHƠI -> BẮT ĐẦU ĐÀO
     if (!data.startTime) {
-        if (data.fuel < 100) {
-            tg.showAlert(`⛽ Không đủ nhiên liệu! Xem quảng cáo để nạp thêm.`);
+        // 1. Kiểm tra nhiên liệu (Xăng)
+        if ((data.fuel || 0) < 100) {
+            tg.showAlert("⛽ Không đủ nhiên liệu! Hãy xem quảng cáo để nạp đầy.");
             return;
         }
-        startMining(); // Hàm bắt đầu đếm giờ (Giữ nguyên)
-        tg.showAlert("⛵ Đã ra khơi! Quay lại sau 3 tiếng nhé.");
-        return; 
+
+        // 2. Trừ xăng và Ghi giờ bắt đầu
+        data.fuel = 0;             // Trừ hết 100 xăng
+        data.startTime = Date.now(); // Lưu thời gian hiện tại
+        
+        // 3. Lưu và Cập nhật
+        save();         // Lưu lên Firebase
+        updateUI();     // Vẽ lại giao diện
+        checkMining();  // Đổi nút thành đồng hồ đếm ngược
+        
+        tg.showAlert("⛵ Đã ra khơi thành công! Quay lại sau 3 tiếng nhé.");
+        return;
     }
 
-    // 2. Logic NHẬN THƯỞNG (Đoạn này thay đổi hoàn toàn)
-    // ---------------------------------------------------------
+    // TRƯỜNG HỢP 2: ĐANG ĐÀO -> GỌI SERVER ĐỂ NHẬN THƯỞNG
     tg.showAlert("🔄 Đang kết nối Server để kiểm tra...");
     
     try {
-        // GỌI SERVER RENDER
         const response = await fetch('https://miniapp-backend-d87k.onrender.com/api/claim', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 userId: userId,           
-                initData: tg.initData     // <--- QUAN TRỌNG: Gửi chữ ký bảo mật
+                initData: tg.initData
             })
         });
 
         const result = await response.json();
 
         if (result.success) {
-            // A. NẾU THÀNH CÔNG:
             tg.showAlert(`✅ Thành công! Bạn nhận được ${result.fish} cá.`);
-            
-            // Cập nhật lại giao diện
-            data.startTime = null; // Reset giờ
-            // data.fish += result.fish; // Không cần cộng tay nữa, load lại từ DB hoặc cộng hiển thị tạm
-            
-            // Tốt nhất là gọi hàm updateUI để load số mới nhất từ Firebase về
-            updateUI(); 
-            save(); 
-            checkMining(); // Đổi nút lại thành trạng thái "Bắt đầu"
-            
+            // Không cần cộng tiền tay ở đây nữa vì đã có "Ra-đar" tự động cập nhật
         } else {
-            // B. NẾU THẤT BẠI (Do chưa đủ giờ hoặc Hack):
-            tg.showAlert(`⚠️ Lỗi: ${result.message}`);
+            tg.showAlert(`⚠️ ${result.message}`);
         }
     } catch (err) {
         console.error(err);
-        tg.showAlert("❌ Lỗi mạng! Kiểm tra kết nối internet.");
+        tg.showAlert("❌ Lỗi mạng! Vui lòng thử lại.");
     }
-    // ---------------------------------------------------------
 }
+
 function handleSell() {
     if (data.fish < 100) { tg.showAlert("❌ Cần tối thiểu 100 con cá để bán!"); return; }
     const coinsEarned = Math.floor(data.fish * 0.005);
