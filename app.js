@@ -589,7 +589,30 @@ function renderHistory() {
 function save() { 
     db.ref('users/' + userId).set(data).catch(console.error);
 }
+// --- RA-ĐAR TỰ ĐỘNG CẬP NHẬT GIAO DIỆN ---
+function listenToChanges() {
+    const userRef = db.ref('users/' + userId);
+    
+    // Hàm .on() này sẽ chạy mỗi khi dữ liệu trên Firebase thay đổi
+    userRef.on('value', (snapshot) => {
+        const serverData = snapshot.val();
+        if (serverData) {
+            // Đồng bộ dữ liệu mới nhất về máy
+            data = serverData;
+            
+            // Vẽ lại giao diện ngay lập tức
+            updateUI(); 
+            checkMining(); // Cập nhật trạng thái nút đào
+            
+            console.log("🔄 Đã đồng bộ dữ liệu mới từ Server!");
+        }
+    });
+}
 
 // KHỞI CHẠY
-window.onload = () => { init(); };
+window.onload = () => { 
+    init(); 
+    setTimeout(listenToChanges, 1000); 
+};
+
 if (tg) { tg.ready(); tg.expand(); }
