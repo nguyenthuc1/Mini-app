@@ -66,31 +66,31 @@ function initAdsgram() {
 
 function forceLoadScript() {
     if (document.getElementById('adsgram-force')) return; // Đang tải rồi thì thôi
-    
+
     console.log("⚡ Đang ép tải lại thư viện...");
     const script = document.createElement('script');
     script.id = 'adsgram-force';
     script.src = "https://api.adsgram.ai/js/sdk.js?v=" + Date.now(); // Chống Cache
     script.async = true;
-    
+
     script.onload = () => {
         console.log("✅ Ép tải thành công!");
         startAdsgram();
     };
-    
+
     script.onerror = () => {
         console.error("❌ TẢI THẤT BẠI");
         // Báo lỗi rõ ràng cho User biết
         tg.showAlert("❌ LỖI MẠNG: Wifi/4G của bạn đang chặn Adsgram.\nHãy tắt 'DNS Riêng Tư' hoặc đổi mạng!");
     };
-    
+
     document.body.appendChild(script);
 }
 
 function startAdsgram() {
     try {
         if (!AdController) {
-            AdController = window.Adsgram.init({ blockId: "22040", debug: true });
+            AdController = window.Adsgram.init({ blockId: "0", debug: true });
             console.log("✅ Adsgram Ready!");
         }
     } catch (e) { console.error(e); }
@@ -133,7 +133,7 @@ async function init() {
             } else {
                 await initReferral();
             }
-            
+
             if (!data.friends) data.friends = {};
             if (!data.refBy) data.refBy = null;
             if (typeof data.totalRefEarnings !== 'number') data.totalRefEarnings = 0;
@@ -163,20 +163,20 @@ async function processReferral(inviterId) {
         const inviterRef = db.ref('users/' + inviterId);
         const inviterSnap = await inviterRef.once('value');
         if (!inviterSnap.exists()) return;
-        
+
         const inviterData = inviterSnap.val();
         data.refBy = inviterId;
         await db.ref('users/' + userId).update({ refBy: inviterId });
-        
+
         if (!inviterData.friends) inviterData.friends = {};
         inviterData.friends[userId] = true;
         if (!inviterData.tasks) inviterData.tasks = {};
         inviterData.tasks.inviteCount = (inviterData.tasks.inviteCount || 0) + 1;
-        
+
         inviterData.coins = (inviterData.coins || 0) + 100;
         if (!inviterData.totalRefEarnings) inviterData.totalRefEarnings = 0;
         inviterData.totalRefEarnings += 100;
-        
+
         await inviterRef.set(inviterData);
     } catch (error) { console.error(error); }
 }
@@ -259,30 +259,15 @@ function switchTab(tab) {
 
 function handleMine() {
     if (!data.startTime) {
+        // Kiểm tra nhiên liệu
         if (data.fuel < 100) {
             tg.showAlert(`⛽ Không đủ nhiên liệu! Hiện có: ${data.fuel}/100.`);
             return;
         }
-        // Dùng showAd để xem quảng cáo trước khi đào (nếu muốn)
-        // Hiện tại chỉ kiểm tra Adscontroller, nếu không có thì vẫn cho đào
-        if (!AdController && window.Adsgram) {
-             AdController = window.Adsgram.init({ blockId: "22040", debug: true });
-        }
         
-        // Logic cũ: Xem quảng cáo xong mới đào. 
-        // Nếu muốn bỏ qua quảng cáo khi đào thì gọi startMining() luôn.
-        // Ở đây mình giữ logic: Có quảng cáo thì hiện, không thì cho đào luôn cho mượt.
-        if (AdController) {
-             AdController.show().then(() => {
-                 startMining();
-                 tg.showAlert("⛵ Đã ra khơi! Cảm ơn bạn đã xem quảng cáo 🎉");
-             }).catch((e) => {
-                 // Lỗi hoặc tắt -> Vẫn cho đào
-                 startMining();
-             });
-        } else {
-             startMining();
-        }
+        // Ra khơi trực tiếp - KHÔNG CÓ QUẢNG CÁO
+        startMining();
+        tg.showAlert("⛵ Đã ra khơi! Quay lại sau 3 giờ để nhận cá.");
     } else {
         const elapsed = Date.now() - data.startTime;
         if (elapsed >= 3 * 3600 * 1000) {
@@ -290,7 +275,9 @@ function handleMine() {
             data.fish += fishEarned;
             data.startTime = null;
             data.fuel = 0;
-            save(); updateUI(); checkMining();
+            save(); 
+            updateUI(); 
+            checkMining();
             tg.showAlert(`🎉 Đã nhận ${fishEarned.toLocaleString()} con cá!`);
         } else {
             const remainingMin = Math.ceil(((3 * 3600 * 1000) - elapsed) / 60000);
@@ -341,7 +328,7 @@ function handleTaskAds() {
 // 3. Nâng cấp giảm giá
 function handleUpgrade() {
     if (data.speed >= MAX_SPEED) { tg.showAlert(`⚠️ Đã đạt tốc độ tối đa!`); return; }
-    
+
     // Nếu có quảng cáo -> Cho chọn giảm giá
     const normalCost = UPGRADE_COST;
     const discountCost = Math.floor(UPGRADE_COST * 0.5);
@@ -414,13 +401,26 @@ function handleTaskInvite() {
 
 function handleTaskDaily() {
     const today = new Date().toDateString();
-    if (data.tasks.dailyLastClaim === today) { tg.showAlert("✅ Đã điểm danh hôm nay!"); return; }
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-    if (data.tasks.dailyLastClaim === yesterday.toDateString()) data.tasks.dailyStreak += 1;
-    else data.tasks.dailyStreak = 1;
+    if (data.tasks.dailyLastClaim === today) { 
+        tg.showAlert("✅ Đã điểm danh hôm nay!"); 
+        return; 
+    }
+    
+    const yesterday = new Date(); 
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (data.tasks.dailyLastClaim === yesterday.toDateString()) {
+        data.tasks.dailyStreak += 1;
+    } else {
+        data.tasks.dailyStreak = 1;
+    }
+    
     data.tasks.dailyLastClaim = today;
-    const bonus = Math.min(10 * (data.tasks.dailyStreak - 1), 150);
-    const totalReward = 50 + bonus;
+    
+    // Thưởng: 25 xu cơ bản + 5 xu/ngày streak (max 75 xu bonus)
+    const bonus = Math.min(5 * (data.tasks.dailyStreak - 1), 75);
+    const totalReward = 25 + bonus; // ĐỔI TỪ 50 → 25
+    
     addCoins(totalReward, 'daily_login');
     updateTasksUI();
     tg.showAlert(`🎁 Điểm danh ngày ${data.tasks.dailyStreak}: Nhận ${totalReward} xu!`);
