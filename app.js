@@ -223,53 +223,58 @@ function switchTab(tab) {
         else if (tab === 'wallet') activeBtn.classList.add('text-yellow-400');
     }
 }
-
-// KHÔNG QUẢNG CÁO KHI ĐÀO
 async function handleMine() {
+    // 1. Logic kiểm tra xem đã bấm "Bắt đầu" chưa (Giữ nguyên)
     if (!data.startTime) {
-        // Logic Ra khơi (Giữ nguyên hoặc tùy chỉnh)
         if (data.fuel < 100) {
-            tg.showAlert(`⛽ Không đủ nhiên liệu!`);
+            tg.showAlert(`⛽ Không đủ nhiên liệu! Xem quảng cáo để nạp thêm.`);
             return;
         }
-        startMining();
-        tg.showAlert("⛵ Đã ra khơi!");
-    } else {
-        // --- ĐOẠN QUAN TRỌNG NHẤT ---
-        tg.showAlert("🔄 Đang kết nối Server để kiểm tra...");
-        
-        try {
-            // Đây là link Server của bạn (tôi lấy từ ảnh bạn gửi)
-            const response = await fetch('https://miniapp-backend-d87k.onrender.com/api/claim', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: userId })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                // Server bảo OK -> Cập nhật giao diện
-                updateUI(); 
-                tg.showAlert(`✅ Thành công! Đã nhận ${result.fish} cá.`);
-                // Xóa giờ đào ở client để đồng bộ
-                data.startTime = null;
-                save();
-                checkMining();
-            } else {
-                // Server từ chối
-                tg.showAlert(`❌ Thất bại: ${result.message}`);
-            }
-        } catch (err) {
-            tg.showAlert("❌ Lỗi kết nối Server! Vui lòng thử lại sau.");
-        }
+        startMining(); // Hàm bắt đầu đếm giờ (Giữ nguyên)
+        tg.showAlert("⛵ Đã ra khơi! Quay lại sau 3 tiếng nhé.");
+        return; 
     }
-}
-function startMining() {
-    data.startTime = Date.now();
-    save(); checkMining();
-}
 
+    // 2. Logic NHẬN THƯỞNG (Đoạn này thay đổi hoàn toàn)
+    // ---------------------------------------------------------
+    tg.showAlert("🔄 Đang kết nối Server để kiểm tra...");
+    
+    try {
+        // GỌI SERVER RENDER
+        const response = await fetch('https://miniapp-backend-d87k.onrender.com/api/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                userId: userId,           
+                initData: tg.initData     // <--- QUAN TRỌNG: Gửi chữ ký bảo mật
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // A. NẾU THÀNH CÔNG:
+            tg.showAlert(`✅ Thành công! Bạn nhận được ${result.fish} cá.`);
+            
+            // Cập nhật lại giao diện
+            data.startTime = null; // Reset giờ
+            // data.fish += result.fish; // Không cần cộng tay nữa, load lại từ DB hoặc cộng hiển thị tạm
+            
+            // Tốt nhất là gọi hàm updateUI để load số mới nhất từ Firebase về
+            updateUI(); 
+            save(); 
+            checkMining(); // Đổi nút lại thành trạng thái "Bắt đầu"
+            
+        } else {
+            // B. NẾU THẤT BẠI (Do chưa đủ giờ hoặc Hack):
+            tg.showAlert(`⚠️ Lỗi: ${result.message}`);
+        }
+    } catch (err) {
+        console.error(err);
+        tg.showAlert("❌ Lỗi mạng! Kiểm tra kết nối internet.");
+    }
+    // ---------------------------------------------------------
+}
 function handleSell() {
     if (data.fish < 100) { tg.showAlert("❌ Cần tối thiểu 100 con cá để bán!"); return; }
     const coinsEarned = Math.floor(data.fish * 0.005);
