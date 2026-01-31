@@ -225,30 +225,49 @@ function switchTab(tab) {
 }
 
 // KHÔNG QUẢNG CÁO KHI ĐÀO
+
+
 function handleMine() {
+    // 1. Nếu chưa bắt đầu đào -> Bấm để Ra khơi
     if (!data.startTime) {
         if (data.fuel < 100) {
+            // Dùng dấu huyền ` ` để hiện số nhiên liệu
             tg.showAlert(`⛽ Không đủ nhiên liệu! Hiện có: ${data.fuel}/100.`);
             return;
         }
         startMining();
         tg.showAlert("⛵ Đã ra khơi! Chúc bạn may mắn 🍀");
+    
+    // 2. Nếu đang đào -> Bấm để Nhận thưởng
     } else {
-        const elapsed = Date.now() - data.startTime;
-        if (elapsed >= 3 * 3600 * 1000) {
-            const fishEarned = Math.floor(3 * 3600 * data.speed);
-            data.fish += fishEarned;
-            data.startTime = null;
-            data.fuel = 0;
-            save(); updateUI(); checkMining();
-            tg.showAlert(`🎉 Đã nhận ${fishEarned.toLocaleString()} con cá!`);
-        } else {
-            const remainingMin = Math.ceil(((3 * 3600 * 1000) - elapsed) / 60000);
-            tg.showAlert(`⏳ Còn ${remainingMin} phút nữa!`);
+        const now = Date.now();
+        const elapsed = now - data.startTime;
+        const DURATION = 3 * 3600 * 1000; // 3 Tiếng
+
+        // --- BẢO MẬT: Chặn Hack Thời Gian ---
+        // Nếu thời gian trôi qua chưa đủ (trừ 1 phút sai số) thì chặn ngay
+        if (elapsed < (DURATION - 60000)) {
+             const remainingMin = Math.ceil((DURATION - elapsed) / 60000);
+             tg.showAlert(`⏳ Chưa xong! Còn ${remainingMin} phút nữa mới được nhận.`);
+             return;
         }
+        // ------------------------------------
+
+        // Nếu đủ giờ thì tính thưởng
+        const fishEarned = Math.floor(3 * 3600 * data.speed);
+        
+        data.fish += fishEarned;
+        data.startTime = null;
+        data.fuel = 0;
+        
+        save(); 
+        updateUI(); 
+        checkMining();
+        
+        // Dùng dấu huyền ` ` để hiện số cá
+        tg.showAlert(`🎉 Đã nhận ${fishEarned.toLocaleString()} con cá!`);
     }
 }
-
 function startMining() {
     data.startTime = Date.now();
     save(); checkMining();
