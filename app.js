@@ -522,6 +522,7 @@ function updateFuelDisplay(fuel = null) {
 function updateUI() {
     const setText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
     setText('fish-count', Math.floor(data.fish).toLocaleString());
+setText('ship-lv-display', "LV." + (data.level || 1));
     setText('coin-balance', Math.floor(data.coins).toLocaleString());
     setText('wallet-balance', Math.floor(data.coins).toLocaleString());
     setText('available-balance', Math.floor(data.coins).toLocaleString());
