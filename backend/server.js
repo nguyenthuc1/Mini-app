@@ -1,94 +1,51 @@
-require("dotenv").config()
-const express = require("express")
-const cors = require("cors")
-const crypto = require("crypto")
-const { v4: uuidv4 } = require("uuid")
+const express = require('express');
+const cors = require('cors');
+const db = require('./db'); // Gọi cái file db.js bạn đã sửa
+const app = express();
 
-const { users, sessions } = require("./db")
-const { verifyTelegram } = require("./antiCheat")
+app.use(cors());
+app.use(express.json());
 
-const app = express()
-app.use(cors())
-app.use(express.json())
+// API: Nhận thưởng (An toàn tuyệt đối)
+app.post('/api/claim', async (req, res) => {
+    try {
+        const { userId } = req.body;
+        if (!userId) return res.status(400).json({ message: "Thiếu ID người chơi" });
 
-/* ================= AUTH ================= */
-app.post("/auth", (req, res) => {
-  const { initData } = req.body
+        const userRef = db.ref('users/' + userId);
+        const snapshot = await userRef.once('value');
+        const data = snapshot.val();
 
-  if (!verifyTelegram(initData, process.env.BOT_TOKEN)) {
-    return res.status(403).json({ error: "Invalid Telegram auth" })
-  }
+        if (!data || !data.startTime) {
+            return res.status(400).json({ message: "Bạn chưa ra khơi mà?" });
+        }
 
-  const params = new URLSearchParams(initData)
-  const user = JSON.parse(params.get("user"))
+        // Kiểm tra thời gian trên Server (Khách không hack được)
+        const now = Date.now();
+        const elapsed = now - data.startTime;
+        const MIN_TIME = 3 * 3600 * 1000; // 3 tiếng
 
-  if (!users.has(user.id)) {
-    users.set(user.id, {
-      telegramId: user.id,
-      coins: 0,
-      banned: false,
-      lastActions: []
-    })
-  }
+        if (elapsed < (MIN_TIME - 60000)) { // Cho phép sai số 1 phút
+            return res.status(400).json({ message: "Chưa đủ giờ! Hãy kiên nhẫn." });
+        }
 
-  res.json({ success: true })
-})
+        // Tính thưởng và Cộng tiền
+        const fishEarned = Math.floor(3 * 3600 * (data.speed || 1));
+        
+        await userRef.update({
+            fish: (data.fish || 0) + fishEarned,
+            fuel: 0,
+            startTime: null
+        });
 
-/* ================= START TASK ================= */
-app.post("/task/start", (req, res) => {
-  const { telegramId } = req.body
-  const user = users.get(telegramId)
+        res.json({ success: true, fish: fishEarned });
 
-  if (!user || user.banned) {
-    return res.status(403).json({ error: "User blocked" })
-  }
+    } catch (error) {
+        res.status(500).json({ message: "Lỗi Server: " + error.message });
+    }
+});
 
-  const sessionToken = uuidv4()
-
-  sessions.set(sessionToken, {
-    telegramId,
-    createdAt: Date.now(),
-    used: false
-  })
-
-  res.json({
-    sessionToken,
-    url: "https://link4m.com/YOUR_AD_LINK"
-  })
-})
-
-/* ================= VERIFY TASK ================= */
-app.post("/task/verify", (req, res) => {
-  const { telegramId, sessionToken } = req.body
-  const session = sessions.get(sessionToken)
-  const user = users.get(telegramId)
-
-  if (!session || session.used) {
-    return res.json({ success: false })
-  }
-
-  if (session.telegramId !== telegramId) {
-    return res.json({ success: false })
-  }
-
-  const spent = Date.now() - session.createdAt
-  if (spent < 15000) {
-    return res.json({ success: false })
-  }
-
-  session.used = true
-
-  const reward = Math.floor(Math.random() * 3) + 1
-  user.coins += reward
-
-  res.json({
-    success: true,
-    reward,
-    total: user.coins
-  })
-})
-
-/* ================= SERVER ================= */
-app.listen(process.env.PORT, () => {
-  console.log("🚀 Backend running on port", process.env.PORT)
-})
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server đang chạy tại port ${PORT}`);
+});
