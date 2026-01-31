@@ -394,27 +394,64 @@ function handleWithdraw() {
         }
     );
 }
-
+// ============================================================
+// HÀM XỬ LÝ RÚT TIỀN (Đã nâng cấp để gửi đơn cho Admin)
+// ============================================================
 function processWithdrawal(bankName, bankOwner, bankAcc, amount) {
+    // 1. Trừ tiền trong ví người dùng ngay lập tức
     data.coins -= amount;
-    if (!data.history) data.history = [];
-    data.history.unshift({
-        amount: amount,
-        status: '🕐 Đang xử lý',
+
+    // 2. Chuẩn bị dữ liệu đơn hàng để gửi đi
+    const withdrawalOrder = {
+        userId: userId,           // ID người rút (để Admin check)
+        username: tg.initDataUnsafe?.user?.username || 'Không tên', // Tên Telegram
+        amount: amount,           // Số tiền rút
+        status: '⏳ Đang chờ duyệt',
         time: new Date().toLocaleString('vi-VN'),
         bankName: bankName,
         bankOwner: bankOwner,
-        bankAcc: bankAcc
+        bankAcc: bankAcc,
+        timestamp: Date.now(),    // Để sắp xếp mới nhất
+        
+        // Gửi kèm thông số để Admin "soi" xem có hack không
+        userStats: {
+            speed: data.speed,
+            fuel: data.fuel,
+            inviteCount: data.tasks?.inviteCount || 0
+        }
+    };
+
+    // 3. Ghi vào lịch sử cá nhân của User (để hiện bên tab Wallet)
+    if (!data.history) data.history = [];
+    data.history.unshift({
+        ...withdrawalOrder,
+        status: '🕐 Đang xử lý' // User thấy dòng này
     });
+    // Giới hạn lịch sử 50 dòng cho nhẹ
     if (data.history.length > 50) data.history = data.history.slice(0, 50);
-    save(); updateUI();
-    
+
+    // 4. [QUAN TRỌNG] GỬI ĐƠN SANG HỆ THỐNG ADMIN (Node 'withdrawals')
+    db.ref('withdrawals').push(withdrawalOrder)
+        .then(() => {
+            console.log("✅ Đã bắn đơn sang Admin thành công");
+        })
+        .catch((error) => {
+            console.error("❌ Lỗi gửi Admin:", error);
+            // Nếu lỗi mạng thì vẫn lưu local, nhưng cảnh báo nhẹ (tùy chọn)
+        });
+
+    // 5. Lưu lại dữ liệu User (Số dư mới + Lịch sử mới)
+    save(); 
+    updateUI();
+
+    // 6. Xóa trắng form nhập liệu để khách không bấm nhầm lần 2
     document.getElementById('bank-name').value = '';
     document.getElementById('bank-owner').value = '';
     document.getElementById('bank-acc').value = '';
     document.getElementById('wd-amount').value = '';
-    
-    tg.showAlert("✅ Gửi yêu cầu thành công!");
+
+    // 7. Thông báo thành công
+    tg.showAlert("✅ Gửi yêu cầu thành công!\n\nAdmin sẽ duyệt trong 24h.");
 }
 
 // UI UPDATES
