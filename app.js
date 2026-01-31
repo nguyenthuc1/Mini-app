@@ -90,7 +90,7 @@ function forceLoadScript() {
 function startAdsgram() {
     try {
         if (!AdController) {
-            AdController = window.Adsgram.init({ blockId: "21962", debug: true });
+            AdController = window.Adsgram.init({ blockId: "22040", debug: true });
             console.log("✅ Adsgram Ready!");
         }
     } catch (e) { console.error(e); }
@@ -266,7 +266,7 @@ function handleMine() {
         // Dùng showAd để xem quảng cáo trước khi đào (nếu muốn)
         // Hiện tại chỉ kiểm tra Adscontroller, nếu không có thì vẫn cho đào
         if (!AdController && window.Adsgram) {
-             AdController = window.Adsgram.init({ blockId: "21962", debug: true });
+             AdController = window.Adsgram.init({ blockId: "22040", debug: true });
         }
         
         // Logic cũ: Xem quảng cáo xong mới đào. 
