@@ -14,7 +14,7 @@ const tg = window.Telegram.WebApp;
 const userId = String(tg.initDataUnsafe?.user?.id || '88888888');
 const BOT_USERNAME = "Supermoneymine_bot";
 
-// Cấu hình giới hạn
+// Cấu hình
 const MAX_SPEED = 5.0; 
 const UPGRADE_COST = 200; 
 const SPEED_INCREMENT = 0.2; 
@@ -31,29 +31,26 @@ let data = {
     friends: {}, 
     totalRefEarnings: 0, 
     tasks: {
-        adsWatchedToday: 0,
-        adsLastReset: null,
-        channelJoined: false,
-        inviteCount: 0,
-        invite5Claimed: false,
-        dailyLastClaim: null,
-        dailyStreak: 0
+        adsWatchedToday: 0, adsLastReset: null, channelJoined: false,
+        inviteCount: 0, invite5Claimed: false, dailyLastClaim: null, dailyStreak: 0
     }
 };
 
 // ========================================
-// HỆ THỐNG QUẢNG CÁO
+// HỆ THỐNG QUẢNG CÁO (SAD.ADSGRAM.AI)
 // ========================================
 let AdController = null;
+
 function initAdsgram() {
     if (window.Adsgram) {
         startAdsgram();
     } else {
-        // Tự động tải nếu chưa có
+        // Tự động tải nếu HTML chưa tải được (Dùng link mới)
         if (!document.getElementById('adsgram-lib')) {
             const script = document.createElement('script');
             script.id = 'adsgram-lib';
-            script.src = "https://api.adsgram.ai/js/sdk.js";
+            // CẬP NHẬT URL MỚI TẠI ĐÂY
+            script.src = "https://sad.adsgram.ai/js/sad.min.js";
             script.async = true;
             script.onload = () => startAdsgram();
             document.head.appendChild(script);
@@ -64,7 +61,9 @@ function initAdsgram() {
 
 function startAdsgram() {
     try {
-        AdController = window.Adsgram.init({ blockId: "22009", debug: true });
+        // ID "0" để test. Khi chạy thật nhớ đổi ID của bạn.
+        AdController = window.Adsgram.init({ blockId: "0", debug: true });
+        console.log("✅ Adsgram (Sad) Ready!");
     } catch (error) {
         console.error("Adsgram error:", error);
     }
@@ -83,21 +82,17 @@ function showAd(onSuccess) {
 }
 
 // ========================================
-// LOGIC GAME & APP
+// LOGIC GAME
 // ========================================
 
 async function init() {
     const loader = document.getElementById('loading-screen');
     firebase.auth().onAuthStateChanged(async (user) => {
-        if (!user) {
-            firebase.auth().signInAnonymously();
-            return;
-        }
+        if (!user) { firebase.auth().signInAnonymously(); return; }
         try {
             const snap = await db.ref('users/' + userId).once('value');
             if (snap.exists()) {
                 data = Object.assign(data, snap.val());
-                // Fix dữ liệu cũ
                 data.speed = Math.round((data.speed || 1) * 10) / 10;
                 if (data.speed > MAX_SPEED) data.speed = MAX_SPEED;
                 if (typeof data.fuel !== 'number') data.fuel = 100;
@@ -196,14 +191,13 @@ function setupEventListeners() {
     bind('btn-sell', handleSell);
     bind('btn-refuel', handleRefuel);
     bind('btn-upgrade', handleUpgrade);
-    bind('btn-withdraw', handleWithdraw); // Đã khôi phục nút rút tiền
+    bind('btn-withdraw', handleWithdraw);
     bind('btn-copy-ref', handleCopyRef);
     bind('btn-task-ads', handleTaskAds);
     bind('btn-task-channel', handleTaskChannel);
     bind('btn-task-invite', handleTaskInvite);
     bind('btn-task-daily', handleTaskDaily);
 
-    // Khôi phục logic nhập liệu ngân hàng
     const bankOwnerInput = document.getElementById('bank-owner');
     if (bankOwnerInput) bankOwnerInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); });
     const bankAccInput = document.getElementById('bank-acc');
@@ -230,16 +224,13 @@ function switchTab(tab) {
     }
 }
 
-// --------------------------------------------------------
-// [SỬA ĐỔI 1]: XÓA QUẢNG CÁO NÚT RA KHƠI
-// --------------------------------------------------------
+// KHÔNG QUẢNG CÁO KHI ĐÀO
 function handleMine() {
     if (!data.startTime) {
         if (data.fuel < 100) {
             tg.showAlert(`⛽ Không đủ nhiên liệu! Hiện có: ${data.fuel}/100.`);
             return;
         }
-        // Ra khơi luôn, không cần showAd()
         startMining();
         tg.showAlert("⛵ Đã ra khơi! Chúc bạn may mắn 🍀");
     } else {
@@ -326,9 +317,6 @@ function performUpgrade(cost) {
     save(); updateUI();
 }
 
-// --------------------------------------------------------
-// CÁC FUNCTION NHIỆM VỤ KHÁC
-// --------------------------------------------------------
 function checkAndResetAds() {
     const today = new Date().toDateString();
     if (!data.tasks.adsLastReset || data.tasks.adsLastReset !== today) {
@@ -343,7 +331,7 @@ function handleTaskChannel() {
     const CHANNEL_USERNAME = "YOUR_CHANNEL_USERNAME"; 
     tg.openTelegramLink(`https://t.me/${CHANNEL_USERNAME}`);
     setTimeout(() => {
-        tg.showConfirm("📢 Đã tham gia Channel chưa?", (confirmed) => {
+        tg.showConfirm("📢 Đã tham gia chưa?", (confirmed) => {
             if (confirmed) {
                 data.tasks.channelJoined = true;
                 addCoins(400, 'channel_join');
@@ -363,9 +351,7 @@ function handleTaskInvite() {
     tg.showAlert("🎉 Nhận 2,500 xu thành công!");
 }
 
-// --------------------------------------------------------
-// [SỬA ĐỔI 2]: GIẢM ĐIỂM DANH XUỐNG 25 XU
-// --------------------------------------------------------
+// ĐIỂM DANH: 25 XU
 function handleTaskDaily() {
     const today = new Date().toDateString();
     if (data.tasks.dailyLastClaim === today) { tg.showAlert("✅ Đã điểm danh hôm nay!"); return; }
@@ -375,13 +361,11 @@ function handleTaskDaily() {
     
     data.tasks.dailyLastClaim = today;
     const bonus = Math.min(10 * (data.tasks.dailyStreak - 1), 150);
-    
-    // SỬA: Giảm từ 50 xuống 25
-    const totalReward = 25 + bonus;
+    const totalReward = 25 + bonus; // Đã sửa thành 25
     
     addCoins(totalReward, 'daily_login');
     updateTasksUI();
-    tg.showAlert(`🎁 Điểm danh ngày ${data.tasks.dailyStreak}: Nhận ${totalReward} xu!`);
+    tg.showAlert(`🎁 Điểm danh: Nhận ${totalReward} xu!`);
 }
 
 function handleCopyRef() {
@@ -389,9 +373,7 @@ function handleCopyRef() {
     navigator.clipboard.writeText(link).then(() => tg.showAlert("✅ Đã sao chép!")).catch(() => tg.showAlert("❌ Lỗi sao chép!"));
 }
 
-// --------------------------------------------------------
-// [KHÔI PHỤC]: CHỨC NĂNG RÚT TIỀN ĐẦY ĐỦ
-// --------------------------------------------------------
+// CHỨC NĂNG RÚT TIỀN (ĐÃ KHÔI PHỤC)
 function handleWithdraw() {
     const bankName = document.getElementById('bank-name').value.trim();
     const bankOwner = document.getElementById('bank-owner').value.trim().toUpperCase();
@@ -425,10 +407,8 @@ function processWithdrawal(bankName, bankOwner, bankAcc, amount) {
         bankAcc: bankAcc
     });
     if (data.history.length > 50) data.history = data.history.slice(0, 50);
-    
     save(); updateUI();
     
-    // Reset form
     document.getElementById('bank-name').value = '';
     document.getElementById('bank-owner').value = '';
     document.getElementById('bank-acc').value = '';
@@ -437,9 +417,7 @@ function processWithdrawal(bankName, bankOwner, bankAcc, amount) {
     tg.showAlert("✅ Gửi yêu cầu thành công!");
 }
 
-// --------------------------------------------------------
-// [KHÔI PHỤC]: UI UPDATES ĐẦY ĐỦ CHO WALLET
-// --------------------------------------------------------
+// UI UPDATES
 function checkMining() {
     const btn = document.getElementById('btn-mine');
     const timer = document.getElementById('timer-display');
@@ -487,16 +465,13 @@ function updateUI() {
     const setText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
     setText('fish-count', Math.floor(data.fish).toLocaleString());
     setText('coin-balance', Math.floor(data.coins).toLocaleString());
-    
-    // Cập nhật cho Wallet Tab (đã khôi phục)
     setText('wallet-balance', Math.floor(data.coins).toLocaleString());
     setText('available-balance', Math.floor(data.coins).toLocaleString());
-    
     setText('speed-display', (data.speed || 1).toFixed(1));
     updateFuelDisplay();
     updateTasksUI();
     updateReferralUI();
-    renderHistory(); // Gọi hàm render lịch sử
+    renderHistory();
 }
 
 function updateTasksUI() {
@@ -512,7 +487,6 @@ function updateTasksUI() {
         else { btnAds.disabled = false; btnAds.innerHTML = '🎁 XEM'; }
     }
 
-    // Update nút Daily
     const today = new Date().toDateString();
     const claimedToday = data.tasks.dailyLastClaim === today;
     const btnDaily = document.getElementById('btn-task-daily');
@@ -523,14 +497,10 @@ function updateTasksUI() {
         if (btnDaily) { btnDaily.disabled = true; btnDaily.innerHTML = '✅ ĐÃ NHẬN'; }
     } else {
         if (dailyStatus) dailyStatus.innerHTML = `🔥 Streak: ${data.tasks.dailyStreak} ngày`;
-        if (btnDaily) { 
-            btnDaily.disabled = false; 
-            btnDaily.innerHTML = '+25 💰'; // Hiển thị +25
-        }
+        if (btnDaily) { btnDaily.disabled = false; btnDaily.innerHTML = '+25 💰'; }
     }
 }
 
-// [KHÔI PHỤC]: RENDER HISTORY (Giao diện đẹp)
 function renderHistory() {
     const div = document.getElementById('history-list');
     if (!div) return;
@@ -562,7 +532,5 @@ function save() {
 }
 
 // KHỞI CHẠY
-window.onload = () => {
-    init();
-};
+window.onload = () => { init(); };
 if (tg) { tg.ready(); tg.expand(); }
