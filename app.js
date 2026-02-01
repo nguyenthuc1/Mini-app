@@ -607,7 +607,8 @@ function listenToChanges() {
 // Khởi chạy game
 window.onload = () => {
     // 1. Tắt màn hình chờ ( QUAN TRỌNG: Thêm dòng này để xóa loading )
-    const loader = document.getElementById('loading');
+   const loader = document.getElementById('loading-screen'); 
+
     if (loader) loader.style.display = 'none';
 
     // 2. Chạy logic game
