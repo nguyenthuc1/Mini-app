@@ -23,7 +23,7 @@ let data = {
     fish: 0, 
     coins: 0, 
     speed: 1, 
-    shipLevel: 1, 
+    level: 1, // Đổi shipLevel thành level cho đồng bộ
     startTime: null, 
     fuel: 100, 
     history: [],
@@ -45,11 +45,9 @@ function initAdsgram() {
     if (window.Adsgram) {
         startAdsgram();
     } else {
-        // Tự động tải nếu HTML chưa tải được (Dùng link mới)
         if (!document.getElementById('adsgram-lib')) {
             const script = document.createElement('script');
             script.id = 'adsgram-lib';
-            // CẬP NHẬT URL MỚI TẠI ĐÂY
             script.src = "https://sad.adsgram.ai/js/sad.min.js";
             script.async = true;
             script.onload = () => startAdsgram();
@@ -61,9 +59,8 @@ function initAdsgram() {
 
 function startAdsgram() {
     try {
-        // ID "0" để test. Khi chạy thật nhớ đổi ID của bạn.
         AdController = window.Adsgram.init({ blockId: "22040", debug: true });
-        console.log("✅ Adsgram (Sad) Ready!");
+        console.log("✅ Adsgram Ready!");
     } catch (error) {
         console.error("Adsgram error:", error);
     }
@@ -96,6 +93,9 @@ async function init() {
                 data.speed = Math.round((data.speed || 1) * 10) / 10;
                 if (data.speed > MAX_SPEED) data.speed = MAX_SPEED;
                 if (typeof data.fuel !== 'number') data.fuel = 100;
+                // Đảm bảo biến level tồn tại
+                if (!data.level) data.level = data.shipLevel || 1; 
+                
                 if (!data.tasks) data.tasks = { adsWatchedToday: 0, adsLastReset: null, channelJoined: false, inviteCount: 0, invite5Claimed: false, dailyLastClaim: null, dailyStreak: 0 };
             } else {
                 await initReferral();
@@ -222,53 +222,44 @@ function switchTab(tab) {
         else if (tab === 'friends') activeBtn.classList.add('text-pink-400');
         else if (tab === 'wallet') activeBtn.classList.add('text-yellow-400');
     }
-}
+} // <--- ĐÃ THÊM DẤU ĐÓNG NGOẶC
+
 async function handleMine() {
-    // TRƯỜNG HỢP 1: CHƯA RA KHƠI -> BẮT ĐẦU ĐÀO
+    console.log("🔘 Đã bấm nút Ra khơi!");
+    
     if (!data.startTime) {
-        // 1. Kiểm tra nhiên liệu (Xăng)
+        // Logic Đào
         if ((data.fuel || 0) < 100) {
-            tg.showAlert("⛽ Không đủ nhiên liệu! Hãy xem quảng cáo để nạp đầy.");
+            tg.showAlert("⛽ Hết nhiên liệu! Xem quảng cáo để nạp.");
             return;
         }
-
-        // 2. Trừ xăng và Ghi giờ bắt đầu
-        data.fuel = 0;             // Trừ hết 100 xăng
-        data.startTime = Date.now(); // Lưu thời gian hiện tại
-        
-        // 3. Lưu và Cập nhật
-        save();         // Lưu lên Firebase
-        updateUI();     // Vẽ lại giao diện
-        checkMining();  // Đổi nút thành đồng hồ đếm ngược
-        
-        tg.showAlert("⛵ Đã ra khơi thành công! Quay lại sau 3 tiếng nhé.");
+        data.fuel = 0;
+        data.startTime = Date.now();
+        save();
+        updateUI();
+        checkMining();
+        tg.showAlert("⛵ Đã ra khơi thành công!");
         return;
     }
 
-    // TRƯỜNG HỢP 2: ĐANG ĐÀO -> GỌI SERVER ĐỂ NHẬN THƯỞNG
-    tg.showAlert("🔄 Đang kết nối Server để kiểm tra...");
-    
+    // Logic Nhận thưởng (Gọi Server)
+    tg.showAlert("🔄 Đang kết nối Server...");
     try {
         const response = await fetch('https://miniapp-backend-d87k.onrender.com/api/claim', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                userId: userId,           
-                initData: tg.initData
-            })
+            body: JSON.stringify({ userId: userId, initData: tg.initData })
         });
-
         const result = await response.json();
-
         if (result.success) {
-            tg.showAlert(`✅ Thành công! Bạn nhận được ${result.fish} cá.`);
-            // Không cần cộng tiền tay ở đây nữa vì đã có "Ra-đar" tự động cập nhật
+            tg.showAlert(`✅ Nhận +${result.fish} Cá!`);
+            // Ra-đar sẽ tự update UI
         } else {
             tg.showAlert(`⚠️ ${result.message}`);
         }
     } catch (err) {
         console.error(err);
-        tg.showAlert("❌ Lỗi mạng! Vui lòng thử lại.");
+        tg.showAlert("❌ Lỗi mạng hoặc Server!");
     }
 }
 
@@ -329,9 +320,14 @@ function performUpgrade(cost) {
     let newSpeed = data.speed + SPEED_INCREMENT;
     newSpeed = Math.round(newSpeed * 10) / 10;
     if (newSpeed > MAX_SPEED) newSpeed = MAX_SPEED;
+    
     data.coins -= cost;
     data.speed = newSpeed;
-    data.shipLevel += 1;
+    
+    // --- SỬA LẠI LOGIC TĂNG LEVEL ---
+    data.level = (data.level || 1) + 1; 
+    // --------------------------------
+    
     save(); updateUI();
 }
 
@@ -369,18 +365,17 @@ function handleTaskInvite() {
     tg.showAlert("🎉 Nhận 2,500 xu thành công!");
 }
 
-// ĐIỂM DANH: 25 XU
 function handleTaskDaily() {
     const today = new Date().toDateString();
     if (data.tasks.dailyLastClaim === today) { tg.showAlert("✅ Đã điểm danh hôm nay!"); return; }
     const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
     if (data.tasks.dailyLastClaim === yesterday.toDateString()) data.tasks.dailyStreak += 1;
     else data.tasks.dailyStreak = 1;
-    
+
     data.tasks.dailyLastClaim = today;
     const bonus = Math.min(10 * (data.tasks.dailyStreak - 1), 150);
-    const totalReward = 25 + bonus; // Đã sửa thành 25
-    
+    const totalReward = 25 + bonus;
+
     addCoins(totalReward, 'daily_login');
     updateTasksUI();
     tg.showAlert(`🎁 Điểm danh: Nhận ${totalReward} xu!`);
@@ -391,7 +386,6 @@ function handleCopyRef() {
     navigator.clipboard.writeText(link).then(() => tg.showAlert("✅ Đã sao chép!")).catch(() => tg.showAlert("❌ Lỗi sao chép!"));
 }
 
-// CHỨC NĂNG RÚT TIỀN (ĐÃ KHÔI PHỤC)
 function handleWithdraw() {
     const bankName = document.getElementById('bank-name').value.trim();
     const bankOwner = document.getElementById('bank-owner').value.trim().toUpperCase();
@@ -412,67 +406,38 @@ function handleWithdraw() {
         }
     );
 }
-// ============================================================
-// HÀM XỬ LÝ RÚT TIỀN (Đã nâng cấp để gửi đơn cho Admin)
-// ============================================================
-function processWithdrawal(bankName, bankOwner, bankAcc, amount) {
-    // 1. Trừ tiền trong ví người dùng ngay lập tức
-    data.coins -= amount;
 
-    // 2. Chuẩn bị dữ liệu đơn hàng để gửi đi
+function processWithdrawal(bankName, bankOwner, bankAcc, amount) {
+    data.coins -= amount;
     const withdrawalOrder = {
-        userId: userId,           // ID người rút (để Admin check)
-        username: tg.initDataUnsafe?.user?.username || 'Không tên', // Tên Telegram
-        amount: amount,           // Số tiền rút
+        userId: userId,
+        username: tg.initDataUnsafe?.user?.username || 'Không tên',
+        amount: amount,
         status: '⏳ Đang chờ duyệt',
         time: new Date().toLocaleString('vi-VN'),
         bankName: bankName,
         bankOwner: bankOwner,
         bankAcc: bankAcc,
-        timestamp: Date.now(),    // Để sắp xếp mới nhất
-        
-        // Gửi kèm thông số để Admin "soi" xem có hack không
-        userStats: {
-            speed: data.speed,
-            fuel: data.fuel,
-            inviteCount: data.tasks?.inviteCount || 0
-        }
+        timestamp: Date.now(),
+        userStats: { speed: data.speed, fuel: data.fuel, inviteCount: data.tasks?.inviteCount || 0 }
     };
 
-    // 3. Ghi vào lịch sử cá nhân của User (để hiện bên tab Wallet)
     if (!data.history) data.history = [];
-    data.history.unshift({
-        ...withdrawalOrder,
-        status: '🕐 Đang xử lý' // User thấy dòng này
-    });
-    // Giới hạn lịch sử 50 dòng cho nhẹ
+    data.history.unshift({ ...withdrawalOrder, status: '🕐 Đang xử lý' });
     if (data.history.length > 50) data.history = data.history.slice(0, 50);
 
-    // 4. [QUAN TRỌNG] GỬI ĐƠN SANG HỆ THỐNG ADMIN (Node 'withdrawals')
     db.ref('withdrawals').push(withdrawalOrder)
-        .then(() => {
-            console.log("✅ Đã bắn đơn sang Admin thành công");
-        })
-        .catch((error) => {
-            console.error("❌ Lỗi gửi Admin:", error);
-            // Nếu lỗi mạng thì vẫn lưu local, nhưng cảnh báo nhẹ (tùy chọn)
-        });
+        .then(() => { console.log("✅ Đã gửi đơn Admin"); })
+        .catch((error) => { console.error("❌ Lỗi gửi Admin:", error); });
 
-    // 5. Lưu lại dữ liệu User (Số dư mới + Lịch sử mới)
-    save(); 
-    updateUI();
-
-    // 6. Xóa trắng form nhập liệu để khách không bấm nhầm lần 2
+    save(); updateUI();
     document.getElementById('bank-name').value = '';
     document.getElementById('bank-owner').value = '';
     document.getElementById('bank-acc').value = '';
     document.getElementById('wd-amount').value = '';
-
-    // 7. Thông báo thành công
     tg.showAlert("✅ Gửi yêu cầu thành công!\n\nAdmin sẽ duyệt trong 24h.");
 }
 
-// UI UPDATES
 function checkMining() {
     const btn = document.getElementById('btn-mine');
     const timer = document.getElementById('timer-display');
@@ -518,12 +483,12 @@ function updateFuelDisplay(fuel = null) {
 
 function updateUI() {
     const setText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-    setText('fish-count', 
-setText('fish-count', Math.floor(data.fish).toLocaleString()); 
-
-
-data.level = (data.level || 1) + 1; 
-
+    
+    // --- SỬA LỖI CHÍNH TẢ Ở ĐÂY ---
+    setText('fish-count', Math.floor(data.fish).toLocaleString()); // Đã sửa toLocal0eString thành toLocaleString
+    // -----------------------------
+    
+    setText('ship-lv-display', (data.level || 1));
     setText('coin-balance', Math.floor(data.coins).toLocaleString());
     setText('wallet-balance', Math.floor(data.coins).toLocaleString());
     setText('available-balance', Math.floor(data.coins).toLocaleString());
@@ -540,7 +505,7 @@ function updateTasksUI() {
     const remaining = 5 - (data.tasks.adsWatchedToday || 0);
     const elAds = document.getElementById('ads-remaining');
     if (elAds) elAds.innerText = remaining;
-    
+
     const btnAds = document.getElementById('btn-task-ads');
     if (btnAds) {
         if (remaining <= 0) { btnAds.disabled = true; btnAds.innerHTML = 'HẾT LƯỢT'; }
@@ -551,7 +516,7 @@ function updateTasksUI() {
     const claimedToday = data.tasks.dailyLastClaim === today;
     const btnDaily = document.getElementById('btn-task-daily');
     const dailyStatus = document.getElementById('daily-status');
-    
+
     if (claimedToday) {
         if (dailyStatus) dailyStatus.innerHTML = `✅ Đã nhận - Streak: ${data.tasks.dailyStreak}`;
         if (btnDaily) { btnDaily.disabled = true; btnDaily.innerHTML = '✅ ĐÃ NHẬN'; }
@@ -590,30 +555,25 @@ function renderHistory() {
 function save() { 
     db.ref('users/' + userId).set(data).catch(console.error);
 }
-// --- RA-ĐAR TỰ ĐỘNG CẬP NHẬT GIAO DIỆN ---
+
 function listenToChanges() {
+    if (!userId) return;
     const userRef = db.ref('users/' + userId);
-    
-    // Hàm .on() này sẽ chạy mỗi khi dữ liệu trên Firebase thay đổi
     userRef.on('value', (snapshot) => {
         const serverData = snapshot.val();
         if (serverData) {
-            // Đồng bộ dữ liệu mới nhất về máy
             data = serverData;
-            
-            // Vẽ lại giao diện ngay lập tức
-            updateUI(); 
-            checkMining(); // Cập nhật trạng thái nút đào
-            
+            updateUI();
+            if (typeof checkMining === "function") checkMining();
             console.log("🔄 Đã đồng bộ dữ liệu mới từ Server!");
         }
     });
 }
+
 // Khởi chạy game
 window.onload = () => {
-    // 1. Tắt màn hình chờ ( QUAN TRỌNG: Thêm dòng này để xóa loading )
-   const loader = document.getElementById('loading-screen'); 
-
+    // 1. Tắt màn hình chờ
+    const loader = document.getElementById('loading-screen'); 
     if (loader) loader.style.display = 'none';
 
     // 2. Chạy logic game
@@ -622,7 +582,7 @@ window.onload = () => {
     } else {
         console.log("⚠️ Không tìm thấy hàm init!");
     }
-    
+
     // 3. Bật ra-đar sau 1 giây
     setTimeout(listenToChanges, 1000);
 };
