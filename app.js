@@ -604,11 +604,26 @@ function listenToChanges() {
         }
     });
 }
+// Khởi chạy game
+window.onload = () => {
+    // 1. Tắt màn hình chờ ( QUAN TRỌNG: Thêm dòng này để xóa loading )
+    const loader = document.getElementById('loading');
+    if (loader) loader.style.display = 'none';
 
-// KHỞI CHẠY
-window.onload = () => { 
-    init(); 
-    setTimeout(listenToChanges, 1000); 
+    // 2. Chạy logic game
+    if (typeof init === "function") {
+        init();
+    } else {
+        console.log("⚠️ Không tìm thấy hàm init!");
+    }
+    
+    // 3. Bật ra-đar sau 1 giây
+    setTimeout(listenToChanges, 1000);
 };
 
-if (tg) { tg.ready(); tg.expand(); }
+// Khởi tạo Telegram
+if (window.Telegram && window.Telegram.WebApp) {
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+}
