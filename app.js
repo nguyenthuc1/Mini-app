@@ -222,6 +222,7 @@ function switchTab(tab) {
         else if (tab === 'friends') activeBtn.classList.add('text-pink-400');
         else if (tab === 'wallet') activeBtn.classList.add('text-yellow-400');
     }
+}
 async function handleMine() {
     // TRƯỜNG HỢP 1: CHƯA RA KHƠI -> BẮT ĐẦU ĐÀO
     if (!data.startTime) {
@@ -517,8 +518,12 @@ function updateFuelDisplay(fuel = null) {
 
 function updateUI() {
     const setText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-    setText('fish-count', Math.floor(data.fish).toLocal0eString());
-setText('ship-lv-display', (data.level || 1));
+    setText('fish-count', 
+setText('fish-count', Math.floor(data.fish).toLocaleString()); 
+
+
+data.level = (data.level || 1) + 1; 
+
     setText('coin-balance', Math.floor(data.coins).toLocaleString());
     setText('wallet-balance', Math.floor(data.coins).toLocaleString());
     setText('available-balance', Math.floor(data.coins).toLocaleString());
