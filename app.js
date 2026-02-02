@@ -572,10 +572,12 @@ function listenToChanges() {
 
 // Khởi chạy game
 window.onload = () => {
-    // 1. Tắt màn hình chờ
-    const loader = document.getElementById('loading-screen'); 
-    if (loader) loader.style.display = 'none';
-
+    const loader = document.getElementById('loading-screen');
+if (loader) {
+    setTimeout(() => {
+        loader.style.display = 'none';
+    }, 2000); // 2000 = 2 giây
+}
     // 2. Chạy logic game
     if (typeof init === "function") {
         init();
