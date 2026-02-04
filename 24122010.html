@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMIN QUẢN LÝ RÚT TIỀN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <div id="login-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-xl w-80 text-center">
+            <h2 class="text-xl font-bold mb-4">ĐĂNG NHẬP ADMIN</h2>
+            <input type="password" id="admin-pass" placeholder="Nhập mật khẩu..." class="w-full border p-2 rounded mb-4">
+            <button onclick="checkLogin()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">VÀO</button>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden container mx-auto p-4 max-w-3xl">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-slate-800">QUẢN LÝ RÚT TIỀN</h1>
+            <button onclick="location.reload()" class="bg-slate-200 p-2 rounded-full hover:bg-slate-300"><i class="fas fa-sync-alt"></i></button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-blue-600 text-white p-4 rounded-xl shadow-lg">
+                <div class="text-sm opacity-80">Đơn chờ duyệt</div>
+                <div class="text-3xl font-bold" id="total-pending">0</div>
+            </div>
+            <div class="bg-red-500 text-white p-4 rounded-xl shadow-lg">
+                <div class="text-sm opacity-80">Phát hiện trùng STK</div>
+                <div class="text-3xl font-bold" id="total-suspicious">0</div>
+            </div>
+        </div>
+
+        <div id="withdrawal-list" class="space-y-4">
+            <div class="text-center text-gray-500 py-10">Đang tải dữ liệu...</div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // 1. CẤU HÌNH (COPY TỪ FILE APP QUA ĐÂY)
+        // =============================================
+        const firebaseConfig = {
+           // ⬇️ DÁN CONFIG CỦA BẠN VÀO ĐÂY ⬇️
+           apiKey : "AIzaSyCX8JK0LoGyNnrMaXsWo-F1ArnEGqsULpo" , 
+  authDomain : "kiemtienapp-2026.firebaseapp.com" , 
+  databaseURL : "https://kiemtienapp-2026-default-rtdb.asia-southeast1.firebasedatabase.app" , 
+  projectId : "kiemtienapp-2026" , 
+  storageBucket : "kiemtienapp-2026.firebasestorage.app" , 
+  messagingSenderId : "965895689246" , 
+  appId : "1:965895689246:web:72b9e6713e1b0c73048a0f" , 
+           // ⬆️ DÁN CONFIG CỦA BẠN VÀO ĐÂY ⬆️
+        };
+
+        // Pass đơn giản để tránh người lạ mở điện thoại bạn xem
+        const ADMIN_PASS = "24122010"; 
+
+        // Khởi tạo Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // =============================================
+        // 2. LOGIC LOGIN
+        // =============================================
+        function checkLogin() {
+            const pass = document.getElementById('admin-pass').value;
+            if(pass === ADMIN_PASS) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                loadData();
+            } else {
+                alert("Sai mật khẩu!");
+            }
+        }
+
+        // =============================================
+        // 3. LOGIC LOAD DỮ LIỆU & CHECK TRÙNG
+        // =============================================
+        function loadData() {
+            db.ref('withdrawals').orderByChild('status').equalTo('pending').on('value', (snapshot) => {
+                const listDiv = document.getElementById('withdrawal-list');
+                listDiv.innerHTML = '';
+                
+                if(!snapshot.exists()) {
+                    listDiv.innerHTML = '<div class="text-center text-gray-400 mt-10">✅ Sạch sẽ! Không có đơn nào mới.</div>';
+                    document.getElementById('total-pending').textContent = 0;
+                    document.getElementById('total-suspicious').textContent = 0;
+                    return;
+                }
+
+                // Chuyển Data thành mảng để xử lý
+                let withdrawals = [];
+                snapshot.forEach(child => {
+                    withdrawals.push({key: child.key, ...child.val()});
+                });
+
+                // --- THUẬT TOÁN CHECK TRÙNG STK ---
+                // Tạo một cái bản đồ xem 1 Số TK xuất hiện ở bao nhiêu User ID
+                let accMap = {}; 
+                withdrawals.forEach(item => {
+                    let acc = item.accountNumber.trim();
+                    if(!accMap[acc]) accMap[acc] = new Set();
+                    accMap[acc].add(item.userId);
+                });
+
+                let suspiciousCount = 0;
+                
+                // Render ra màn hình
+                withdrawals.forEach(item => {
+                    let acc = item.accountNumber.trim();
+                    // Nếu số TK này xuất hiện ở > 1 User ID khác nhau -> GIAN LẬN
+                    let isSuspicious = accMap[acc].size > 1;
+                    if(isSuspicious) suspiciousCount++;
+
+                    const date = new Date(item.createdAt).toLocaleString('vi-VN');
+                    
+                    const html = `
+                        <div class="bg-white rounded-xl shadow-md p-5 border-l-4 ${isSuspicious ? 'border-red-500 ring-2 ring-red-200' : 'border-blue-500'}">
+                            
+                            ${isSuspicious ? `
+                                <div class="bg-red-100 text-red-700 px-3 py-1 rounded-lg text-sm font-bold mb-3 flex items-center gap-2">
+                                    <i class="fas fa-exclamation-triangle"></i> CẢNH BÁO: STK NÀY DÙNG CHUNG NHIỀU NICK!
+                                </div>
+                            ` : ''}
+
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <div class="text-2xl font-bold text-slate-800">${parseInt(item.amount).toLocaleString('vi-VN')} ₫</div>
+                                    <div class="text-sm text-gray-500">${item.bank}</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs text-gray-400">${date}</div>
+                                    <div class="text-xs font-mono bg-gray-100 px-2 py-1 rounded mt-1 select-all cursor-pointer" onclick="alert('Đã copy ID!'); navigator.clipboard.writeText('${item.userId}')">
+                                        ID: ${item.userId.substr(0,10)}...
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 rounded-lg p-3 mb-4">
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-gray-500 text-sm">Chủ TK:</span>
+                                    <span class="font-bold uppercase">${item.accountName}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-500 text-sm">Số TK:</span>
+                                    <span class="font-mono text-lg font-bold text-blue-600 select-all cursor-pointer" onclick="copyText('${item.accountNumber}')">${item.accountNumber} <i class="far fa-copy text-xs text-gray-400 ml-1"></i></span>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <button onclick="approve('${item.key}')" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg shadow transition">
+                                    ✅ DUYỆT (CK XONG)
+                                </button>
+                                <button onclick="rejectPopup('${item.key}', '${item.userId}', ${item.amount})" class="flex-1 bg-red-100 hover:bg-red-200 text-red-600 font-bold py-3 rounded-lg transition">
+                                    ❌ TỪ CHỐI
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    listDiv.innerHTML += html;
+                });
+
+                document.getElementById('total-pending').textContent = withdrawals.length;
+                document.getElementById('total-suspicious').textContent = suspiciousCount;
+            });
+        }
+
+        // =============================================
+        // 4. CÁC HÀM XỬ LÝ (DUYỆT / TỪ CHỐI)
+        // =============================================
+        
+        // A. DUYỆT ĐƠN (Đã chuyển khoản xong)
+        function approve(key) {
+            if(confirm("Xác nhận đã chuyển tiền cho đơn này?")) {
+                db.ref('withdrawals/' + key).update({
+                    status: 'completed',
+                    processedAt: firebase.database.ServerValue.TIMESTAMP
+                }).then(() => alert("Đã duyệt xong!"));
+            }
+        }
+
+        // B. TỪ CHỐI (Hiện Popup hỏi lý do & Hoàn tiền)
+        function rejectPopup(key, userId, amount) {
+            // 1. Nhập lý do
+            let reason = prompt("Nhập lý do từ chối (User sẽ xem được nếu sau này làm lịch sử):", "Sai thông tin tài khoản");
+            if(reason === null) return; // Bấm hủy
+
+            // 2. Hỏi có hoàn tiền không
+            let isRefund = confirm(`BẠN CÓ MUỐN HOÀN LẠI ${amount.toLocaleString()}đ CHO USER KHÔNG?\n\n- OK (Có): Tiền sẽ cộng lại vào ví User.\n- Cancel (Không): Phạt luôn, không trả lại tiền.`);
+
+            // 3. Xử lý
+            const updates = {};
+            
+            // Cập nhật trạng thái đơn rút
+            updates['withdrawals/' + key + '/status'] = 'rejected';
+            updates['withdrawals/' + key + '/rejectReason'] = reason;
+            updates['withdrawals/' + key + '/processedAt'] = firebase.database.ServerValue.TIMESTAMP;
+
+            // Nếu chọn Hoàn tiền -> Cộng lại vào balance
+            if(isRefund) {
+                updates['users/' + userId + '/balance'] = firebase.database.ServerValue.increment(amount);
+                alert("Đã từ chối & HOÀN TIỀN thành công!");
+            } else {
+                alert("Đã từ chối & KHÔNG HOÀN TIỀN (Phạt)!");
+            }
+
+            db.ref().update(updates).catch(err => alert("Lỗi: " + err));
+        }
+
+        // Helper copy
+        function copyText(txt) {
+            navigator.clipboard.writeText(txt);
+            alert("Đã copy số tài khoản!");
+        }
+
+    </script>
+</body>
+</html>
