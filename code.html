@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lấy Mã Nhận Thưởng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: sans-serif; }
+        .card { background: #1e293b; padding: 2rem; border-radius: 1rem; text-align: center; max-width: 90%; width: 400px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .code-box { background: #000; color: #4ade80; font-family: monospace; font-size: 2.5rem; font-weight: bold; padding: 1rem; margin: 1.5rem 0; border-radius: 0.5rem; border: 2px dashed #4ade80; letter-spacing: 5px; cursor: pointer; }
+        .note { color: #94a3b8; font-size: 0.9rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="text-5xl mb-4">🔓</div>
+        <h1 class="text-2xl font-bold text-white mb-2">MÃ NHIỆM VỤ CỦA BẠN</h1>
+        <p class="text-gray-400 text-sm">Bấm vào mã bên dưới để copy</p>
+
+        <div id="code-display" class="code-box" onclick="copyCode()">...</div>
+
+        <div id="status" class="text-green-500 font-bold h-6"></div>
+        
+        <p class="note">⚠️ Mã này chỉ có hiệu lực trong ngày hôm nay.</p>
+        <button onclick="window.close()" class="mt-6 bg-slate-700 hover:bg-slate-600 text-white py-3 px-6 rounded-lg w-full transition">Đóng trang này</button>
+    </div>
+
+    <script>
+        // ==========================================
+        // ⚠️ QUAN TRỌNG: PHẢI GIỐNG HỆT TRONG APP
+        // ==========================================
+        const SECRET_KEY = "THUC_DEP_TRAI_2026"; 
+
+        // Hàm sinh mã (Copy y nguyên từ App sang)
+        function generateCode(index) {
+            const today = new Date().getDate(); 
+            // Công thức: index + ngày + key + index
+            const rawString = index + "_" + today + "_" + SECRET_KEY + "_" + index;
+            
+            let hash = 0;
+            for (let i = 0; i < rawString.length; i++) {
+                hash = ((hash << 5) - hash) + rawString.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash).toString(36).toUpperCase().substring(0, 5); 
+        }
+
+        // Tự động chạy khi mở trang
+        window.onload = function() {
+            // Lấy tham số task trên đường dẫn (VD: code.html?task=0)
+            const urlParams = new URLSearchParams(window.location.search);
+            const taskIndex = parseInt(urlParams.get('task'));
+
+            if (isNaN(taskIndex)) {
+                document.getElementById('code-display').innerText = "ERROR";
+                document.getElementById('status').innerText = "Link bị lỗi!";
+                return;
+            }
+
+            // Tính mã và hiển thị
+            const code = generateCode(taskIndex);
+            document.getElementById('code-display').innerText = code;
+        };
+
+        function copyCode() {
+            const code = document.getElementById('code-display').innerText;
+            navigator.clipboard.writeText(code);
+            document.getElementById('status').innerText = "Đã copy! Quay lại App để nhập.";
+        }
+    </script>
+</body>
+</html>
