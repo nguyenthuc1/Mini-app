@@ -3,71 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lấy Mã Nhận Thưởng</title>
+    <title>Lấy Mã Nhận Thưởng 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
         body { background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: sans-serif; }
         .card { background: #1e293b; padding: 2rem; border-radius: 1rem; text-align: center; max-width: 90%; width: 400px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .code-box { background: #000; color: #4ade80; font-family: monospace; font-size: 2.5rem; font-weight: bold; padding: 1rem; margin: 1.5rem 0; border-radius: 0.5rem; border: 2px dashed #4ade80; letter-spacing: 5px; cursor: pointer; }
+        .code-box { background: #000; color: #4ade80; font-family: monospace; font-size: 2.5rem; font-weight: bold; padding: 1rem; margin: 1.5rem 0; border-radius: 0.5rem; border: 2px dashed #4ade80; letter-spacing: 5px; cursor: pointer; min-height: 80px; display: flex; align-items: center; justify-content: center; }
         .note { color: #94a3b8; font-size: 0.9rem; margin-top: 1rem; }
+        .loading { animation: pulse 1.5s infinite; color: #64748b; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
     <div class="card">
         <div class="text-5xl mb-4">🔓</div>
         <h1 class="text-2xl font-bold text-white mb-2">MÃ NHIỆM VỤ CỦA BẠN</h1>
-        <p class="text-gray-400 text-sm">Bấm vào mã bên dưới để copy</p>
+        <p id="instruction" class="text-gray-400 text-sm">Vui lòng chờ giây lát...</p>
 
-        <div id="code-display" class="code-box" onclick="copyCode()">...</div>
+        <div id="code-display" class="code-box loading">...</div>
 
         <div id="status" class="text-green-500 font-bold h-6"></div>
-        
-        <p class="note">⚠️ Mã này chỉ có hiệu lực trong ngày hôm nay.</p>
+
+        <p class="note">⚠️ Mã này sẽ tự động thay đổi sau 24h.</p>
         <button onclick="window.close()" class="mt-6 bg-slate-700 hover:bg-slate-600 text-white py-3 px-6 rounded-lg w-full transition">Đóng trang này</button>
     </div>
 
     <script>
-        // ==========================================
-        // ⚠️ QUAN TRỌNG: PHẢI GIỐNG HỆT TRONG APP
-        // ==========================================
-        const SECRET_KEY = "THUC_DEP_TRAI_2026"; 
+        // 1. Cấu hình Firebase (Dán đúng bộ Config của Thức vào đây)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCX8JK0LoGyNnrMaXsWo-F1ArnEGqsULpo",
+            authDomain: "kiemtienapp-2026.firebaseapp.com",
+            databaseURL: "https://kiemtienapp-2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "kiemtienapp-2026",
+            storageBucket: "kiemtienapp-2026.firebasestorage.app",
+            messagingSenderId: "965895689246",
+            appId: "1:965895689246:web:72b9e6713e1b0c73048a0f"
+        };
 
-        // Hàm sinh mã (Copy y nguyên từ App sang)
-        function generateCode(index) {
-            const today = new Date().getDate(); 
-            // Công thức: index + ngày + key + index
-            const rawString = index + "_" + today + "_" + SECRET_KEY + "_" + index;
-            
-            let hash = 0;
-            for (let i = 0; i < rawString.length; i++) {
-                hash = ((hash << 5) - hash) + rawString.charCodeAt(i);
-                hash |= 0;
-            }
-            return Math.abs(hash).toString(36).toUpperCase().substring(0, 5); 
-        }
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        // Tự động chạy khi mở trang
         window.onload = function() {
-            // Lấy tham số task trên đường dẫn (VD: code.html?task=0)
+            // Lấy tham số task từ URL (Ví dụ: code.html?task=0)
             const urlParams = new URLSearchParams(window.location.search);
-            const taskIndex = parseInt(urlParams.get('task'));
+            const taskIndex = urlParams.get('task');
 
-            if (isNaN(taskIndex)) {
-                document.getElementById('code-display').innerText = "ERROR";
-                document.getElementById('status').innerText = "Link bị lỗi!";
+            if (taskIndex === null) {
+                showError("THIẾU ID");
                 return;
             }
 
-            // Tính mã và hiển thị
-            const code = generateCode(taskIndex);
-            document.getElementById('code-display').innerText = code;
+            // Truy cập Database lấy mã của nhiệm vụ tương ứng (0-9)
+            db.ref('adminConfig/tasks/' + taskIndex + '/code').once('value')
+                .then((snapshot) => {
+                    const code = snapshot.val();
+                    if (code) {
+                        const display = document.getElementById('code-display');
+                        display.innerText = code;
+                        display.classList.remove('loading');
+                        document.getElementById('instruction').innerText = "Bấm vào mã để copy";
+                    } else {
+                        showError("HẾT HẠN");
+                    }
+                })
+                .catch((error) => {
+                    console.error(error);
+                    showError("LỖI KẾT NỐI");
+                });
         };
+
+        function showError(msg) {
+            document.getElementById('code-display').innerText = msg;
+            document.getElementById('code-display').style.color = "#ef4444";
+            document.getElementById('code-display').style.borderColor = "#ef4444";
+            document.getElementById('instruction').innerText = "Vui lòng vượt link lại!";
+        }
 
         function copyCode() {
             const code = document.getElementById('code-display').innerText;
-            navigator.clipboard.writeText(code);
-            document.getElementById('status').innerText = "Đã copy! Quay lại App để nhập.";
+            if (code === "..." || code.length > 10) return;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                document.getElementById('status').innerText = "Đã copy thành công!";
+                setTimeout(() => { document.getElementById('status').innerText = ""; }, 3000);
+            });
         }
+        
+        document.getElementById('code-display').onclick = copyCode;
     </script>
 </body>
 </html>
